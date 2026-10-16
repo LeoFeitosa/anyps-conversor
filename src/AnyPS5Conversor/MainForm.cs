@@ -574,7 +574,7 @@ public sealed class MainForm : Form
     }
 
     void ShowError(string message) =>
-        MessageBox.Show(this, message, T("err_title"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        MessageDialog.Show(this, T("err_heading"), message);
 
     static void OpenUrl(string url) => Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
 
