@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
 
 namespace AnyPS5Conversor;
@@ -41,30 +42,56 @@ public static class Converter
             log($"AnyPS5 {AnyPS5Version}: {relinker}");
 
             progress.Report(new(0.04, "status_unwrapping"));
-            var converted = await Task.Run(() => PrepareInputs(game, work, log), cancel);
+            var converted = await Task.Run(() => PrepareInputs(game, work, log, cancel), cancel);
 
-            // Faixas da barra: gerar o .exe 10–55%, copiar o jogo 55–93%, bibliotecas 93–100%.
+            // O relinker usa um núcleo só e lê apenas a pasta de trabalho: a cópia do jogo para app0/ e as
+            // bibliotecas correm ao mesmo tempo. A barra (10–98%) acompanha a mais atrasada das duas.
             progress.Report(new(0.10, "status_relinking", 0));
             Directory.CreateDirectory(output);
             var exe = Path.Combine(output, game.SafeName + ".exe");
-            void Report(double f) => progress.Report(new(0.10 + 0.45 * f, "status_relinking", (int)(f * 100)));
+            double relinked = 0, copied = 0;
+            var gate = new Lock();
+            void Report(ref double stage, double fraction)
+            {
+                lock (gate)
+                {
+                    stage = fraction;
+                    var (key, low) = relinked <= copied ? ("status_relinking", relinked) : ("status_copying", copied);
+                    progress.Report(new(0.10 + 0.88 * low, key, (int)(low * 100)));
+                }
+            }
+
+            using var failed = CancellationTokenSource.CreateLinkedTokenSource(cancel);
+            async Task Stage(Func<Task> run)
+            {
+                try
+                {
+                    await run();
+                }
+                catch
+                {
+                    // Se uma etapa falha, a outra para na hora em vez de terminar à toa.
+                    failed.Cancel();
+                    throw;
+                }
+            }
+            var both = Task.WhenAll(
+                Stage(() => RelinkAsync(relinker, work, exe, NeedsFixedBase(game), log, f => Report(ref relinked, f), failed.Token)),
+                Stage(() => Task.Run(() =>
+                {
+                    InstallLibraries(output);
+                    CopyGame(game.Folder, Path.Combine(output, "app0"), converted, move, f => Report(ref copied, f), failed.Token);
+                }, failed.Token)));
             try
             {
-                await RunRelinkerAsync(relinker, Path.Combine(work, "eboot.bin"), exe, NeedsFixedBase(game), log, Report, cancel);
+                await both;
             }
-            catch (UserException e) when (e.Key == "err_relinker" && e.Args[0] is string why
-                && why.Contains("icon", StringComparison.OrdinalIgnoreCase) && File.Exists(Path.Combine(work, "sce_sys", "icon0.png")))
+            catch when (both.Exception?.InnerExceptions.FirstOrDefault(e => e is not OperationCanceledException) is { } cause)
             {
-                // Um ícone que o relinker não aceita não deve impedir a conversão.
-                log("icon0.png rejected; converting without the game icon");
-                File.Delete(Path.Combine(work, "sce_sys", "icon0.png"));
-                await RunRelinkerAsync(relinker, Path.Combine(work, "eboot.bin"), exe, NeedsFixedBase(game), log, Report, cancel);
+                // A etapa que parou por causa da outra só acusa "cancelado"; o erro que vale é o da que falhou.
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw(cause);
             }
-
-            await Task.Run(() => CopyGame(game.Folder, Path.Combine(output, "app0"), converted, move, progress, cancel), cancel);
-
-            progress.Report(new(0.93, "status_libs"));
-            await Task.Run(() => InstallLibraries(output), cancel);
+            cancel.ThrowIfCancellationRequested();
 
             progress.Report(new(1, "status_done"));
             log($"OK: {exe}");
@@ -72,18 +99,36 @@ public static class Converter
         }
         catch (Exception e) when (DiskSpace.IsDiskFull(e))
         {
-            TryDelete(output);
+            await Task.Run(() => TryDelete(output));
             throw DiskSpace.DiskFull(output);
         }
         catch
         {
             // A pasta de saída foi criada por nós e é nova: não deixa meio jogo para trás.
-            TryDelete(output);
+            // Apagar gigabytes leva tempo; fora da thread da janela, ela continua respondendo.
+            await Task.Run(() => TryDelete(output));
             throw;
         }
         finally
         {
             TryDelete(work);
+        }
+    }
+
+    static async Task RelinkAsync(string relinker, string work, string exe, bool fixedBase, Action<string> log, Action<double> report, CancellationToken cancel)
+    {
+        var input = Path.Combine(work, "eboot.bin");
+        try
+        {
+            await RunRelinkerAsync(relinker, input, exe, fixedBase, log, report, cancel);
+        }
+        catch (UserException e) when (e.Key == "err_relinker" && e.Args[0] is string why
+            && why.Contains("icon", StringComparison.OrdinalIgnoreCase) && File.Exists(Path.Combine(work, "sce_sys", "icon0.png")))
+        {
+            // Um ícone que o relinker não aceita não deve impedir a conversão.
+            log("icon0.png rejected; converting without the game icon");
+            File.Delete(Path.Combine(work, "sce_sys", "icon0.png"));
+            await RunRelinkerAsync(relinker, input, exe, fixedBase, log, report, cancel);
         }
     }
 
@@ -128,7 +173,7 @@ public static class Converter
     }
 
     /// <summary>Monta a entrada limpa do relinker e devolve os módulos que viraram .guest.prx.</summary>
-    static HashSet<string> PrepareInputs(GameInfo game, string work, Action<string> log)
+    static HashSet<string> PrepareInputs(GameInfo game, string work, Action<string> log, CancellationToken cancel)
     {
         Directory.CreateDirectory(work);
         WriteClean(Path.Combine(game.Folder, "eboot.bin"), Path.Combine(work, "eboot.bin"), log);
@@ -146,6 +191,7 @@ public static class Converter
         var converted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var module in game.Modules)
         {
+            cancel.ThrowIfCancellationRequested();
             var relative = Path.GetRelativePath(game.Folder, module);
             var target = Path.Combine(work, relative);
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
@@ -259,7 +305,9 @@ public static class Converter
         }
         catch (OperationCanceledException)
         {
+            // Espera o relinker morrer de fato: o .exe pela metade só pode ser apagado depois.
             process.Kill(entireProcessTree: true);
+            await process.WaitForExitAsync(CancellationToken.None);
             throw;
         }
 
@@ -274,7 +322,12 @@ public static class Converter
     static bool SameVolume(string a, string b) =>
         string.Equals(Path.GetPathRoot(Path.GetFullPath(a)), Path.GetPathRoot(Path.GetFullPath(b)), StringComparison.OrdinalIgnoreCase);
 
-    static void CopyGame(string source, string target, HashSet<string> skip, bool move, IProgress<ConversionProgress> progress, CancellationToken cancel)
+    /// <summary>
+    /// Leva o jogo para app0/. Extração nossa no mesmo disco: move. Pasta do usuário no mesmo disco: link físico,
+    /// que é instantâneo e não ocupa espaço (o original continua intacto e apagar um não afeta o outro). Nos demais
+    /// casos, ou se o disco não aceitar links, copia.
+    /// </summary>
+    static void CopyGame(string source, string target, HashSet<string> skip, bool move, Action<double> report, CancellationToken cancel)
     {
         var files = Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories)
             .Select(f => (Path: f, Relative: Path.GetRelativePath(source, f)))
@@ -282,37 +335,47 @@ public static class Converter
             .Select(f => (f.Path, f.Relative, Size: new FileInfo(f.Path).Length))
             .ToList();
         var total = Math.Max(1, files.Sum(f => f.Size));
+        var link = !move && SameVolume(source, target);
         long done = 0;
         var buffer = new byte[4 << 20];
         foreach (var file in files)
         {
+            cancel.ThrowIfCancellationRequested();
             var destination = Path.Combine(target, file.Relative);
             Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+            // Somente leitura é atributo do arquivo, compartilhado pelo link: tirá-lo para apagar uma conversão
+            // que falhou mexeria no original. Esses vão por cópia.
+            var linked = link && !File.GetAttributes(file.Path).HasFlag(FileAttributes.ReadOnly)
+                && (link = CreateHardLink(destination, file.Path, IntPtr.Zero));
             if (move)
-            {
-                cancel.ThrowIfCancellationRequested();
                 File.Move(file.Path, destination);
-                done += file.Size;
-                var moved = (double)done / total;
-                progress.Report(new(0.55 + 0.38 * moved, "status_copying", (int)(moved * 100)));
+            else if (!linked)
+            {
+                using (var input = new FileStream(file.Path, FileMode.Open, FileAccess.Read, FileShare.Read, 1, FileOptions.SequentialScan))
+                using (var output = File.Create(destination))
+                {
+                    // Reserva o tamanho de uma vez: menos fragmentação, e o disco cheio aparece antes de gravar.
+                    output.SetLength(file.Size);
+                    int read;
+                    while ((read = input.Read(buffer)) > 0)
+                    {
+                        cancel.ThrowIfCancellationRequested();
+                        output.Write(buffer, 0, read);
+                        done += read;
+                        report((double)done / total);
+                    }
+                }
+                File.SetLastWriteTimeUtc(destination, File.GetLastWriteTimeUtc(file.Path));
                 continue;
             }
-            using (var input = File.OpenRead(file.Path))
-            using (var output = File.Create(destination))
-            {
-                int read;
-                while ((read = input.Read(buffer)) > 0)
-                {
-                    cancel.ThrowIfCancellationRequested();
-                    output.Write(buffer, 0, read);
-                    done += read;
-                    var fraction = (double)done / total;
-                    progress.Report(new(0.55 + 0.38 * fraction, "status_copying", (int)(fraction * 100)));
-                }
-            }
-            File.SetLastWriteTimeUtc(destination, File.GetLastWriteTimeUtc(file.Path));
+            done += file.Size;
+            report((double)done / total);
         }
+        report(1);
     }
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    static extern bool CreateHardLink(string fileName, string existingFileName, IntPtr securityAttributes);
 
     static void InstallLibraries(string output)
     {
