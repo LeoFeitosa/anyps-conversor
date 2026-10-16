@@ -20,7 +20,7 @@ public sealed class ArchivesTests : IDisposable
 
     string Extract(string archive)
     {
-        var folder = Archives.Extract(archive, null, new Progress<int>(), CancellationToken.None);
+        var folder = Archives.Extract(archive, null, Archives.TempRoot, new Progress<int>(), CancellationToken.None);
         extracted.Add(folder);
         return folder;
     }
@@ -68,7 +68,7 @@ public sealed class ArchivesTests : IDisposable
         using (var writer = new StreamWriter(archive.CreateEntry("../../evil.txt").Open()))
             writer.Write("x");
 
-        var error = Assert.Throws<UserException>(() => Archives.Extract(zip, null, new Progress<int>(), CancellationToken.None));
+        var error = Assert.Throws<UserException>(() => Archives.Extract(zip, null, Archives.TempRoot, new Progress<int>(), CancellationToken.None));
 
         Assert.Equal("err_archive_unsafe", error.Key);
     }
@@ -85,10 +85,10 @@ public sealed class ArchivesTests : IDisposable
         var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", name);
         var progress = new Progress<int>();
 
-        Assert.False(Assert.Throws<PasswordException>(() => Archives.Extract(path, null, progress, CancellationToken.None)).Wrong);
-        Assert.True(Assert.Throws<PasswordException>(() => Archives.Extract(path, "errada", progress, CancellationToken.None)).Wrong);
+        Assert.False(Assert.Throws<PasswordException>(() => Archives.Extract(path, null, Archives.TempRoot, progress, CancellationToken.None)).Wrong);
+        Assert.True(Assert.Throws<PasswordException>(() => Archives.Extract(path, "errada", Archives.TempRoot, progress, CancellationToken.None)).Wrong);
 
-        var folder = Archives.Extract(path, "segredo123", progress, CancellationToken.None);
+        var folder = Archives.Extract(path, "segredo123", Archives.TempRoot, progress, CancellationToken.None);
         extracted.Add(folder);
         Assert.True(File.Exists(Path.Combine(folder, "jogo", "sce_sys", "param.json")));
         Assert.Equal(5000, new FileInfo(Path.Combine(folder, "jogo", "dados.bin")).Length);
@@ -109,6 +109,35 @@ public sealed class ArchivesTests : IDisposable
         Assert.False(Directory.Exists(dead));
         Assert.False(Directory.Exists(legacy));
         Assert.True(Directory.Exists(Archives.TempRoot));
+    }
+
+    [Fact]
+    public void ExtractsIntoAHiddenWorkFolderInTheOutputAndRemovesIt()
+    {
+        var output = Path.Combine(root, "saida");
+        var zip = Path.Combine(root, "game.zip");
+        ZipFile.CreateFromDirectory(CreateGameFolder(), zip);
+
+        var folder = Archives.Extract(zip, null, Archives.WorkRoot(output), new Progress<int>(), CancellationToken.None);
+
+        var work = Path.Combine(output, ".AnyPS5-Conversor");
+        Assert.StartsWith(work, folder);
+        if (OperatingSystem.IsWindows())
+            Assert.True(File.GetAttributes(work).HasFlag(FileAttributes.Hidden));
+        Archives.DeleteWorkRoot(output);
+        Assert.False(Directory.Exists(work));
+    }
+
+    [Fact]
+    public void CleansStaleWorkFoldersInTheOutput()
+    {
+        var output = Path.Combine(root, "saida");
+        var dead = Path.Combine(output, ".AnyPS5-Conversor", "run-999999999", "extract-x");
+        Directory.CreateDirectory(dead);
+
+        Archives.CleanStaleTemp(output);
+
+        Assert.False(Directory.Exists(Path.Combine(output, ".AnyPS5-Conversor")));
     }
 
     [Fact]

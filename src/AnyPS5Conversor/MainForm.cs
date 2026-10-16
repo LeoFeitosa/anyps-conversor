@@ -67,6 +67,7 @@ public sealed class MainForm : Form
 
     GameInfo? game;
     string? extractedFolder;
+    string? extractionParent;
     string? sourceInput;
     string? convertedExe;
     CancellationTokenSource? running;
@@ -130,7 +131,7 @@ public sealed class MainForm : Form
         outputCard.SetBounds(24, 324, 712, 140);
         PlaceStep(outputCard, outputBadge, outputTitle, outputHint);
         outputBox.SetBounds(20, 74, 532, 28);
-        outputBox.Text = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "AnyPS5");
+        outputBox.Text = Settings.Output;
         outputButton.SetBounds(564, 70, 128, 34);
         outputButton.Click += (_, _) => PickOutput();
         recycleSourceBox.SetBounds(20, 108, 672, 24);
@@ -176,7 +177,11 @@ public sealed class MainForm : Form
         ResumeLayout(false);
         if (initialGame is not null)
             Shown += async (_, _) => await LoadGameAsync(initialGame);
-        FormClosed += (_, _) => Archives.TryDelete(Archives.TempRoot);
+        FormClosed += (_, _) =>
+        {
+            Archives.TryDelete(Archives.TempRoot);
+            DiscardExtraction();
+        };
     }
 
     static void PlaceStep(Card card, StepBadge badge, Label title, Label? hint)
@@ -265,8 +270,11 @@ public sealed class MainForm : Form
         if (running is not null)
             return;
         using var dialog = new FolderBrowserDialog { Description = T("pick_output"), UseDescriptionForTitle = true, SelectedPath = outputBox.Text };
-        if (dialog.ShowDialog(this) == DialogResult.OK)
-            outputBox.Text = dialog.SelectedPath;
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+            return;
+        outputBox.Text = dialog.SelectedPath;
+        Settings.Output = dialog.SelectedPath;
+        Archives.CleanStaleTemp(dialog.SelectedPath);
     }
 
     /// <summary>Carrega uma pasta, um eboot.bin ou um arquivo compactado com o jogo.</summary>
@@ -301,7 +309,8 @@ public sealed class MainForm : Form
                     try
                     {
                         var attempt = password;
-                        extracted = await Task.Run(() => Archives.Extract(path, attempt, progress, token), token);
+                        var workRoot = Archives.WorkRoot(outputBox.Text);
+                        extracted = await Task.Run(() => Archives.Extract(path, attempt, workRoot, progress, token), token);
                         break;
                     }
                     catch (PasswordException e)
@@ -327,8 +336,9 @@ public sealed class MainForm : Form
                 Archives.TryDelete(extracted);
                 throw;
             }
-            Archives.TryDelete(extractedFolder);
+            DiscardExtraction();
             extractedFolder = extracted;
+            extractionParent = extracted is null ? null : outputBox.Text;
             game = loaded;
             sourceInput = path;
             convertedExe = null;
@@ -381,8 +391,7 @@ public sealed class MainForm : Form
         convertButton.Visible = true;
         progressBar.Value = 0;
         gameBadge.Done = outputBadge.Done = convertBadge.Done = false;
-        Archives.TryDelete(extractedFolder);
-        extractedFolder = null;
+        DiscardExtraction();
         SetStatus("status_idle");
     }
 
@@ -456,7 +465,7 @@ public sealed class MainForm : Form
         try
         {
             Directory.CreateDirectory(outputBox.Text);
-            convertedExe = await Converter.ConvertAsync(game, outputBox.Text, progress, Log, running.Token);
+            convertedExe = await Converter.ConvertAsync(game, outputBox.Text, extractedFolder is not null, progress, Log, running.Token);
             finished = true;
             progressBar.Value = 1000;
             percentLabel.Text = "100%";
@@ -466,8 +475,7 @@ public sealed class MainForm : Form
             SetStatus("status_done");
 
             // A extração só servia de entrada para o relinker; o jogo convertido já tem a sua cópia em app0/.
-            Archives.TryDelete(extractedFolder);
-            extractedFolder = null;
+            DiscardExtraction();
             if (recycleSourceBox.Checked && sourceInput is not null)
                 RecycleSource(SourceCleanup.SourceToRecycle(sourceInput, game.Folder), Log);
 
@@ -497,6 +505,9 @@ public sealed class MainForm : Form
             SetBusy(false);
             if (convertedExe is null)
                 percentLabel.Text = "";
+            // Se a conversão falhou depois de mover a extração para app0/, ela ficou incompleta: pede o jogo de novo.
+            if (convertedExe is null && extractedFolder is not null && game is not null && !File.Exists(Path.Combine(game.Folder, "eboot.bin")))
+                ResetGame();
         }
     }
 
@@ -544,6 +555,15 @@ public sealed class MainForm : Form
     {
         Directory.CreateDirectory(Converter.LogFolder);
         return Path.Combine(Converter.LogFolder, $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}_{info.SafeName}.log");
+    }
+
+    /// <summary>Apaga a extração atual e a pasta de trabalho oculta no local onde ela foi feita.</summary>
+    void DiscardExtraction()
+    {
+        Archives.TryDelete(extractedFolder);
+        if (extractionParent is not null)
+            Archives.DeleteWorkRoot(extractionParent);
+        extractedFolder = extractionParent = null;
     }
 
     /// <summary>Opção do usuário: manda o arquivo compactado ou a pasta do jogo para a Lixeira.</summary>

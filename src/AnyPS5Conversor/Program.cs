@@ -6,7 +6,7 @@ static class Program
     static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
-        Archives.CleanStaleTemp();
+        Archives.CleanStaleTemp(Settings.Output, Settings.DefaultOutput);
         Converter.CleanLocalData();
         Application.Run(new MainForm(args.FirstOrDefault()));
     }

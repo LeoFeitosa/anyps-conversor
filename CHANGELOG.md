@@ -6,6 +6,17 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-16
+
+### Alterado
+
+- A extração de um arquivo compactado é feita numa pasta oculta (`.AnyPS5-Conversor`) dentro do local
+  escolhido em "Onde salvar", e não mais em `%TEMP%` no C:. Salvar em outro disco leva a extração
+  junto.
+- No mesmo disco, os arquivos extraídos são movidos para `app0/` em vez de copiados: a etapa fica
+  instantânea e o pico de espaço cai para o arquivo compactado mais uma cópia do conteúdo.
+- O local escolhido em "Onde salvar" fica lembrado entre execuções.
+
 ## [0.4.1] - 2026-10-16
 
 ### Alterado
@@ -99,7 +110,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Botões para jogar e abrir a pasta ao final, com as últimas linhas de `anyps5.log` se o jogo
   fechar com erro.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.3.0...v0.3.1

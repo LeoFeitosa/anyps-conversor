@@ -18,19 +18,25 @@ public static class Converter
 
     public static string AnyPS5Version => anyPS5Version ??= ReadResourceText("anyps5-version").Trim();
 
+    /// <param name="sourceIsExtraction">
+    /// A pasta do jogo é uma extração nossa e pode ser consumida: no mesmo disco, os arquivos são movidos para
+    /// app0/ em vez de copiados, o que é instantâneo e não ocupa espaço a mais.
+    /// </param>
     public static async Task<string> ConvertAsync(
         GameInfo game,
         string parentFolder,
+        bool sourceIsExtraction,
         IProgress<ConversionProgress> progress,
         Action<string> log,
         CancellationToken cancel)
     {
         var output = UniqueFolder(Path.Combine(parentFolder, game.SafeName));
+        var move = sourceIsExtraction && SameVolume(game.Folder, parentFolder);
         var work = Path.Combine(Archives.TempRoot, "work-" + Guid.NewGuid().ToString("N"));
         try
         {
             progress.Report(new(0.02, "status_preparing"));
-            EnsureSpace(game, parentFolder);
+            EnsureSpace(game, parentFolder, move);
             var relinker = ExtractRelinker();
             log($"AnyPS5 {AnyPS5Version}: {relinker}");
 
@@ -55,7 +61,7 @@ public static class Converter
                 await RunRelinkerAsync(relinker, Path.Combine(work, "eboot.bin"), exe, NeedsFixedBase(game), log, Report, cancel);
             }
 
-            await Task.Run(() => CopyGame(game.Folder, Path.Combine(output, "app0"), converted, progress, cancel), cancel);
+            await Task.Run(() => CopyGame(game.Folder, Path.Combine(output, "app0"), converted, move, progress, cancel), cancel);
 
             progress.Report(new(0.93, "status_libs"));
             await Task.Run(() => InstallLibraries(output), cancel);
@@ -85,11 +91,12 @@ public static class Converter
     /// Destino: cópia do jogo em app0/, bibliotecas e o .exe (estimado em duas vezes os executáveis).
     /// Temporário: os executáveis desembrulhados e o relinker.
     /// </summary>
-    static void EnsureSpace(GameInfo game, string parentFolder)
+    static void EnsureSpace(GameInfo game, string parentFolder, bool move)
     {
         var executables = new FileInfo(Path.Combine(game.Folder, "eboot.bin")).Length + game.Modules.Sum(m => new FileInfo(m).Length);
+        var gameFiles = move ? 0 : DiskSpace.FolderSize(game.Folder);
         using (var libraries = new ZipArchive(OpenResource("prx-windows.zip"), ZipArchiveMode.Read))
-            DiskSpace.Ensure(parentFolder, DiskSpace.FolderSize(game.Folder) + libraries.Entries.Sum(e => e.Length) + 2 * executables);
+            DiskSpace.Ensure(parentFolder, gameFiles + libraries.Entries.Sum(e => e.Length) + 2 * executables);
         DiskSpace.Ensure(Archives.TempRoot, executables + (8L << 20));
     }
 
@@ -264,7 +271,10 @@ public static class Converter
             throw new UserException("err_relinker", failures.Count > 0 ? string.Join(Environment.NewLine, failures) : $"exit code {process.ExitCode}");
     }
 
-    static void CopyGame(string source, string target, HashSet<string> skip, IProgress<ConversionProgress> progress, CancellationToken cancel)
+    static bool SameVolume(string a, string b) =>
+        string.Equals(Path.GetPathRoot(Path.GetFullPath(a)), Path.GetPathRoot(Path.GetFullPath(b)), StringComparison.OrdinalIgnoreCase);
+
+    static void CopyGame(string source, string target, HashSet<string> skip, bool move, IProgress<ConversionProgress> progress, CancellationToken cancel)
     {
         var files = Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories)
             .Select(f => (Path: f, Relative: Path.GetRelativePath(source, f)))
@@ -278,6 +288,15 @@ public static class Converter
         {
             var destination = Path.Combine(target, file.Relative);
             Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+            if (move)
+            {
+                cancel.ThrowIfCancellationRequested();
+                File.Move(file.Path, destination);
+                done += file.Size;
+                var moved = (double)done / total;
+                progress.Report(new(0.55 + 0.38 * moved, "status_copying", (int)(moved * 100)));
+                continue;
+            }
             using (var input = File.OpenRead(file.Path))
             using (var output = File.Create(destination))
             {
