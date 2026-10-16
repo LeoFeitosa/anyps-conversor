@@ -284,18 +284,43 @@ public static class Converter
         zip.ExtractToDirectory(output, overwriteFiles: true);
     }
 
-    /// <summary>O relinker vai embutido no .exe; é extraído uma vez por versão do AnyPS5.</summary>
+    /// <summary>Dados locais do programa: só os registros de conversões que falharam.</summary>
+    public static string LogFolder { get; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AnyPS5-Conversor", "logs");
+
+    /// <summary>
+    /// Mantém no disco só o que o usuário pode precisar: os 10 registros de falha mais recentes, de até
+    /// 30 dias. Remove também a cópia do relinker que as versões 0.1 a 0.3 guardavam por versão.
+    /// </summary>
+    public static void CleanLocalData()
+    {
+        var local = Path.GetDirectoryName(LogFolder)!;
+        if (Directory.Exists(local))
+            foreach (var folder in Directory.GetDirectories(local, "v*"))
+                Archives.TryDelete(folder);
+        if (!Directory.Exists(LogFolder))
+            return;
+        var logs = new DirectoryInfo(LogFolder).GetFiles("*.log").OrderByDescending(f => f.LastWriteTimeUtc).ToList();
+        foreach (var log in logs.Skip(10).Concat(logs.Take(10).Where(f => f.LastWriteTimeUtc < DateTime.UtcNow.AddDays(-30))))
+        {
+            try
+            {
+                log.Delete();
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+    }
+
+    /// <summary>O relinker vai embutido no .exe e é extraído para a pasta temporária desta execução.</summary>
     static string ExtractRelinker()
     {
-        var folder = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "AnyPS5-Conversor", AnyPS5Version);
-        var path = Path.Combine(folder, "relinker.exe");
-        using var resource = OpenResource("relinker.exe");
-        if (File.Exists(path) && new FileInfo(path).Length == resource.Length)
+        var path = Path.Combine(Archives.TempRoot, "relinker.exe");
+        if (File.Exists(path))
             return path;
-        Directory.CreateDirectory(folder);
+        Directory.CreateDirectory(Archives.TempRoot);
         var temporary = path + ".tmp";
+        using (var resource = OpenResource("relinker.exe"))
         using (var file = File.Create(temporary))
             resource.CopyTo(file);
         File.Move(temporary, path, overwrite: true);

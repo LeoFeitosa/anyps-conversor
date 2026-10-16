@@ -51,7 +51,8 @@ Também dá para arrastar a pasta do jogo direto sobre o ícone do `AnyPS5-Conve
 
 ## Requisitos
 
-- Windows 10 ou 11, 64 bits.
+- Windows 10 (versão 1607 ou mais nova) ou Windows 11, 64 bits. É o mínimo das bibliotecas do AnyPS5
+  para os jogos convertidos rodarem, e também o do .NET 10, com que o conversor é feito.
 - Processador com AVX2, FMA, F16C, BMI1, BMI2, LZCNT e MOVBE (Ryzen e Intel Core a partir de 2015,
   em geral). O programa avisa se faltar alguma. Em processadores Intel a conversão usa
   automaticamente a opção `--to-intel` do AnyPS5.
@@ -59,7 +60,9 @@ Também dá para arrastar a pasta do jogo direto sobre o ícone do `AnyPS5-Conve
 - O jogo precisa estar **descriptografado**. Arquivos criptografados são recusados, assim como pacotes
   `.pkg` da loja, que são criptografados.
 
-Cada conversão deixa um registro em `%LOCALAPPDATA%\AnyPS5-Conversor\logs`. Se um jogo converte mas não abre ou trava, quase sempre é uma função do sistema que o AnyPS5 ainda
+Quando uma conversão falha, o registro dela fica em `%LOCALAPPDATA%\AnyPS5-Conversor\logs` (os 10
+mais recentes, por até 30 dias). Fora isso o programa só guarda o idioma escolhido e apaga os
+temporários ao terminar. Se um jogo converte mas não abre ou trava, quase sempre é uma função do sistema que o AnyPS5 ainda
 não implementa. O progresso por título fica no
 [mapa de compatibilidade](https://alxcbtw.github.io/anyps5-roadmap/) e os relatos vão nas
 [discussões do AnyPS5](https://github.com/boykopovar/AnyPS5/discussions/categories/game-bring-up).
@@ -113,7 +116,7 @@ folder.
 **Usage:** download `AnyPS5-Conversor.exe` from Releases, run it (no install), drop the game folder
 (the one with `eboot.bin`) on the window, click **Convert to Windows**, then **Play now**.
 
-**Requirements:** Windows 10/11 x64, a CPU with AVX2, FMA, F16C, BMI1, BMI2, LZCNT and MOVBE, a GPU
+**Requirements:** Windows 10 1607 or later, or Windows 11, x64, a CPU with AVX2, FMA, F16C, BMI1, BMI2, LZCNT and MOVBE, a GPU
 with a current Vulkan driver, and a decrypted game. Encrypted files are refused.
 
 **Legal:** no games, firmware, keys or proprietary libraries are included, and nothing is decrypted

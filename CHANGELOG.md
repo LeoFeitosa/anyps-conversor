@@ -6,6 +6,19 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-16
+
+### Corrigido
+
+- Na janela de senha, nomes de arquivo longos cortavam o fim da mensagem. Agora o nome é encurtado pelo
+  meio, mantendo o início e a extensão, a mensagem aparece sempre inteira e a janela ajusta a altura.
+
+### Alterado
+
+- Nada fica no disco sem necessidade: o relinker é extraído na pasta temporária da execução (antes
+  ficava uma cópia por versão em `%LOCALAPPDATA%`), o registro de uma conversão bem-sucedida é
+  apagado ao final e só ficam os 10 registros de falha mais recentes, por até 30 dias.
+
 ## [0.3.0] - 2026-10-16
 
 ### Adicionado
@@ -60,7 +73,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Botões para jogar e abrir a pasta ao final, com as últimas linhas de `anyps5.log` se o jogo
   fechar com erro.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.1.0...v0.2.0
