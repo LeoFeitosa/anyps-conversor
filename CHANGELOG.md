@@ -6,6 +6,14 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-10-16
+
+### Adicionado
+
+- As imagens do programa nos READMEs são geradas a partir do próprio `.exe` a cada release, em
+  português (`docs/screenshot-pt.png`) e em inglês (`docs/screenshot-en.png`), e sempre mostram a
+  versão publicada. A pasta de saída mostrada é um exemplo neutro.
+
 ## [0.6.1] - 2026-10-16
 
 ### Adicionado
@@ -147,7 +155,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Botões para jogar e abrir a pasta ao final, com as últimas linhas de `anyps5.log` se o jogo
   fechar com erro.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.4.1...v0.5.0

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using static AnyPS5Conversor.Strings;
 
 namespace AnyPS5Conversor;
@@ -280,6 +281,42 @@ public sealed class MainForm : Form
         outputBox.Text = dialog.SelectedPath;
         Settings.Output = dialog.SelectedPath;
         Archives.CleanStaleTemp(dialog.SelectedPath);
+    }
+
+    [DllImport("user32.dll")]
+    static extern bool PrintWindow(IntPtr hwnd, IntPtr hdc, uint flags);
+
+    [DllImport("user32.dll")]
+    static extern bool GetWindowRect(IntPtr hwnd, out RECT rect);
+
+    [DllImport("dwmapi.dll")]
+    static extern int DwmGetWindowAttribute(IntPtr hwnd, int attribute, out RECT value, int size);
+
+    struct RECT { public int Left, Top, Right, Bottom; }
+
+    /// <summary>
+    /// Imagem da janela inicial para o README. A janela abre fora da área visível e o Windows a desenha
+    /// inteira, com a barra de título; a pasta de saída mostrada é um exemplo, nunca a de quem gera.
+    /// </summary>
+    public static void SaveScreenshot(string file)
+    {
+        using var form = new MainForm { StartPosition = FormStartPosition.Manual, Location = new Point(-8000, -8000), ShowInTaskbar = false };
+        form.outputBox.Text = @"C:\Users\Jogador\AnyPS5";
+        form.Show();
+        Application.DoEvents();
+        GetWindowRect(form.Handle, out var window);
+        // A borda invisível de redimensionamento fica de fora: só o que aparece na tela.
+        DwmGetWindowAttribute(form.Handle, 9, out var visible, Marshal.SizeOf<RECT>());
+        using var full = new Bitmap(window.Right - window.Left, window.Bottom - window.Top);
+        using (var g = Graphics.FromImage(full))
+        {
+            var hdc = g.GetHdc();
+            PrintWindow(form.Handle, hdc, 2);
+            g.ReleaseHdc(hdc);
+        }
+        var crop = new Rectangle(visible.Left - window.Left, visible.Top - window.Top, visible.Right - visible.Left, visible.Bottom - visible.Top);
+        using var image = full.Clone(crop, full.PixelFormat);
+        image.Save(file, System.Drawing.Imaging.ImageFormat.Png);
     }
 
     /// <summary>Carrega uma pasta, um eboot.bin ou um arquivo compactado com o jogo.</summary>

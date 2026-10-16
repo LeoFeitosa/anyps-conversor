@@ -86,3 +86,35 @@ jobs:
           sed "s/{anyps5}/$(jq -r .anyps5 build/dependencies.json)/g" build/release-footer.md >> notes.md
           gh release create "$TAG" dist/AnyPS5-Conversor.exe dist/AnyPS5-Conversor.exe.sha256 THIRD-PARTY-NOTICES.txt \
             --repo "$GITHUB_REPOSITORY" --title "AnyPS5 Conversor $TAG" --notes-file notes.md
+
+  # A imagem do README mostra sempre a versão publicada: gerada do próprio .exe, em português e inglês.
+  screenshots:
+    if: github.ref_type == 'tag'
+    needs: release
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: AnyPS5-Conversor
+          path: dist
+
+      - name: Update the README screenshots
+        shell: pwsh
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          ./build/update-screenshots.ps1 -Exe dist/AnyPS5-Conversor.exe
+          git add docs/screenshot-pt.png docs/screenshot-en.png
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 0) { 'Screenshots already up to date.'; exit 0 }
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898099+github-actions[bot]@users.noreply.github.com'
+          git commit -m "docs: update screenshots for $env:TAG"
+          git push origin HEAD:main
+

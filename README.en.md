@@ -11,7 +11,7 @@ Choose the game folder, click **Convert to Windows** and, at the end, **Play now
 
 **[⬇ Download the latest version (AnyPS5-Conversor.exe)](https://github.com/LeoFeitosa/anyps5-conversor/releases/latest/download/AnyPS5-Conversor.exe)**
 
-![AnyPS5 Conversor window](docs/screenshot.png)
+![AnyPS5 Conversor window](docs/screenshot-en.png)
 
 ## Based on AnyPS5
 
