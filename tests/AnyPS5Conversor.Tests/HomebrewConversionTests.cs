@@ -51,6 +51,13 @@ public sealed class HomebrewConversionTests
                 // Esperado: o título fala direto com o sistema do PS5 e o aviso certo foi reconhecido.
                 return;
             }
+            catch (UserException e)
+            {
+                // A mensagem do relinker e o fim do registro vão para o resultado: é o que a issue de falha mostra.
+                lock (log)
+                    Assert.Fail($"{id}: {e.Key} {string.Join(" | ", e.Args)}{Environment.NewLine}{string.Join(Environment.NewLine, log.TakeLast(15))}");
+                throw;
+            }
 
             var folder = Path.GetDirectoryName(exe)!;
             Assert.True(new FileInfo(exe).Length > 0, "o .exe não foi gerado");
