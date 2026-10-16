@@ -6,12 +6,23 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-10-16
+
 ### Adicionado
 
+- Link **Licenças** no rodapé do programa, com os avisos de licença dos componentes de terceiros
+  embutidos no `.exe` (`THIRD-PARTY-NOTICES.txt`, também anexado a cada release).
+- Aviso legal completo em português e inglês (`LEGAL.md`), política de segurança (`SECURITY.md`) e
+  confirmação obrigatória, no formulário de issue, de que nenhum conteúdo protegido está sendo
+  enviado. As notas de cada release trazem o aviso legal e o link do código-fonte do AnyPS5 incluído.
 - README completo em inglês (`README.en.md`), com seletor de idioma, e link de download direto da
   versão mais recente no topo das duas versões.
 - Teste de conversão real (`HomebrewConversionTests`) com homebrews livres baixados do release de cada
   autor por `build/download-homebrew.ps1`, com versão e SHA-256 fixados em `build/homebrew.json`.
+- Atualização automática do AnyPS5 (`.github/workflows/anyps5-update.yml`): uma vez por dia, adota a
+  versão nova do AnyPS5 publicada há 7 dias ou mais, compila, roda os testes e as conversões reais e
+  publica a nova versão do conversor. Avisa o dono do repositório por issue quando houver versão nova,
+  dando certo ou não; se algo falhar, nada é publicado.
 
 ## [0.6.0] - 2026-10-16
 
@@ -136,7 +147,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Botões para jogar e abrir a pasta ao final, com as últimas linhas de `anyps5.log` se o jogo
   fechar com erro.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.4.0...v0.4.1
