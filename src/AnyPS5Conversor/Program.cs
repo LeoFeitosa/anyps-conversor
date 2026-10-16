@@ -7,6 +7,7 @@ static class Program
     {
         ApplicationConfiguration.Initialize();
         Archives.CleanStaleTemp();
+        Converter.CleanLocalData();
         Application.Run(new MainForm(args.FirstOrDefault()));
     }
 }

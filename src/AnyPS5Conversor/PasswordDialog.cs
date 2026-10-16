@@ -13,12 +13,13 @@ sealed class PasswordDialog : Form
 
     public string Password => passwordBox.Text;
 
+    const int ContentWidth = 432;
+
     public PasswordDialog(string fileName, bool wrong)
     {
         SuspendLayout();
         AutoScaleDimensions = new SizeF(96f, 96f);
         AutoScaleMode = AutoScaleMode.Dpi;
-        ClientSize = new Size(480, 250);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = MinimizeBox = ShowInTaskbar = false;
         StartPosition = FormStartPosition.CenterParent;
@@ -26,31 +27,68 @@ sealed class PasswordDialog : Form
         Font = Theme.Body;
         Text = T("password_title");
 
+        // O texto da mensagem nunca é cortado: se faltar espaço, encurta-se o nome do arquivo, pelo meio.
+        var text = T("password_message", ShortenMiddle(fileName, Theme.Body, ContentWidth));
+        var textHeight = Math.Min(MeasureHeight(text, Theme.Body, ContentWidth), 120);
+
         var title = Theme.Label(T("password_title"), Theme.CardTitle, Theme.Text);
-        title.SetBounds(24, 18, 432, 28);
-        var message = Theme.Label(T("password_message", fileName), Theme.Body, Theme.Muted);
-        message.SetBounds(24, 50, 432, 58);
-        message.AutoEllipsis = true;
+        title.SetBounds(24, 18, ContentWidth, 28);
+        var message = Theme.Label(text, Theme.Body, Theme.Muted);
+        message.SetBounds(24, 50, ContentWidth, textHeight);
+        var y = 50 + textHeight + 8;
         var error = Theme.Label(wrong ? T("password_wrong") : "", Theme.Body, Theme.Error);
-        error.SetBounds(24, 108, 432, 20);
-        passwordBox.SetBounds(24, 132, 432, 30);
-        var show = new CheckBox { Text = T("password_show"), ForeColor = Theme.Muted, AutoSize = true, Location = new Point(24, 170) };
+        error.SetBounds(24, y, ContentWidth, wrong ? 22 : 0);
+        y += wrong ? 26 : 0;
+        passwordBox.SetBounds(24, y, ContentWidth, 30);
+        y += 38;
+        var show = new CheckBox { Text = T("password_show"), ForeColor = Theme.Muted, AutoSize = true, Location = new Point(24, y) };
         show.CheckedChanged += (_, _) => passwordBox.UseSystemPasswordChar = !show.Checked;
+        y += 32;
 
         var ok = Theme.AccentButton();
         ok.Text = T("password_ok");
-        ok.SetBounds(264, 200, 192, 36);
+        ok.SetBounds(264, y, 192, 36);
         ok.DialogResult = DialogResult.OK;
         var cancel = Theme.SecondaryButton();
         cancel.Text = T("cancel");
-        cancel.SetBounds(140, 200, 112, 36);
+        cancel.SetBounds(140, y, 112, 36);
         cancel.DialogResult = DialogResult.Cancel;
+        ClientSize = new Size(480, y + 36 + 18);
 
         Controls.AddRange([title, message, error, passwordBox, show, cancel, ok]);
         AcceptButton = ok;
         CancelButton = cancel;
         Shown += (_, _) => passwordBox.Focus();
         ResumeLayout(false);
+    }
+
+    /// <summary>Altura do texto quebrado em linhas, em unidades de 96 dpi como o resto do layout.</summary>
+    int MeasureHeight(string text, Font font, int width)
+    {
+        var scale = DeviceDpi / 96f;
+        var size = TextRenderer.MeasureText(text, font, new Size((int)(width * scale), int.MaxValue), TextFormatFlags.WordBreak);
+        return (int)Math.Ceiling(size.Height / scale) + 2;
+    }
+
+    /// <summary>
+    /// Encurta o nome pelo meio ("início…final.rar") até caber numa linha, preservando a extensão. Nomes sem
+    /// espaço não quebram linha, então sem isso um nome comprido empurraria o resto da mensagem para fora.
+    /// </summary>
+    string ShortenMiddle(string name, Font font, int width)
+    {
+        var scale = DeviceDpi / 96f;
+        var limit = (int)(width * scale * 0.9f);
+        bool Fits(string s) => TextRenderer.MeasureText(s, font).Width <= limit;
+        if (Fits(name))
+            return name;
+        var tail = Math.Min(name.Length / 3, 18);
+        for (var head = name.Length - tail - 1; head > 4; head--)
+        {
+            var candidate = name[..head] + "…" + name[^tail..];
+            if (Fits(candidate))
+                return candidate;
+        }
+        return name[..4] + "…" + name[^tail..];
     }
 
     protected override void OnHandleCreated(EventArgs e)

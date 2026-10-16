@@ -464,6 +464,9 @@ public sealed class MainForm : Form
             extractedFolder = null;
             if (recycleSourceBox.Checked && sourceInput is not null)
                 RecycleSource(SourceCleanup.SourceToRecycle(sourceInput, game.Folder), Log);
+
+            // Deu certo: o registro continua em "Mostrar detalhes", mas não fica ocupando o disco.
+            File.Delete(logFile);
         }
         catch (OperationCanceledException)
         {
@@ -530,12 +533,11 @@ public sealed class MainForm : Form
         detailsLink.Text = logBox.Visible ? T("hide_details") : T("show_details");
     }
 
-    /// <summary>Registro da conversão, guardado mesmo quando ela falha.</summary>
+    /// <summary>Registro da conversão; só fica no disco se ela falhar.</summary>
     static string ConversionLogPath(GameInfo info)
     {
-        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AnyPS5-Conversor", "logs");
-        Directory.CreateDirectory(folder);
-        return Path.Combine(folder, $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}_{info.SafeName}.log");
+        Directory.CreateDirectory(Converter.LogFolder);
+        return Path.Combine(Converter.LogFolder, $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}_{info.SafeName}.log");
     }
 
     /// <summary>Opção do usuário: manda o arquivo compactado ou a pasta do jogo para a Lixeira.</summary>
