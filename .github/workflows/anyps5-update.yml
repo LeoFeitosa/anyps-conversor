@@ -171,8 +171,9 @@ jobs:
             --title "AnyPS5 Conversor v$env:NEW" --notes-file notes.md --latest
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
+      # Roda também sem versão nova: se faltar a cópia da versão em uso, ela é criada; se existir, nada muda.
       - name: Keep a backup copy of the AnyPS5 binaries
-        if: steps.check.outputs.update == 'true' && env.DRY_RUN != 'true'
+        if: success() && env.DRY_RUN != 'true'
         shell: pwsh
         run: ./build/mirror-anyps5.ps1
 
