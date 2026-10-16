@@ -12,9 +12,12 @@ public static class Strings
 
     public static Language Current { get; private set; } = LoadLanguage();
 
-    public static void Set(Language language)
+    /// <param name="save">Falso só para a imagem do README: troca o idioma sem gravar a escolha do usuário.</param>
+    public static void Set(Language language, bool save = true)
     {
         Current = language;
+        if (!save)
+            return;
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(SettingsFile)!);

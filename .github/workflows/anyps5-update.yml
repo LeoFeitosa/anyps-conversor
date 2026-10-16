@@ -150,7 +150,8 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898099+github-actions[bot]@users.noreply.github.com'
-          git add build/dependencies.json Directory.Build.props CHANGELOG.md
+          ./build/update-screenshots.ps1 -Exe publish/AnyPS5-Conversor.exe
+          git add build/dependencies.json Directory.Build.props CHANGELOG.md docs/screenshot-pt.png docs/screenshot-en.png
           git commit -m "chore: update AnyPS5 to $env:TAG"
           git tag -a "v$env:NEW" -m "AnyPS5 Conversor $env:NEW"
           git push origin HEAD:main "v$env:NEW"

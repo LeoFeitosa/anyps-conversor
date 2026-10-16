@@ -12,7 +12,7 @@ em **Jogar agora**.
 
 **[⬇ Baixar a versão mais recente (AnyPS5-Conversor.exe)](https://github.com/LeoFeitosa/anyps5-conversor/releases/latest/download/AnyPS5-Conversor.exe)**
 
-![Tela do AnyPS5 Conversor](docs/screenshot.png)
+![Tela do AnyPS5 Conversor](docs/screenshot-pt.png)
 
 ## Baseado no AnyPS5
 
