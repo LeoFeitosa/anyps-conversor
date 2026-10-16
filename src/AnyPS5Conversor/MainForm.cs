@@ -215,7 +215,7 @@ public sealed class MainForm : Form
         upstreamLink.Text = T("footer_based");
         disclaimer.Text = T("footer_disclaimer");
         if (game is not null)
-            ShowGame(game);
+            ShowGameTexts(game);
         SetStatus(statusKey, statusIsError, statusArgs);
         Invalidate(true);
     }
@@ -391,8 +391,8 @@ public sealed class MainForm : Form
         progressBar.Animated = busy;
         convertButton.Text = busy ? T("cancel") : T("convert");
         convertButton.Primary = !busy;
-        browseFolderButton.Enabled = browseFileButton.Enabled = changeButton.Enabled = outputButton.Enabled =
-            portugueseButton.Enabled = englishButton.Enabled = !busy;
+        // O idioma pode mudar a qualquer momento, inclusive no meio de uma extração ou conversão.
+        browseFolderButton.Enabled = browseFileButton.Enabled = changeButton.Enabled = outputButton.Enabled = !busy;
         UseWaitCursor = false;
     }
 
@@ -400,12 +400,18 @@ public sealed class MainForm : Form
     {
         dropZone.Visible = false;
         gamePanel.Visible = true;
+        ShowGameTexts(info);
+        // O ícone fica em memória: a pasta de onde veio (a extração) é apagada depois da conversão.
+        gameIcon.Image?.Dispose();
+        gameIcon.Image = info.IconPath is null ? null : Image.FromStream(new MemoryStream(File.ReadAllBytes(info.IconPath)));
+    }
+
+    void ShowGameTexts(GameInfo info)
+    {
         gameName.Text = info.Name;
         gameMeta.Text = T("game_id", info.TitleId);
         gameStatus.Text = info.HasParamJson ? T("game_ready") : T("game_no_param");
         gameStatus.ForeColor = info.HasParamJson ? Theme.Success : Theme.Warning;
-        gameIcon.Image?.Dispose();
-        gameIcon.Image = info.IconPath is null ? null : Image.FromStream(new MemoryStream(File.ReadAllBytes(info.IconPath)));
     }
 
     async Task ConvertOrCancelAsync()

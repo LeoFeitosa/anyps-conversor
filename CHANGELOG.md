@@ -6,6 +6,25 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-16
+
+### Adicionado
+
+- Verificação de espaço em disco antes de extrair um arquivo compactado e antes de converter. Se faltar
+  espaço, o programa diz quanto é necessário, quanto há livre e quanto liberar, sem começar nada. Se o
+  disco encher mesmo assim no meio do processo, os arquivos incompletos são apagados e a mensagem explica.
+- O idioma pode ser trocado a qualquer momento, inclusive durante uma extração ou conversão.
+
+### Corrigido
+
+- Trocar o idioma depois de converter um jogo vindo de arquivo compactado dava erro ao recarregar o
+  ícone da extração já apagada.
+
+### Alterado
+
+- A versão do programa vem só de `Directory.Build.props`: o build de uma tag falha se ela for diferente,
+  e builds fora de uma versão publicada aparecem como `-dev.N` no rodapé.
+
 ## [0.3.1] - 2026-10-16
 
 ### Corrigido
@@ -73,7 +92,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Botões para jogar e abrir a pasta ao final, com as últimas linhas de `anyps5.log` se o jogo
   fechar com erro.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.2.0...v0.2.1

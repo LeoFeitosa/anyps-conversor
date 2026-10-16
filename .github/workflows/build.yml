@@ -26,6 +26,16 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Check that the tag matches the project version
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        run: |
+          [xml]$props = Get-Content Directory.Build.props
+          $version = @($props.Project.PropertyGroup.VersionPrefix | Where-Object { $_ })[0]
+          if ("v$version" -ne '${{ github.ref_name }}') {
+            throw "Tag ${{ github.ref_name }} does not match VersionPrefix $version in Directory.Build.props"
+          }
+
       - name: Download AnyPS5 dependencies
         shell: pwsh
         run: ./build/download-dependencies.ps1
@@ -36,9 +46,8 @@ jobs:
       - name: Publish
         shell: pwsh
         run: |
-          $version = if ('${{ github.ref_type }}' -eq 'tag') { '${{ github.ref_name }}'.TrimStart('v') } else { $null }
-          $extra = if ($version) { "-p:Version=$version" } else { '' }
-          dotnet publish src/AnyPS5Conversor -c Release -o publish $extra
+          $suffix = if ('${{ github.ref_type }}' -eq 'tag') { '' } else { '-p:VersionSuffix=dev.${{ github.run_number }}' }
+          dotnet publish src/AnyPS5Conversor -c Release -o publish $suffix
           $hash = (Get-FileHash publish/AnyPS5-Conversor.exe -Algorithm SHA256).Hash.ToLower()
           "$hash  AnyPS5-Conversor.exe" | Set-Content publish/AnyPS5-Conversor.exe.sha256 -NoNewline
 
