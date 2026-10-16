@@ -20,7 +20,7 @@ public sealed class ArchivesTests : IDisposable
 
     string Extract(string archive)
     {
-        var folder = Archives.Extract(archive, new Progress<int>(), CancellationToken.None);
+        var folder = Archives.Extract(archive, null, new Progress<int>(), CancellationToken.None);
         extracted.Add(folder);
         return folder;
     }
@@ -68,9 +68,30 @@ public sealed class ArchivesTests : IDisposable
         using (var writer = new StreamWriter(archive.CreateEntry("../../evil.txt").Open()))
             writer.Write("x");
 
-        var error = Assert.Throws<UserException>(() => Archives.Extract(zip, new Progress<int>(), CancellationToken.None));
+        var error = Assert.Throws<UserException>(() => Archives.Extract(zip, null, new Progress<int>(), CancellationToken.None));
 
         Assert.Equal("err_archive_unsafe", error.Key);
+    }
+
+    /// <summary>Gerados com 7-Zip e WinRAR por build/generate-test-archives.ps1; a senha é "segredo123".</summary>
+    [Theory]
+    [InlineData("aes.zip")]
+    [InlineData("zipcrypto.zip")]
+    [InlineData("nomes-ocultos.7z")]
+    [InlineData("dados.rar")]
+    [InlineData("nomes-ocultos.rar")]
+    public void AsksForPasswordAndRejectsWrongOne(string name)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", name);
+        var progress = new Progress<int>();
+
+        Assert.False(Assert.Throws<PasswordException>(() => Archives.Extract(path, null, progress, CancellationToken.None)).Wrong);
+        Assert.True(Assert.Throws<PasswordException>(() => Archives.Extract(path, "errada", progress, CancellationToken.None)).Wrong);
+
+        var folder = Archives.Extract(path, "segredo123", progress, CancellationToken.None);
+        extracted.Add(folder);
+        Assert.True(File.Exists(Path.Combine(folder, "jogo", "sce_sys", "param.json")));
+        Assert.Equal(5000, new FileInfo(Path.Combine(folder, "jogo", "dados.bin")).Length);
     }
 
     [Fact]

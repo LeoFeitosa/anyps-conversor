@@ -291,7 +291,26 @@ public sealed class MainForm : Form
                     SetStatus("status_extracting", false, p);
                 });
                 var token = running.Token;
-                extracted = await Task.Run(() => Archives.Extract(path, progress, token), token);
+                string? password = null;
+                while (true)
+                {
+                    try
+                    {
+                        var attempt = password;
+                        extracted = await Task.Run(() => Archives.Extract(path, attempt, progress, token), token);
+                        break;
+                    }
+                    catch (PasswordException e)
+                    {
+                        password = PasswordDialog.Ask(this, Path.GetFileName(path), e.Wrong);
+                        if (password is null)
+                        {
+                            SetStatus(game is null ? "status_idle" : "status_ready");
+                            return;
+                        }
+                        SetStatus("status_extracting", false, 0);
+                    }
+                }
             }
 
             GameInfo loaded;

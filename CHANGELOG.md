@@ -6,6 +6,14 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-16
+
+### Adicionado
+
+- Arquivos compactados com senha (`.zip` AES ou ZipCrypto, `.7z` e `.rar`, inclusive com a lista de
+  arquivos protegida): o programa pede a senha numa janela própria, avisa quando ela está errada e não
+  guarda a senha. Não é preciso ter 7-Zip ou WinRAR instalado.
+
 ## [0.1.0] - 2026-10-16
 
 ### Adicionado
@@ -30,5 +38,6 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Botões para jogar e abrir a pasta ao final, com as últimas linhas de `anyps5.log` se o jogo
   fechar com erro.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/LeoFeitosa/anyps5-conversor/releases/tag/v0.1.0
