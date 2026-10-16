@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace AnyPS5Conversor;
+namespace AnyPSConversor;
 
 /// <summary>Confere o espaço livre antes de extrair ou converter, para não parar no meio com o disco cheio.</summary>
 public static class DiskSpace

@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
 
-namespace AnyPS5Conversor;
+namespace AnyPSConversor;
 
 /// <summary>
 /// Andamento da conversão: fração de 0 a 1 (negativa = indeterminada) e chave de status. O passo é a linha de
@@ -414,8 +414,7 @@ public static class Converter
     }
 
     /// <summary>Dados locais do programa: só os registros de conversões que falharam.</summary>
-    public static string LogFolder { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AnyPS5-Conversor", "logs");
+    public static string LogFolder { get; } = Path.Combine(Settings.Migrate(Environment.SpecialFolder.LocalApplicationData), "logs");
 
     /// <summary>
     /// Mantém no disco só o que o usuário pode precisar: os 10 registros de falha mais recentes, de até

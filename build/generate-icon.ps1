@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Gera assets/icon.ico e assets/icon-256.png. Arte original desenhada em código, com a mesma
-    geometria de Theme.DrawMark (src/AnyPS5Conversor/Theme.cs). Requer Windows (System.Drawing).
+    geometria de Theme.DrawMark (src/AnyPSConversor/Theme.cs). Requer Windows (System.Drawing).
 #>
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing

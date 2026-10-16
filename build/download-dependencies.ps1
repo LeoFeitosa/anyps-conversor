@@ -24,7 +24,7 @@ foreach ($entry in $manifest.files.PSObject.Properties) {
 
     $sources = @(
         "https://github.com/boykopovar/AnyPS5/releases/download/$($manifest.anyps5)/$($entry.Value.asset)"
-        "https://github.com/LeoFeitosa/anyps5-conversor/releases/download/anyps5-$($manifest.anyps5)/$($entry.Value.asset)"
+        "https://github.com/LeoFeitosa/anyps-conversor/releases/download/anyps5-$($manifest.anyps5)/$($entry.Value.asset)"
     )
     $downloaded = $false
     foreach ($url in $sources) {

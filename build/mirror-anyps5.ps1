@@ -28,9 +28,9 @@ try {
         $file
     }
     $notes = @"
-Cópia de segurança dos binários oficiais do [AnyPS5 $($manifest.anyps5)](https://github.com/boykopovar/AnyPS5/releases/tag/$($manifest.anyps5)), sem alterações, usada só para compilar o conversor se o release oficial deixar de existir. Não é uma versão do AnyPS5 Conversor: para baixar o programa, use o [release mais recente](https://github.com/LeoFeitosa/anyps5-conversor/releases/latest). Licença GPL-2.0; código-fonte em https://github.com/boykopovar/AnyPS5/tree/$($manifest.anyps5).
+Cópia de segurança dos binários oficiais do [AnyPS5 $($manifest.anyps5)](https://github.com/boykopovar/AnyPS5/releases/tag/$($manifest.anyps5)), sem alterações, usada só para compilar o conversor se o release oficial deixar de existir. Não é uma versão do AnyPS Conversor: para baixar o programa, use o [release mais recente](https://github.com/LeoFeitosa/anyps-conversor/releases/latest). Licença GPL-2.0; código-fonte em https://github.com/boykopovar/AnyPS5/tree/$($manifest.anyps5).
 
-Backup copy of the official [AnyPS5 $($manifest.anyps5)](https://github.com/boykopovar/AnyPS5/releases/tag/$($manifest.anyps5)) binaries, unchanged, used only to build the converter if the official release is no longer available. This is not an AnyPS5 Conversor version: to download the program, use the [latest release](https://github.com/LeoFeitosa/anyps5-conversor/releases/latest). GPL-2.0 license; source code at https://github.com/boykopovar/AnyPS5/tree/$($manifest.anyps5).
+Backup copy of the official [AnyPS5 $($manifest.anyps5)](https://github.com/boykopovar/AnyPS5/releases/tag/$($manifest.anyps5)) binaries, unchanged, used only to build the converter if the official release is no longer available. This is not an AnyPS Conversor version: to download the program, use the [latest release](https://github.com/LeoFeitosa/anyps-conversor/releases/latest). GPL-2.0 license; source code at https://github.com/boykopovar/AnyPS5/tree/$($manifest.anyps5).
 "@
     $notesFile = Join-Path $download 'notes.md'
     Set-Content $notesFile $notes

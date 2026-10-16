@@ -1,4 +1,4 @@
-namespace AnyPS5Conversor;
+namespace AnyPSConversor;
 
 /// <summary>
 /// Opção "mover os originais para a Lixeira" ao fim da conversão. Só move o arquivo compactado escolhido

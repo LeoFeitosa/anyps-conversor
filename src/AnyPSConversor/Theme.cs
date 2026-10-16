@@ -2,7 +2,7 @@ using System.ComponentModel;
 using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 
-namespace AnyPS5Conversor;
+namespace AnyPSConversor;
 
 /// <summary>Tema escuro azul-marinho com destaque azul. Toda a arte é desenhada em código.</summary>
 static class Theme
@@ -131,8 +131,8 @@ sealed class HeaderPanel : Panel
 
         Theme.DrawMark(g, new RectangleF(26 * scale, 16 * scale, 40 * scale, 40 * scale));
         var title = new Point((int)(78 * scale), (int)(12 * scale));
-        TextRenderer.DrawText(g, "AnyPS5", Theme.AppTitle, title, Color.White);
-        var width = TextRenderer.MeasureText(g, "AnyPS5", Theme.AppTitle).Width;
+        TextRenderer.DrawText(g, "AnyPS", Theme.AppTitle, title, Color.White);
+        var width = TextRenderer.MeasureText(g, "AnyPS", Theme.AppTitle).Width;
         TextRenderer.DrawText(g, Strings.Current == Language.Portuguese ? "Conversor" : "Converter", Theme.AppTitle,
             new Point(title.X + width - (int)(6 * scale), title.Y), Theme.HeaderMuted);
     }

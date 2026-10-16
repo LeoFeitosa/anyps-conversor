@@ -1,7 +1,7 @@
-using AnyPS5Conversor;
+using AnyPSConversor;
 using Xunit;
 
-namespace AnyPS5Conversor.Tests;
+namespace AnyPSConversor.Tests;
 
 public sealed class GameInfoTests : IDisposable
 {
@@ -20,6 +20,18 @@ public sealed class GameInfoTests : IDisposable
         if (paramJson is not null)
             File.WriteAllText(Path.Combine(game, "sce_sys", "param.json"), paramJson);
         return game;
+    }
+
+    [Fact]
+    public void FindsTheConsoleOfAGame()
+    {
+        var game = CreateGame("PPSA00001", """{"titleId":"PPSA00001"}""");
+
+        Assert.Same(Ps5Platform.Instance, ConsolePlatform.Load(game).Platform);
+        Assert.Same(Ps5Platform.Instance, ConsolePlatform.ForMainFile("EBOOT.BIN"));
+        Assert.Null(ConsolePlatform.ForMainFile("leia-me.txt"));
+        var empty = Directory.CreateDirectory(Path.Combine(root, "vazia")).FullName;
+        Assert.Equal("err_no_eboot", Assert.Throws<UserException>(() => ConsolePlatform.Load(empty)).Key);
     }
 
     [Fact]

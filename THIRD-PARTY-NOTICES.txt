@@ -1,9 +1,9 @@
-AnyPS5 Conversor - avisos de terceiros / third-party notices
+AnyPS Conversor - avisos de terceiros / third-party notices
 
-O AnyPS5 Conversor é distribuído sob a GNU General Public License v2.0 (arquivo LICENSE).
+O AnyPS Conversor é distribuído sob a GNU General Public License v2.0 (arquivo LICENSE).
 O executável inclui os componentes abaixo, cada um sob a própria licença.
 
-AnyPS5 Conversor is distributed under the GNU General Public License v2.0 (LICENSE file).
+AnyPS Conversor is distributed under the GNU General Public License v2.0 (LICENSE file).
 The executable includes the components below, each under its own license.
 
 1. AnyPS5 (relinker.exe e/and prx-windows)

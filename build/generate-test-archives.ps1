@@ -1,12 +1,12 @@
 <#
 .SYNOPSIS
-    Recria os arquivos com senha de tests/AnyPS5Conversor.Tests/Fixtures (senha "segredo123").
+    Recria os arquivos com senha de tests/AnyPSConversor.Tests/Fixtures (senha "segredo123").
     Requer 7-Zip e WinRAR instalados; só é preciso para mudar os casos de teste.
 #>
 $ErrorActionPreference = 'Stop'
 $sevenZip = "$env:ProgramFiles\7-Zip\7z.exe"
 $rar = "$env:ProgramFiles\WinRAR\Rar.exe"
-$fixtures = Join-Path (Split-Path -Parent $PSScriptRoot) 'tests\AnyPS5Conversor.Tests\Fixtures'
+$fixtures = Join-Path (Split-Path -Parent $PSScriptRoot) 'tests\AnyPSConversor.Tests\Fixtures'
 $source = Join-Path ([IO.Path]::GetTempPath()) ("anyps5-fixtures-" + [Guid]::NewGuid().ToString('N'))
 
 New-Item -ItemType Directory -Force (Join-Path $source 'jogo\sce_sys') | Out-Null

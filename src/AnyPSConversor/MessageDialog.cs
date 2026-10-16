@@ -1,7 +1,7 @@
 using System.Drawing.Drawing2D;
-using static AnyPS5Conversor.Strings;
+using static AnyPSConversor.Strings;
 
-namespace AnyPS5Conversor;
+namespace AnyPSConversor;
 
 /// <summary>
 /// Aviso no visual do programa, no lugar da caixa de mensagem do Windows. Textos curtos aparecem inteiros;

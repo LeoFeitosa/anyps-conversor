@@ -125,25 +125,25 @@ jobs:
         shell: pwsh
         run: |
           $env:ANYPS5_HOMEBREW = Join-Path $env:RUNNER_TEMP 'homebrew'
-          dotnet test --project tests/AnyPS5Conversor.Tests -c Release
+          dotnet test --project tests/AnyPSConversor.Tests -c Release
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
       - name: Publish
         if: steps.check.outputs.update == 'true'
         shell: pwsh
         run: |
-          dotnet publish src/AnyPS5Conversor -c Release -o publish
+          dotnet publish src/AnyPSConversor -c Release -o publish
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          $hash = (Get-FileHash publish/AnyPS5-Conversor.exe -Algorithm SHA256).Hash.ToLower()
-          "$hash  AnyPS5-Conversor.exe" | Set-Content publish/AnyPS5-Conversor.exe.sha256 -NoNewline
+          $hash = (Get-FileHash publish/AnyPS-Conversor.exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  AnyPS-Conversor.exe" | Set-Content publish/AnyPS-Conversor.exe.sha256 -NoNewline
 
       - uses: actions/upload-artifact@v7
         if: steps.check.outputs.update == 'true'
         with:
-          name: AnyPS5-Conversor
+          name: AnyPS-Conversor
           path: |
-            publish/AnyPS5-Conversor.exe
-            publish/AnyPS5-Conversor.exe.sha256
+            publish/AnyPS-Conversor.exe
+            publish/AnyPS-Conversor.exe.sha256
           if-no-files-found: error
 
       - name: Commit, tag and release
@@ -155,10 +155,10 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898099+github-actions[bot]@users.noreply.github.com'
-          ./build/update-screenshots.ps1 -Exe publish/AnyPS5-Conversor.exe
+          ./build/update-screenshots.ps1 -Exe publish/AnyPS-Conversor.exe
           git add build/dependencies.json Directory.Build.props CHANGELOG.md CHANGELOG.en.md docs/screenshot-pt.png docs/screenshot-en.png
           git commit -m "chore: update AnyPS5 to $env:TAG"
-          git tag -a "v$env:NEW" -m "AnyPS5 Conversor $env:NEW"
+          git tag -a "v$env:NEW" -m "AnyPS Conversor $env:NEW"
           git push origin HEAD:main "v$env:NEW"
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
@@ -167,8 +167,8 @@ jobs:
           }
           $footer = (Get-Content build/release-footer.md -Raw).Replace('{anyps5}', $env:TAG)
           Set-Content notes.md ("## Português`n`n" + (Section CHANGELOG.md) + "`n`n## English`n`n" + (Section CHANGELOG.en.md) + "`n" + $footer)
-          gh release create "v$env:NEW" publish/AnyPS5-Conversor.exe publish/AnyPS5-Conversor.exe.sha256 THIRD-PARTY-NOTICES.txt `
-            --title "AnyPS5 Conversor v$env:NEW" --notes-file notes.md --latest
+          gh release create "v$env:NEW" publish/AnyPS-Conversor.exe publish/AnyPS-Conversor.exe.sha256 THIRD-PARTY-NOTICES.txt `
+            --title "AnyPS Conversor v$env:NEW" --notes-file notes.md --latest
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
       # Roda também sem versão nova: se faltar a cópia da versão em uso, ela é criada; se existir, nada muda.
@@ -186,9 +186,9 @@ jobs:
           OWNER: ${{ github.repository_owner }}
         run: |
           $body = @"
-          @$env:OWNER o AnyPS5 $env:TAG foi adotado e o **AnyPS5 Conversor v$env:NEW** já está publicado. Passou na compilação, nos testes e na conversão real dos homebrews de teste.
+          @$env:OWNER o AnyPS5 $env:TAG foi adotado e o **AnyPS Conversor v$env:NEW** já está publicado. Passou na compilação, nos testes e na conversão real dos homebrews de teste.
 
-          AnyPS5 $env:TAG was adopted and **AnyPS5 Conversor v$env:NEW** is published. It passed the build, the tests and the real conversion of the test homebrew.
+          AnyPS5 $env:TAG was adopted and **AnyPS Conversor v$env:NEW** is published. It passed the build, the tests and the real conversion of the test homebrew.
 
           Release: https://github.com/$env:GITHUB_REPOSITORY/releases/tag/v$env:NEW
           AnyPS5: https://github.com/$env:UPSTREAM/releases/tag/$env:TAG

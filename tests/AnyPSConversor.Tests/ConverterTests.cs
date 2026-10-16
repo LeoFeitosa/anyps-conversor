@@ -1,7 +1,7 @@
-using AnyPS5Conversor;
+using AnyPSConversor;
 using Xunit;
 
-namespace AnyPS5Conversor.Tests;
+namespace AnyPSConversor.Tests;
 
 public class ConverterTests
 {

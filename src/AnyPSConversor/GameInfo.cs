@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace AnyPS5Conversor;
+namespace AnyPSConversor;
 
 /// <summary>Erro mostrado ao usuário; a mensagem é uma chave de <see cref="Strings"/>.</summary>
 public sealed class UserException(string key, params object[] args) : Exception(key)
@@ -9,7 +9,7 @@ public sealed class UserException(string key, params object[] args) : Exception(
     public object[] Args { get; } = args;
 }
 
-/// <summary>Pasta de um jogo/app de PS5 pronta para conversão.</summary>
+/// <summary>Pasta de um jogo/app pronta para conversão. <see cref="Load"/> lê o formato do PS5.</summary>
 public sealed record GameInfo(
     string Folder,
     string TitleId,
@@ -18,6 +18,9 @@ public sealed record GameInfo(
     bool HasParamJson,
     IReadOnlyList<string> Modules)
 {
+    /// <summary>Console do jogo: quem sabe convertê-lo.</summary>
+    public required IConsolePlatform Platform { get; init; }
+
     /// <summary>Pastas de módulos que o relinker procura ao lado do eboot.bin.</summary>
     public static readonly string[] ModuleDirectories = ["sce_module", "sce_modules", "prx"];
 
@@ -47,7 +50,7 @@ public sealed record GameInfo(
             name ?? titleId ?? fallback,
             File.Exists(iconPath) ? iconPath : null,
             File.Exists(paramPath),
-            modules);
+            modules) { Platform = Ps5Platform.Instance };
     }
 
     /// <summary>Nome seguro para arquivo e pasta.</summary>
