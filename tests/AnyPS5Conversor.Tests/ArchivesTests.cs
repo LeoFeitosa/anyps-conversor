@@ -95,6 +95,23 @@ public sealed class ArchivesTests : IDisposable
     }
 
     [Fact]
+    public void CleansTempOfFinishedRuns()
+    {
+        var baseFolder = Path.GetDirectoryName(Archives.TempRoot)!;
+        var dead = Path.Combine(baseFolder, "run-999999999");
+        var legacy = Path.Combine(baseFolder, "extract-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dead);
+        Directory.CreateDirectory(legacy);
+        Directory.CreateDirectory(Archives.TempRoot);
+
+        Archives.CleanStaleTemp();
+
+        Assert.False(Directory.Exists(dead));
+        Assert.False(Directory.Exists(legacy));
+        Assert.True(Directory.Exists(Archives.TempRoot));
+    }
+
+    [Fact]
     public void RecognizesArchiveExtensions()
     {
         foreach (var name in new[] { "a.zip", "a.RAR", "a.7z", "a.tar.gz", "a.tgz" })

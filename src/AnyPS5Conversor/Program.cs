@@ -6,6 +6,7 @@ static class Program
     static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
+        Archives.CleanStaleTemp();
         Application.Run(new MainForm(args.FirstOrDefault()));
     }
 }

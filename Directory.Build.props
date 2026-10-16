@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <!-- Versão do app (SemVer). O workflow de release usa a tag vX.Y.Z para sobrescrever. -->
-    <Version>0.2.0</Version>
+    <Version>0.2.1</Version>
     <Authors>Leonardo Feitosa</Authors>
     <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

@@ -18,8 +18,46 @@ public static class Archives
     public static bool IsArchive(string path) =>
         File.Exists(path) && Extensions.Any(e => path.EndsWith(e, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>Pasta temporária onde ficam as extrações desta execução.</summary>
-    public static string TempRoot { get; } = Path.Combine(Path.GetTempPath(), "AnyPS5-Conversor");
+    static readonly string TempBase = Path.Combine(Path.GetTempPath(), "AnyPS5-Conversor");
+
+    /// <summary>
+    /// Pasta temporária desta execução (extrações e entradas do relinker). Fica numa subpasta com o
+    /// número do processo para que <see cref="CleanStaleTemp"/> saiba o que já pode ser apagado.
+    /// </summary>
+    public static string TempRoot { get; } = Path.Combine(TempBase, "run-" + Environment.ProcessId);
+
+    /// <summary>
+    /// Apaga o que execuções anteriores deixaram quando foram encerradas à força ou o PC desligou:
+    /// subpastas de processos que não existem mais e pastas soltas das versões 0.1 e 0.2.
+    /// </summary>
+    public static void CleanStaleTemp()
+    {
+        if (!Directory.Exists(TempBase))
+            return;
+        foreach (var folder in Directory.GetDirectories(TempBase))
+        {
+            var name = Path.GetFileName(folder);
+            var alive = name.StartsWith("run-", StringComparison.Ordinal)
+                && int.TryParse(name.AsSpan(4), out var pid)
+                && IsConverterProcess(pid);
+            if (!alive)
+                TryDelete(folder);
+        }
+    }
+
+    static bool IsConverterProcess(int pid)
+    {
+        try
+        {
+            using var process = System.Diagnostics.Process.GetProcessById(pid);
+            return pid == Environment.ProcessId
+                || process.ProcessName.Equals(System.Diagnostics.Process.GetCurrentProcess().ProcessName, StringComparison.OrdinalIgnoreCase);
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+    }
 
     /// <param name="password">Senha do arquivo; nula até o usuário informar uma.</param>
     /// <exception cref="PasswordException">O arquivo tem senha e ela falta ou não confere.</exception>
