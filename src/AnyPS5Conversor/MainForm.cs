@@ -40,6 +40,7 @@ public sealed class MainForm : Form
     readonly Label outputHint = Theme.Label("", Theme.Body, Theme.Muted);
     readonly TextBox outputBox = new() { ReadOnly = true, BorderStyle = BorderStyle.FixedSingle, Font = Theme.Body, BackColor = Theme.Input, ForeColor = Theme.Text };
     readonly RoundButton outputButton = Theme.SecondaryButton();
+    readonly CheckBox recycleSourceBox = new() { ForeColor = Theme.Text, BackColor = Theme.Surface, Font = Theme.Body };
 
     readonly Card convertCard = new();
     readonly StepBadge convertBadge = new(3);
@@ -66,6 +67,7 @@ public sealed class MainForm : Form
 
     GameInfo? game;
     string? extractedFolder;
+    string? sourceInput;
     string? convertedExe;
     CancellationTokenSource? running;
     string statusKey = "status_idle";
@@ -73,7 +75,7 @@ public sealed class MainForm : Form
     bool statusIsError;
     readonly string[] missingCpu = Converter.MissingCpuFeatures();
 
-    const int BaseHeight = 706;
+    const int BaseHeight = 734;
     const int LogHeight = 190;
 
     /// <param name="initialGame">Pasta solta sobre o ícone do .exe, se houver.</param>
@@ -125,16 +127,17 @@ public sealed class MainForm : Form
         gameCard.Controls.AddRange([dropZone, gamePanel, legalHint]);
 
         // 2. Destino
-        outputCard.SetBounds(24, 324, 712, 112);
+        outputCard.SetBounds(24, 324, 712, 140);
         PlaceStep(outputCard, outputBadge, outputTitle, outputHint);
         outputBox.SetBounds(20, 74, 532, 28);
         outputBox.Text = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "AnyPS5");
         outputButton.SetBounds(564, 70, 128, 34);
         outputButton.Click += (_, _) => PickOutput();
-        outputCard.Controls.AddRange([outputBox, outputButton]);
+        recycleSourceBox.SetBounds(20, 108, 672, 24);
+        outputCard.Controls.AddRange([outputBox, outputButton, recycleSourceBox]);
 
         // 3. Converter
-        convertCard.SetBounds(24, 452, 712, 192);
+        convertCard.SetBounds(24, 480, 712, 192);
         PlaceStep(convertCard, convertBadge, convertTitle, null);
         convertButton.SetBounds(20, 62, 672, 50);
         convertButton.Font = Theme.BigButton;
@@ -154,7 +157,7 @@ public sealed class MainForm : Form
         detailsLink.LinkClicked += (_, _) => ToggleDetails();
         convertCard.Controls.AddRange([convertButton, donePanel, progressBar, percentLabel, statusLabel, detailsLink]);
 
-        logBox.SetBounds(24, 656, 712, LogHeight - 12);
+        logBox.SetBounds(24, 684, 712, LogHeight - 12);
 
         var footer = new Panel { BackColor = Theme.Footer, Dock = DockStyle.Bottom, Height = 46 };
         upstreamLink.SetBounds(24, 6, 360, 18);
@@ -203,6 +206,7 @@ public sealed class MainForm : Form
         outputTitle.Text = T("step2_title");
         outputHint.Text = T("step2_hint");
         outputButton.Text = T("change");
+        recycleSourceBox.Text = T("recycle_source");
         convertTitle.Text = T("step3_title");
         convertButton.Text = running is null ? T("convert") : T("cancel");
         playButton.Text = T("play");
@@ -234,7 +238,7 @@ public sealed class MainForm : Form
             error = true;
         }
         statusLabel.Text = text;
-        statusLabel.ForeColor = error ? Theme.Error : key == "status_done" ? Theme.Success : Theme.Muted;
+        statusLabel.ForeColor = error ? Theme.Error : key is "status_done" or "status_done_recycled" ? Theme.Success : Theme.Muted;
     }
 
     async Task PickFolderAsync()
@@ -326,6 +330,7 @@ public sealed class MainForm : Form
             Archives.TryDelete(extractedFolder);
             extractedFolder = extracted;
             game = loaded;
+            sourceInput = path;
             convertedExe = null;
             ShowGame(game);
             donePanel.Visible = false;
@@ -366,6 +371,7 @@ public sealed class MainForm : Form
         if (running is not null)
             return;
         game = null;
+        sourceInput = null;
         convertedExe = null;
         gameIcon.Image?.Dispose();
         gameIcon.Image = null;
@@ -420,8 +426,12 @@ public sealed class MainForm : Form
         SetBusy(true);
         logBox.Clear();
         var logFile = ConversionLogPath(game);
+        var finished = false;
         var progress = new Progress<ConversionProgress>(p =>
         {
+            // Avisos atrasados da conversão não podem sobrescrever o status final.
+            if (finished)
+                return;
             progressBar.Value = (int)(Math.Clamp(p.Fraction, 0, 1) * 1000);
             percentLabel.Text = $"{(int)(Math.Clamp(p.Fraction, 0, 1) * 100)}%";
             SetStatus(p.StatusKey, false, p.Args);
@@ -441,10 +451,19 @@ public sealed class MainForm : Form
         {
             Directory.CreateDirectory(outputBox.Text);
             convertedExe = await Converter.ConvertAsync(game, outputBox.Text, progress, Log, running.Token);
+            finished = true;
+            progressBar.Value = 1000;
+            percentLabel.Text = "100%";
             convertBadge.Done = outputBadge.Done = true;
             convertButton.Visible = false;
             donePanel.Visible = true;
             SetStatus("status_done");
+
+            // A extração só servia de entrada para o relinker; o jogo convertido já tem a sua cópia em app0/.
+            Archives.TryDelete(extractedFolder);
+            extractedFolder = null;
+            if (recycleSourceBox.Checked && sourceInput is not null)
+                RecycleSource(SourceCleanup.SourceToRecycle(sourceInput, game.Folder), Log);
         }
         catch (OperationCanceledException)
         {
@@ -517,6 +536,33 @@ public sealed class MainForm : Form
         var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AnyPS5-Conversor", "logs");
         Directory.CreateDirectory(folder);
         return Path.Combine(folder, $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}_{info.SafeName}.log");
+    }
+
+    /// <summary>Opção do usuário: manda o arquivo compactado ou a pasta do jogo para a Lixeira.</summary>
+    void RecycleSource(string source, Action<string> log)
+    {
+        if (!SourceCleanup.IsSafeToRecycle(source, outputBox.Text, [AppContext.BaseDirectory]))
+        {
+            log("source kept, protected location: " + source);
+            ShowError(T("err_recycle_unsafe", source));
+            return;
+        }
+        try
+        {
+            if (File.Exists(source))
+                Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(source,
+                    Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+            else if (Directory.Exists(source))
+                Microsoft.VisualBasic.FileIO.FileSystem.DeleteDirectory(source,
+                    Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+            log("moved to the Recycle Bin: " + source);
+            SetStatus("status_done_recycled");
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or OperationCanceledException)
+        {
+            log("source kept: " + e.Message);
+            ShowError(T("err_recycle", source, e.Message));
+        }
     }
 
     void ShowError(string message) =>

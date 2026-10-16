@@ -40,6 +40,9 @@ com o hash SHA-256 de cada arquivo.
    ou WinRAR instalado.
 4. Clique em **Converter para Windows** e depois em **Jogar agora**.
 
+Se quiser ficar só com a versão convertida, marque **Ao terminar, mover os arquivos originais do jogo
+para a Lixeira**. Eles vão para a Lixeira do Windows, de onde podem ser restaurados.
+
 O jogo convertido fica numa pasta nova, por padrão em `%USERPROFILE%\AnyPS5\<nome do jogo>`, com o
 executável, a pasta `libs/` e os arquivos originais em `app0/`. A pasta pode ser movida para
 qualquer lugar.
