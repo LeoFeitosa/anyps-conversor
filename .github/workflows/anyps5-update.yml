@@ -136,7 +136,7 @@ jobs:
           $hash = (Get-FileHash publish/AnyPS5-Conversor.exe -Algorithm SHA256).Hash.ToLower()
           "$hash  AnyPS5-Conversor.exe" | Set-Content publish/AnyPS5-Conversor.exe.sha256 -NoNewline
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         if: steps.check.outputs.update == 'true'
         with:
           name: AnyPS5-Conversor
