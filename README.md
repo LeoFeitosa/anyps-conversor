@@ -30,7 +30,8 @@ usar:
 | Interface, idiomas e montagem da pasta final | Este repositório |
 
 A versão do AnyPS5 usada em cada build fica fixada em [`build/dependencies.json`](build/dependencies.json),
-com o hash SHA-256 de cada arquivo.
+com o hash SHA-256 de cada arquivo. Uma cópia de segurança desses arquivos fica num release interno deste
+repositório (`anyps5-<versão>`), usada só se o release oficial deixar de existir.
 
 ## Como usar
 

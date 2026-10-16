@@ -3,7 +3,8 @@ name: AnyPS5 update
 # Adota sozinho cada versão nova do AnyPS5 depois de 7 dias publicada: atualiza build/dependencies.json,
 # sobe a versão do conversor, compila, roda os testes (inclusive a conversão real de homebrews livres) e
 # publica o release. Sem versão nova, termina sem fazer nada. Com versão nova, avisa o dono do repositório
-# por uma issue: fechada quando deu certo, aberta quando algo falhou (e então nada é publicado).
+# por uma issue: fechada quando deu certo, aberta quando algo falhou (e então nada é publicado). Cada versão
+# adotada ganha uma cópia de segurança dos binários num release interno (build/mirror-anyps5.ps1).
 
 on:
   schedule:
@@ -169,6 +170,11 @@ jobs:
           gh release create "v$env:NEW" publish/AnyPS5-Conversor.exe publish/AnyPS5-Conversor.exe.sha256 THIRD-PARTY-NOTICES.txt `
             --title "AnyPS5 Conversor v$env:NEW" --notes-file notes.md --latest
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+      - name: Keep a backup copy of the AnyPS5 binaries
+        if: steps.check.outputs.update == 'true' && env.DRY_RUN != 'true'
+        shell: pwsh
+        run: ./build/mirror-anyps5.ps1
 
       - name: Notify success
         if: steps.check.outputs.update == 'true' && env.DRY_RUN != 'true'

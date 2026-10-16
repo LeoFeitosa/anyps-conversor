@@ -112,6 +112,10 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
+          # Republicar uma versão antiga não pode trocar as imagens da versão atual.
+          [xml]$props = Get-Content Directory.Build.props
+          $current = @($props.Project.PropertyGroup.VersionPrefix | Where-Object { $_ })[0]
+          if ("v$current" -ne $env:TAG) { "Skipping: $env:TAG is not the current version (v$current)."; exit 0 }
           ./build/update-screenshots.ps1 -Exe dist/AnyPS5-Conversor.exe
           git add docs/screenshot-pt.png docs/screenshot-en.png
           git diff --cached --quiet

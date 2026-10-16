@@ -28,7 +28,8 @@ AnyPS5 Conversor only puts those pieces together in a program anyone can use:
 | Interface, languages and output folder layout | This repository |
 
 The AnyPS5 version used by each build is pinned in [`build/dependencies.json`](build/dependencies.json),
-with the SHA-256 hash of every file.
+with the SHA-256 hash of every file. A backup copy of those files is kept in an internal release of this
+repository (`anyps5-<version>`), used only if the official release is no longer available.
 
 ## How to use
 

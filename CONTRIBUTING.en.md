@@ -34,7 +34,10 @@ The final executable is `publish/AnyPS5-Conversor.exe`.
 
 It is automatic: every day the `AnyPS5 update` workflow looks for a new AnyPS5 version published 7 or
 more days earlier, updates `build/dependencies.json`, runs the tests and the real conversions and
-publishes. To try a version by hand, run the workflow from the Actions tab with `dry_run` checked.
+publishes. To try a version by hand, run the workflow from the Actions tab with `dry_run` checked. Every
+adopted version gets a backup copy of the binaries in an internal `anyps5-<version>` release
+(`build/mirror-anyps5.ps1`), which `build/download-dependencies.ps1` uses if the official release
+disappears, always checking the same SHA-256.
 
 To run the real conversions locally:
 
