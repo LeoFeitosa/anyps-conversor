@@ -129,6 +129,8 @@ public static class Strings
         ["pick_output"] = ("Escolha onde salvar o jogo convertido", "Choose where to save the converted game"),
         ["footer_based"] = ("Baseado no AnyPS5 · GPL-2.0", "Based on AnyPS5 · GPL-2.0"),
         ["footer_disclaimer"] = ("Projeto independente, sem vínculo com a Sony.", "Independent project, not affiliated with Sony."),
+        ["footer_licenses"] = ("Licenças", "Licenses"),
+        ["licenses_title"] = ("Licenças de terceiros", "Third-party licenses"),
         ["app_name"] = ("AnyPS5 Conversor", "AnyPS5 Converter"),
     };
 }

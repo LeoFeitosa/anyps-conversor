@@ -7,6 +7,13 @@ body:
       value: |
         **Não anexe jogos, arquivos de jogos, chaves nem links para eles.** Issues com esse conteúdo são removidas.
         **Do not attach games, game files, keys or links to them.** Issues with such content are removed.
+  - type: checkboxes
+    id: legal
+    attributes:
+      label: Confirmação / Confirmation
+      options:
+        - label: Uso apenas homebrew livre ou cópias extraídas do meu próprio console, e esta issue não contém jogos, arquivos de jogos, chaves nem links para eles. / I only use free homebrew or copies dumped from my own console, and this issue contains no games, game files, keys or links to them.
+          required: true
   - type: input
     id: version
     attributes:

@@ -62,6 +62,7 @@ public sealed class MainForm : Form
 
     readonly LinkLabel upstreamLink = Theme.Link();
     readonly LinkLabel projectLink = Theme.Link();
+    readonly LinkLabel licensesLink = Theme.Link();
     readonly Label disclaimer = Theme.Label("", Theme.Small, Theme.Muted);
     readonly Label versionLabel = Theme.Label("", Theme.Small, Theme.Muted, ContentAlignment.TopRight);
 
@@ -166,10 +167,13 @@ public sealed class MainForm : Form
         projectLink.SetBounds(400, 6, 120, 18);
         projectLink.Text = "GitHub";
         projectLink.LinkClicked += (_, _) => OpenUrl(ProjectUrl);
-        disclaimer.SetBounds(24, 25, 480, 18);
+        // Os avisos de licença vão dentro do .exe: quem baixa só o executável também os recebe.
+        licensesLink.SetBounds(400, 25, 120, 18);
+        licensesLink.LinkClicked += (_, _) => MessageDialog.Show(this, T("licenses_title"), Converter.ThirdPartyNotices, warning: false);
+        disclaimer.SetBounds(24, 25, 370, 18);
         versionLabel.SetBounds(476, 6, 260, 36);
         versionLabel.Text = $"v{AppVersion}\nAnyPS5 {Converter.AnyPS5Version}";
-        footer.Controls.AddRange([upstreamLink, projectLink, disclaimer, versionLabel]);
+        footer.Controls.AddRange([upstreamLink, projectLink, licensesLink, disclaimer, versionLabel]);
 
         Controls.AddRange([header, gameCard, outputCard, convertCard, logBox, footer]);
         EnableDrop(this);
@@ -219,6 +223,7 @@ public sealed class MainForm : Form
         detailsLink.Text = logBox.Visible ? T("hide_details") : T("show_details");
         upstreamLink.Text = T("footer_based");
         disclaimer.Text = T("footer_disclaimer");
+        licensesLink.Text = T("footer_licenses");
         if (game is not null)
             ShowGameTexts(game);
         SetStatus(statusKey, statusIsError, statusArgs);

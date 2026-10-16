@@ -86,7 +86,8 @@ libraries embedded. Official builds are made by GitHub Actions for every `vX.Y.Z
 in Releases along with their SHA-256.
 
 Details on versions, commits and tests are in [CONTRIBUTING.md](CONTRIBUTING.md) (in Portuguese).
-The change history is in [CHANGELOG.md](CHANGELOG.md).
+The change history is in [CHANGELOG.md](CHANGELOG.md), and how to report security problems in
+[SECURITY.md](SECURITY.md).
 
 ## Legal notice
 
@@ -94,11 +95,19 @@ The change history is in [CHANGELOG.md](CHANGELOG.md).
   libraries. Only use games you dumped from your own console or freely distributed homebrew.
 - The program does not break any protection: it only accepts executables that are already
   decrypted.
-- Independent project, not affiliated with Sony Interactive Entertainment. PlayStation and PS5 are
-  trademarks of Sony Interactive Entertainment, mentioned here only to describe compatibility.
+- Independent project, not affiliated with Sony Interactive Entertainment or with the AnyPS5
+  authors. PlayStation and PS5 are trademarks of Sony Interactive Entertainment, mentioned here only
+  to describe compatibility.
+- Provided "as is", without warranty. Each user is responsible for how they use it and for complying
+  with the laws of their country.
+
+The full text, with trademarks, third-party licenses and how to request content removal, is in
+[LEGAL.md](LEGAL.md).
 
 ## License
 
 [GNU General Public License v2.0](LICENSE), the same as AnyPS5. The executable distributes the
-AnyPS5 relinker and libraries; the source code of both is at
-[boykopovar/AnyPS5](https://github.com/boykopovar/AnyPS5), and this program's source is here.
+AnyPS5 relinker and libraries, whose source code is at
+[boykopovar/AnyPS5](https://github.com/boykopovar/AnyPS5) (at the tag pinned in
+`build/dependencies.json`), and this program's source is here. Third-party components and their
+licenses are listed in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
