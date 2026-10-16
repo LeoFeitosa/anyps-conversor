@@ -10,7 +10,11 @@ public sealed class PasswordException(bool wrong) : Exception("password required
     public bool Wrong { get; } = wrong;
 }
 
-/// <summary>Extrai o jogo de um arquivo compactado (.zip, .rar, .7z, .tar e variações) para uma pasta temporária.</summary>
+/// <summary>
+/// Extrai o jogo de um arquivo compactado (.zip, .rar, .7z, .tar e variações) para uma pasta de trabalho no
+/// mesmo local onde o jogo convertido será salvo, para usar o disco escolhido pelo usuário e poder mover
+/// (em vez de copiar) os arquivos para app0/.
+/// </summary>
 public static class Archives
 {
     public static readonly string[] Extensions = [".zip", ".rar", ".7z", ".tar", ".tgz", ".gz", ".bz2", ".xz"];
@@ -19,30 +23,67 @@ public static class Archives
         File.Exists(path) && Extensions.Any(e => path.EndsWith(e, StringComparison.OrdinalIgnoreCase));
 
     static readonly string TempBase = Path.Combine(Path.GetTempPath(), "AnyPS5-Conversor");
+    const string WorkFolderName = ".AnyPS5-Conversor";
+    static readonly string RunName = "run-" + Environment.ProcessId;
 
     /// <summary>
-    /// Pasta temporária desta execução (extrações e entradas do relinker). Fica numa subpasta com o
-    /// número do processo para que <see cref="CleanStaleTemp"/> saiba o que já pode ser apagado.
+    /// Pasta temporária desta execução para o que é pequeno (relinker e executáveis desembrulhados). Fica
+    /// numa subpasta com o número do processo para que <see cref="CleanStaleTemp"/> saiba o que apagar.
     /// </summary>
-    public static string TempRoot { get; } = Path.Combine(TempBase, "run-" + Environment.ProcessId);
+    public static string TempRoot { get; } = Path.Combine(TempBase, RunName);
 
-    /// <summary>
-    /// Apaga o que execuções anteriores deixaram quando foram encerradas à força ou o PC desligou:
-    /// subpastas de processos que não existem mais e pastas soltas das versões 0.1 e 0.2.
-    /// </summary>
-    public static void CleanStaleTemp()
+    /// <summary>Pasta oculta desta execução dentro do local de saída, onde ficam as extrações.</summary>
+    public static string WorkRoot(string outputParent)
     {
-        if (!Directory.Exists(TempBase))
-            return;
-        foreach (var folder in Directory.GetDirectories(TempBase))
+        var root = Path.Combine(outputParent, WorkFolderName);
+        Directory.CreateDirectory(root);
+        File.SetAttributes(root, File.GetAttributes(root) | FileAttributes.Hidden);
+        return Path.Combine(root, RunName);
+    }
+
+    /// <summary>Apaga a pasta de trabalho desta execução e, se ficar vazia, a pasta oculta que a contém.</summary>
+    public static void DeleteWorkRoot(string outputParent)
+    {
+        var root = Path.Combine(outputParent, WorkFolderName);
+        TryDelete(Path.Combine(root, RunName));
+        RemoveIfEmpty(root);
+    }
+
+    /// <summary>
+    /// Apaga o que execuções anteriores deixaram quando foram encerradas à força ou o PC desligou: subpastas
+    /// de processos que não existem mais em %TEMP% e na pasta de trabalho dos locais de saída indicados,
+    /// além das pastas soltas das versões 0.1 e 0.2.
+    /// </summary>
+    public static void CleanStaleTemp(params string?[] outputParents)
+    {
+        var bases = outputParents.Where(p => !string.IsNullOrEmpty(p)).Select(p => Path.Combine(p!, WorkFolderName)).Prepend(TempBase);
+        foreach (var folderBase in bases)
         {
-            var name = Path.GetFileName(folder);
-            var alive = name.StartsWith("run-", StringComparison.Ordinal)
-                && int.TryParse(name.AsSpan(4), out var pid)
-                && IsConverterProcess(pid);
-            if (!alive)
-                TryDelete(folder);
+            if (!Directory.Exists(folderBase))
+                continue;
+            foreach (var folder in Directory.GetDirectories(folderBase))
+            {
+                var name = Path.GetFileName(folder);
+                var alive = name.StartsWith("run-", StringComparison.Ordinal)
+                    && int.TryParse(name.AsSpan(4), out var pid)
+                    && IsConverterProcess(pid);
+                if (!alive)
+                    TryDelete(folder);
+            }
+            if (folderBase != TempBase)
+                RemoveIfEmpty(folderBase);
         }
+    }
+
+    static void RemoveIfEmpty(string folder)
+    {
+        try
+        {
+            if (Directory.Exists(folder) && !Directory.EnumerateFileSystemEntries(folder).Any())
+                Directory.Delete(folder);
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
     }
 
     static bool IsConverterProcess(int pid)
@@ -60,15 +101,16 @@ public static class Archives
     }
 
     /// <param name="password">Senha do arquivo; nula até o usuário informar uma.</param>
+    /// <param name="workRoot">Onde extrair; normalmente <see cref="WorkRoot"/> do local de saída.</param>
     /// <exception cref="PasswordException">O arquivo tem senha e ela falta ou não confere.</exception>
-    public static string Extract(string archive, string? password, IProgress<int> progress, CancellationToken cancel)
+    public static string Extract(string archive, string? password, string workRoot, IProgress<int> progress, CancellationToken cancel)
     {
         // Zip, rar e 7z têm índice e são abertos inteiros; tar, gz, bz2 e xz são lidos em sequência e não têm senha.
         var indexed = new[] { ".zip", ".rar", ".7z" }.Any(e => archive.EndsWith(e, StringComparison.OrdinalIgnoreCase));
         if (indexed && password is null && NeedsPassword(archive))
             throw new PasswordException(wrong: false);
 
-        var target = Path.Combine(TempRoot, "extract-" + Guid.NewGuid().ToString("N"));
+        var target = Path.Combine(workRoot, "extract-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(target);
         try
         {

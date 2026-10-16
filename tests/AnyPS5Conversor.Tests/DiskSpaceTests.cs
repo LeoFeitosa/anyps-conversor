@@ -37,7 +37,7 @@ public class DiskSpaceTests
         try
         {
             File.WriteAllBytes(zip, ZipWithDeclaredSize(long.MaxValue / 4));
-            var error = Assert.Throws<UserException>(() => Archives.Extract(zip, null, new Progress<int>(), CancellationToken.None));
+            var error = Assert.Throws<UserException>(() => Archives.Extract(zip, null, Archives.TempRoot, new Progress<int>(), CancellationToken.None));
             Assert.Equal("err_disk_space", error.Key);
         }
         finally
