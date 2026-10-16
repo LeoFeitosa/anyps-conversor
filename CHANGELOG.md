@@ -6,6 +6,20 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-16
+
+### Adicionado
+
+- Opção "Ao terminar, mover os arquivos originais do jogo para a Lixeira", desmarcada por padrão. Move
+  o arquivo compactado escolhido ou só a pasta com o `eboot.bin`, nunca uma pasta acima dela, e
+  mantém os originais quando eles estão na raiz do disco, numa pasta do sistema ou do usuário
+  (Área de Trabalho, Documentos, Downloads…) ou quando contêm a pasta de destino.
+
+### Alterado
+
+- A extração de um arquivo compactado é apagada logo depois da conversão, e não só ao fechar o
+  programa.
+
 ## [0.2.1] - 2026-10-16
 
 ### Corrigido
@@ -46,7 +60,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Botões para jogar e abrir a pasta ao final, com as últimas linhas de `anyps5.log` se o jogo
   fechar com erro.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/LeoFeitosa/anyps5-conversor/releases/tag/v0.1.0

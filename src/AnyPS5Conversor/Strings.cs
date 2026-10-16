@@ -63,6 +63,8 @@ public static class Strings
         ["step2_title"] = ("Onde salvar", "Where to save"),
         ["step2_hint"] = ("Uma pasta nova com o jogo convertido será criada aqui.", "A new folder with the converted game will be created here."),
 
+        ["recycle_source"] = ("Ao terminar, mover os arquivos originais do jogo para a Lixeira (fica só a versão convertida)",
+                              "When done, move the original game files to the Recycle Bin (keep only the converted version)"),
         ["step3_title"] = ("Converter", "Convert"),
         ["convert"] = ("Converter para Windows", "Convert to Windows"),
         ["cancel"] = ("Cancelar", "Cancel"),
@@ -77,6 +79,7 @@ public static class Strings
         ["status_copying"] = ("Copiando os arquivos do jogo…", "Copying the game files…"),
         ["status_libs"] = ("Instalando as bibliotecas do AnyPS5…", "Installing the AnyPS5 libraries…"),
         ["status_done"] = ("Jogo convertido. Clique em Jogar agora.", "Game converted. Click Play now."),
+        ["status_done_recycled"] = ("Jogo convertido. Os arquivos originais foram para a Lixeira.", "Game converted. The original files were moved to the Recycle Bin."),
         ["status_failed"] = ("A conversão não deu certo.", "The conversion did not succeed."),
         ["status_cancelled"] = ("Conversão cancelada.", "Conversion cancelled."),
 
@@ -103,6 +106,10 @@ public static class Strings
         ["log_saved"] = ("O registro completo foi salvo em:\n{0}", "The full log was saved to:\n{0}"),
         ["err_syscall"] = ("Este jogo fala direto com o sistema do PS5 (chamadas de sistema), algo que o AnyPS5 ainda não consegue converter. Não é um problema do seu arquivo.\n\n{0}",
                            "This game talks directly to the PS5 system (system calls), which AnyPS5 cannot convert yet. Your file is not the problem.\n\n{0}"),
+        ["err_recycle_unsafe"] = ("Os arquivos originais foram mantidos: {0} é uma pasta protegida ou contém o destino da conversão.",
+                                  "The original files were kept: {0} is a protected folder or contains the conversion output."),
+        ["err_recycle"] = ("O jogo foi convertido, mas não foi possível mover {0} para a Lixeira: {1}",
+                           "The game was converted, but {0} could not be moved to the Recycle Bin: {1}"),
         ["err_unexpected"] = ("Erro inesperado: {0}", "Unexpected error: {0}"),
         ["err_cpu"] = ("Seu processador não tem instruções que os jogos de PS5 exigem ({0}). A conversão funciona, mas o jogo não vai abrir neste PC.",
                        "Your processor lacks instructions PS5 games require ({0}). Conversion works, but the game will not start on this PC."),

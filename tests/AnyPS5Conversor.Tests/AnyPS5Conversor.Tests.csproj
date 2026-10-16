@@ -14,6 +14,7 @@
     <Compile Include="..\..\src\AnyPS5Conversor\GameInfo.cs" Link="GameInfo.cs" />
     <Compile Include="..\..\src\AnyPS5Conversor\Converter.cs" Link="Converter.cs" />
     <Compile Include="..\..\src\AnyPS5Conversor\Archives.cs" Link="Archives.cs" />
+    <Compile Include="..\..\src\AnyPS5Conversor\SourceCleanup.cs" Link="SourceCleanup.cs" />
   </ItemGroup>
 
   <ItemGroup>
