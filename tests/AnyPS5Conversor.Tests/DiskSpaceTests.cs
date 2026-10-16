@@ -37,7 +37,7 @@ public class DiskSpaceTests
         try
         {
             File.WriteAllBytes(zip, ZipWithDeclaredSize(long.MaxValue / 4));
-            var error = Assert.Throws<UserException>(() => Archives.Extract(zip, null, Archives.TempRoot, new Progress<int>(), CancellationToken.None));
+            var error = Assert.Throws<UserException>(() => Archives.Extract(zip, null, Archives.TempRoot, new Progress<ExtractProgress>(), CancellationToken.None));
             Assert.Equal("err_disk_space", error.Key);
         }
         finally
@@ -51,7 +51,8 @@ public class DiskSpaceTests
     {
         using var stream = new MemoryStream();
         using var w = new BinaryWriter(stream);
-        var name = "big.bin"u8.ToArray();
+        // Chama-se eboot.bin para passar pela conferência dos arquivos obrigatórios, que vem antes do espaço.
+        var name = "jogo/eboot.bin"u8.ToArray();
         // Cabeçalho local
         w.Write(0x04034b50); w.Write((short)45); w.Write((short)0); w.Write((short)0); w.Write(0); w.Write(0);
         w.Write(0); w.Write(-1); w.Write((short)name.Length); w.Write((short)20); w.Write(name);

@@ -20,7 +20,7 @@ public sealed class ArchivesTests : IDisposable
 
     string Extract(string archive)
     {
-        var folder = Archives.Extract(archive, null, Archives.TempRoot, new Progress<int>(), CancellationToken.None);
+        var folder = Archives.Extract(archive, null, Archives.TempRoot, new Progress<ExtractProgress>(), CancellationToken.None);
         extracted.Add(folder);
         return folder;
     }
@@ -65,10 +65,14 @@ public sealed class ArchivesTests : IDisposable
     {
         var zip = Path.Combine(root, "evil.zip");
         using (var archive = ZipFile.Open(zip, ZipArchiveMode.Create))
-        using (var writer = new StreamWriter(archive.CreateEntry("../../evil.txt").Open()))
-            writer.Write("x");
+        {
+            using (var writer = new StreamWriter(archive.CreateEntry("jogo/eboot.bin").Open()))
+                writer.Write("\u007FELF");
+            using (var writer = new StreamWriter(archive.CreateEntry("../../evil.txt").Open()))
+                writer.Write("x");
+        }
 
-        var error = Assert.Throws<UserException>(() => Archives.Extract(zip, null, Archives.TempRoot, new Progress<int>(), CancellationToken.None));
+        var error = Assert.Throws<UserException>(() => Archives.Extract(zip, null, Archives.TempRoot, new Progress<ExtractProgress>(), CancellationToken.None));
 
         Assert.Equal("err_archive_unsafe", error.Key);
     }
@@ -83,7 +87,7 @@ public sealed class ArchivesTests : IDisposable
     public void AsksForPasswordAndRejectsWrongOne(string name)
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", name);
-        var progress = new Progress<int>();
+        var progress = new Progress<ExtractProgress>();
 
         Assert.False(Assert.Throws<PasswordException>(() => Archives.Extract(path, null, Archives.TempRoot, progress, CancellationToken.None)).Wrong);
         Assert.True(Assert.Throws<PasswordException>(() => Archives.Extract(path, "errada", Archives.TempRoot, progress, CancellationToken.None)).Wrong);
@@ -112,13 +116,61 @@ public sealed class ArchivesTests : IDisposable
     }
 
     [Fact]
+    public void RefusesArchiveWithoutEbootBeforeExtracting()
+    {
+        var zip = Path.Combine(root, "sem-jogo.zip");
+        using (var archive = ZipFile.Open(zip, ZipArchiveMode.Create))
+        using (var writer = new StreamWriter(archive.CreateEntry("pasta/leia-me.txt").Open()))
+            writer.Write("x");
+        var before = Directory.Exists(Archives.TempRoot) ? Directory.GetDirectories(Archives.TempRoot).Length : 0;
+
+        var error = Assert.Throws<UserException>(() => Archives.Extract(zip, null, Archives.TempRoot, new Progress<ExtractProgress>(), CancellationToken.None));
+
+        Assert.Equal("err_no_eboot_archive", error.Key);
+        Assert.Equal(before, Directory.GetDirectories(Archives.TempRoot).Length);
+    }
+
+    [Fact]
+    public void RefusesEncryptedEbootBeforeExtracting()
+    {
+        var zip = Path.Combine(root, "criptografado.zip");
+        var random = new Random(1);
+        using (var archive = ZipFile.Open(zip, ZipArchiveMode.Create))
+        using (var stream = archive.CreateEntry("PPSA00010/eboot.bin").Open())
+            stream.Write(SelfUnwrapperTests.BuildSelf(_ => (byte)random.Next(256)));
+
+        var error = Assert.Throws<UserException>(() => Archives.Extract(zip, null, Archives.TempRoot, new Progress<ExtractProgress>(), CancellationToken.None));
+
+        Assert.Equal("err_encrypted", error.Key);
+    }
+
+    [Fact]
+    public void ReportsEachFileWhileExtracting()
+    {
+        var zip = Path.Combine(root, "game.zip");
+        ZipFile.CreateFromDirectory(CreateGameFolder(), zip);
+        var entries = new List<string>();
+
+        extracted.Add(Archives.Extract(zip, null, Archives.TempRoot, new Sync(p => { if (p.Entry is not null) entries.Add(p.Entry); }), CancellationToken.None));
+
+        Assert.Contains(entries, e => e.EndsWith("eboot.bin", StringComparison.Ordinal));
+        Assert.Contains(entries, e => e.EndsWith("libc.prx", StringComparison.Ordinal));
+    }
+
+    /// <summary>Progress sem contexto de sincronização: os avisos chegam na hora, na mesma thread.</summary>
+    sealed class Sync(Action<ExtractProgress> report) : IProgress<ExtractProgress>
+    {
+        public void Report(ExtractProgress value) => report(value);
+    }
+
+    [Fact]
     public void ExtractsIntoAHiddenWorkFolderInTheOutputAndRemovesIt()
     {
         var output = Path.Combine(root, "saida");
         var zip = Path.Combine(root, "game.zip");
         ZipFile.CreateFromDirectory(CreateGameFolder(), zip);
 
-        var folder = Archives.Extract(zip, null, Archives.WorkRoot(output), new Progress<int>(), CancellationToken.None);
+        var folder = Archives.Extract(zip, null, Archives.WorkRoot(output), new Progress<ExtractProgress>(), CancellationToken.None);
 
         var work = Path.Combine(output, ".AnyPS5-Conversor");
         Assert.StartsWith(work, folder);

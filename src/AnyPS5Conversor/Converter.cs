@@ -6,8 +6,18 @@ using System.Runtime.Intrinsics.X86;
 
 namespace AnyPS5Conversor;
 
-/// <summary>Andamento da conversão: fração de 0 a 1 (negativa = indeterminada) e chave de status.</summary>
-public readonly record struct ConversionProgress(double Fraction, string StatusKey, params object[] Args);
+/// <summary>
+/// Andamento da conversão: fração de 0 a 1 (negativa = indeterminada) e chave de status. O passo é a linha de
+/// detalhe embaixo do status: chave de texto (ou nula) e o arquivo ou item da vez.
+/// </summary>
+public readonly record struct ConversionProgress(double Fraction, string StatusKey, params object[] Args)
+{
+    public string? StepKey { get; init; }
+    public string? StepItem { get; init; }
+}
+
+/// <summary>Um passo de uma etapa: fração dela, chave de texto do passo e o arquivo ou item da vez.</summary>
+public delegate void StepReport(double fraction, string? stepKey, string? item);
 
 /// <summary>
 /// Converte a pasta de um jogo de PS5 para Windows: desembrulha os SELF, roda o relinker do AnyPS5,
@@ -44,7 +54,8 @@ public static class Converter
             log($"AnyPS5 {AnyPS5Version}: {relinker}");
 
             progress.Report(new(0.04, "status_unwrapping"));
-            var converted = await Task.Run(() => PrepareInputs(game, work, log, cancel), cancel);
+            var converted = await Task.Run(() => PrepareInputs(game, work, log,
+                file => progress.Report(new(0.04, "status_unwrapping") { StepKey = "step_reading", StepItem = file }), cancel), cancel);
 
             // O relinker usa um núcleo só e lê apenas a pasta de trabalho: a cópia do jogo para app0/ e as
             // bibliotecas correm ao mesmo tempo. A barra (10–98%) acompanha a mais atrasada das duas.
@@ -52,14 +63,20 @@ public static class Converter
             Directory.CreateDirectory(output);
             var exe = Path.Combine(output, game.SafeName + ".exe");
             double relinked = 0, copied = 0;
+            (string? Key, string? Item) relinkStep = default, copyStep = default;
             var gate = new Lock();
-            void Report(ref double stage, double fraction)
+            void Report(ref double stage, ref (string? Key, string? Item) step, double fraction, string? stepKey, string? item)
             {
                 lock (gate)
                 {
                     stage = fraction;
-                    var (key, low) = relinked <= copied ? ("status_relinking", relinked) : ("status_copying", copied);
-                    progress.Report(new(0.10 + 0.88 * low, key, (int)(low * 100)));
+                    if (stepKey is not null)
+                        step = (stepKey, item);
+                    // Mostra a etapa mais atrasada, que é a que decide quando a conversão termina.
+                    var (key, low, shown) = relinked <= copied
+                        ? ("status_relinking", relinked, relinkStep)
+                        : ("status_copying", copied, copyStep);
+                    progress.Report(new(0.10 + 0.88 * low, key, (int)(low * 100)) { StepKey = shown.Key, StepItem = shown.Item });
                 }
             }
 
@@ -78,11 +95,14 @@ public static class Converter
                 }
             }
             var both = Task.WhenAll(
-                Stage(() => RelinkAsync(relinker, work, exe, NeedsFixedBase(game), log, f => Report(ref relinked, f), failed.Token)),
+                Stage(() => RelinkAsync(relinker, work, exe, NeedsFixedBase(game), log,
+                    (f, key, item) => Report(ref relinked, ref relinkStep, f, key, item), failed.Token)),
                 Stage(() => Task.Run(() =>
                 {
+                    Report(ref copied, ref copyStep, 0, "step_libs", null);
                     InstallLibraries(output);
-                    CopyGame(game.Folder, Path.Combine(output, "app0"), converted, move, f => Report(ref copied, f), failed.Token);
+                    CopyGame(game.Folder, Path.Combine(output, "app0"), converted, move,
+                        (f, key, item) => Report(ref copied, ref copyStep, f, key, item), failed.Token);
                 }, failed.Token)));
             try
             {
@@ -117,7 +137,7 @@ public static class Converter
         }
     }
 
-    static async Task RelinkAsync(string relinker, string work, string exe, bool fixedBase, Action<string> log, Action<double> report, CancellationToken cancel)
+    static async Task RelinkAsync(string relinker, string work, string exe, bool fixedBase, Action<string> log, StepReport report, CancellationToken cancel)
     {
         var input = Path.Combine(work, "eboot.bin");
         try
@@ -175,9 +195,10 @@ public static class Converter
     }
 
     /// <summary>Monta a entrada limpa do relinker e devolve os módulos que viraram .guest.prx.</summary>
-    static HashSet<string> PrepareInputs(GameInfo game, string work, Action<string> log, CancellationToken cancel)
+    static HashSet<string> PrepareInputs(GameInfo game, string work, Action<string> log, Action<string> reading, CancellationToken cancel)
     {
         Directory.CreateDirectory(work);
+        reading("eboot.bin");
         WriteClean(Path.Combine(game.Folder, "eboot.bin"), Path.Combine(work, "eboot.bin"), log);
 
         // O relinker usa sce_sys/icon0.png, ao lado do executável de entrada, como ícone do .exe.
@@ -195,6 +216,7 @@ public static class Converter
         {
             cancel.ThrowIfCancellationRequested();
             var relative = Path.GetRelativePath(game.Folder, module);
+            reading(relative);
             var target = Path.Combine(work, relative);
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
             WriteClean(module, target, log);
@@ -229,7 +251,10 @@ public static class Converter
     static readonly string[] RelinkerStages = ["Instruction scan", "Syscall scan", "PRX conversion", "Output image", "Write output"];
 
     /// <summary>Fração de 0 a 1 de uma linha de progresso do relinker, como "PRX conversion | libc.prx | 57% (0/1)".</summary>
-    public static double? RelinkerFraction(string line)
+    public static double? RelinkerFraction(string line) => ParseRelinker(line)?.Fraction;
+
+    /// <summary>Fração, etapa (índice em <see cref="RelinkerStages"/>) e item de uma linha de progresso do relinker.</summary>
+    public static (double Fraction, int Stage, string Item)? ParseRelinker(string line)
     {
         var parts = line.Split('|');
         if (parts.Length < 3)
@@ -238,7 +263,7 @@ public static class Converter
         var percent = System.Text.RegularExpressions.Regex.Match(parts[2], @"(\d+)%");
         if (stage < 0 || !percent.Success)
             return null;
-        return (stage + int.Parse(percent.Groups[1].Value) / 100.0) / RelinkerStages.Length;
+        return ((stage + int.Parse(percent.Groups[1].Value) / 100.0) / RelinkerStages.Length, stage, parts[1].Trim());
     }
 
     /// <summary>
@@ -247,7 +272,7 @@ public static class Converter
     /// </summary>
     public static bool NeedsFixedBase(GameInfo game) => File.Exists(Path.Combine(game.Folder, "imports.txt"));
 
-    static async Task RunRelinkerAsync(string relinker, string input, string exe, bool fixedBase, Action<string> log, Action<double> report, CancellationToken cancel)
+    static async Task RunRelinkerAsync(string relinker, string input, string exe, bool fixedBase, Action<string> log, StepReport report, CancellationToken cancel)
     {
         var start = new ProcessStartInfo(relinker)
         {
@@ -281,10 +306,10 @@ public static class Converter
             var segments = line.Split('\r', StringSplitOptions.RemoveEmptyEntries);
             foreach (var segment in segments)
             {
-                if (RelinkerFraction(segment) is { } fraction && fraction > best)
+                if (ParseRelinker(segment) is { } step && step.Fraction >= best)
                 {
-                    best = fraction;
-                    report(fraction);
+                    best = step.Fraction;
+                    report(step.Fraction, $"step_stage{step.Stage}", step.Item);
                 }
             }
             var last = segments.LastOrDefault()?.TrimEnd();
@@ -314,7 +339,7 @@ public static class Converter
         }
 
         if (process.ExitCode == 0)
-            report(1);
+            report(1, null, null);
         if (process.ExitCode != 0 && failures.Any(f => f.Contains("Forbidden syscall", StringComparison.Ordinal)))
             throw new UserException("err_syscall", string.Join(Environment.NewLine, failures));
         if (process.ExitCode != 0)
@@ -329,7 +354,7 @@ public static class Converter
     /// que é instantâneo e não ocupa espaço (o original continua intacto e apagar um não afeta o outro). Nos demais
     /// casos, ou se o disco não aceitar links, copia.
     /// </summary>
-    static void CopyGame(string source, string target, HashSet<string> skip, bool move, Action<double> report, CancellationToken cancel)
+    static void CopyGame(string source, string target, HashSet<string> skip, bool move, StepReport report, CancellationToken cancel)
     {
         var files = Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories)
             .Select(f => (Path: f, Relative: Path.GetRelativePath(source, f)))
@@ -345,6 +370,8 @@ public static class Converter
             cancel.ThrowIfCancellationRequested();
             var destination = Path.Combine(target, file.Relative);
             Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+            var stepKey = move ? "step_moving" : "step_copying";
+            report((double)done / total, stepKey, file.Relative);
             // Somente leitura é atributo do arquivo, compartilhado pelo link: tirá-lo para apagar uma conversão
             // que falhou mexeria no original. Esses vão por cópia.
             var linked = link && !File.GetAttributes(file.Path).HasFlag(FileAttributes.ReadOnly)
@@ -364,16 +391,16 @@ public static class Converter
                         cancel.ThrowIfCancellationRequested();
                         output.Write(buffer, 0, read);
                         done += read;
-                        report((double)done / total);
+                        report((double)done / total, null, null);
                     }
                 }
                 File.SetLastWriteTimeUtc(destination, File.GetLastWriteTimeUtc(file.Path));
                 continue;
             }
             done += file.Size;
-            report((double)done / total);
+            report((double)done / total, null, null);
         }
-        report(1);
+        report(1, null, null);
     }
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]

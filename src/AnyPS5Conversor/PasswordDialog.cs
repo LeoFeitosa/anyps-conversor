@@ -28,7 +28,7 @@ sealed class PasswordDialog : Form
         Text = T("password_title");
 
         // O texto da mensagem nunca é cortado: se faltar espaço, encurta-se o nome do arquivo, pelo meio.
-        var text = T("password_message", ShortenMiddle(fileName, Theme.Body, ContentWidth));
+        var text = T("password_message", Theme.ShortenMiddle(fileName, Theme.Body, (int)(ContentWidth * DeviceDpi / 96f * 0.9f)));
         var textHeight = Math.Min(MeasureHeight(text, Theme.Body, ContentWidth), 120);
 
         var title = Theme.Label(T("password_title"), Theme.CardTitle, Theme.Text);
@@ -68,27 +68,6 @@ sealed class PasswordDialog : Form
         var scale = DeviceDpi / 96f;
         var size = TextRenderer.MeasureText(text, font, new Size((int)(width * scale), int.MaxValue), TextFormatFlags.WordBreak);
         return (int)Math.Ceiling(size.Height / scale) + 2;
-    }
-
-    /// <summary>
-    /// Encurta o nome pelo meio ("início…final.rar") até caber numa linha, preservando a extensão. Nomes sem
-    /// espaço não quebram linha, então sem isso um nome comprido empurraria o resto da mensagem para fora.
-    /// </summary>
-    string ShortenMiddle(string name, Font font, int width)
-    {
-        var scale = DeviceDpi / 96f;
-        var limit = (int)(width * scale * 0.9f);
-        bool Fits(string s) => TextRenderer.MeasureText(s, font).Width <= limit;
-        if (Fits(name))
-            return name;
-        var tail = Math.Min(name.Length / 3, 18);
-        for (var head = name.Length - tail - 1; head > 4; head--)
-        {
-            var candidate = name[..head] + "…" + name[^tail..];
-            if (Fits(candidate))
-                return candidate;
-        }
-        return name[..4] + "…" + name[^tail..];
     }
 
     protected override void OnHandleCreated(EventArgs e)

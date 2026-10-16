@@ -8,6 +8,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-10-16
+
+### Added
+
+- Below the status, the program shows what is happening: the file being extracted, the executable
+  being read, the relinker step (instruction scan, system calls, game libraries, assembling and writing
+  the `.exe`) and the file being copied. Long names are shortened in the middle.
+- Time left for extraction ("about N min left"), shown only after 5 seconds and 3% measured on the PC
+  itself, when the estimate is stable. Building the `.exe` has no estimate: the relinker steps take
+  very different times from game to game, and the number would not be reliable.
+- `.zip`, `.rar` and `.7z` archives are checked before extracting: without `eboot.bin`, or with an
+  encrypted one, the archive is refused right away, without writing anything to disk.
+
+### Fixed
+
+- In `.tar.gz`, `.tar.xz` and `.tar.bz2`, the progress bar stood still during a large file; it now
+  moves along with the reading.
+
 ## [0.6.2] - 2026-10-16
 
 ### Added
@@ -158,7 +176,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Buttons to play and open the folder at the end, with the last lines of `anyps5.log` if the game
   closes with an error.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.6.2...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.6.3...HEAD
+[0.6.3]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.5.0...v0.6.0
