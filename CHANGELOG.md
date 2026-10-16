@@ -6,6 +6,14 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-16
+
+### Corrigido
+
+- Extrações e arquivos de trabalho ficavam para sempre em `%TEMP%\AnyPS5-Conversor` quando o programa
+  era encerrado à força ou o PC desligava, ocupando gigabytes. Cada execução agora usa uma subpasta
+  própria, e ao abrir o programa apaga o que sobrou de execuções anteriores.
+
 ## [0.2.0] - 2026-10-16
 
 ### Adicionado
@@ -38,6 +46,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Botões para jogar e abrir a pasta ao final, com as últimas linhas de `anyps5.log` se o jogo
   fechar com erro.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/LeoFeitosa/anyps5-conversor/releases/tag/v0.1.0

@@ -173,7 +173,7 @@ public sealed class MainForm : Form
         ResumeLayout(false);
         if (initialGame is not null)
             Shown += async (_, _) => await LoadGameAsync(initialGame);
-        FormClosed += (_, _) => Archives.TryDelete(extractedFolder);
+        FormClosed += (_, _) => Archives.TryDelete(Archives.TempRoot);
     }
 
     static void PlaceStep(Card card, StepBadge badge, Label title, Label? hint)

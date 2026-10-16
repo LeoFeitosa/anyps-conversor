@@ -26,7 +26,7 @@ public static class Converter
         CancellationToken cancel)
     {
         var output = UniqueFolder(Path.Combine(parentFolder, game.SafeName));
-        var work = Path.Combine(Path.GetTempPath(), "AnyPS5-Conversor", Guid.NewGuid().ToString("N"));
+        var work = Path.Combine(Archives.TempRoot, "work-" + Guid.NewGuid().ToString("N"));
         try
         {
             progress.Report(new(0.02, "status_preparing"));
