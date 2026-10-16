@@ -11,10 +11,10 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Tag do AnyPS5 a testar (vazio = a mais recente com 7 dias ou mais)'
+        description: 'Tag do AnyPS5 a testar (vazio = a mais recente com 7+ dias) / AnyPS5 tag to try (empty = newest 7+ days old)'
         required: false
       dry_run:
-        description: 'Só testar: não publica nem abre issue'
+        description: 'Só testar, sem publicar nem abrir issue / Test only, no release or issue'
         type: boolean
         default: true
 
@@ -106,6 +106,10 @@ jobs:
             Replace("## [Unreleased]`n", "## [Unreleased]`n`n## [$env:NEW] - $date`n`n### AnyPS5`n`n- AnyPS5 atualizado de $env:CURRENT para $env:TAG ([notas da versão](https://github.com/$env:UPSTREAM/releases/tag/$env:TAG)).`n").
             Replace("[Unreleased]: $repo/compare/v$env:OLD...HEAD", "[Unreleased]: $repo/compare/v$env:NEW...HEAD`n[$env:NEW]: $repo/compare/v$env:OLD...v$env:NEW")
           Set-Content CHANGELOG.md $changelog -NoNewline
+          $changelog = (Get-Content CHANGELOG.en.md -Raw).
+            Replace("## [Unreleased]`n", "## [Unreleased]`n`n## [$env:NEW] - $date`n`n### AnyPS5`n`n- AnyPS5 updated from $env:CURRENT to $env:TAG ([release notes](https://github.com/$env:UPSTREAM/releases/tag/$env:TAG)).`n").
+            Replace("[Unreleased]: $repo/compare/v$env:OLD...HEAD", "[Unreleased]: $repo/compare/v$env:NEW...HEAD`n[$env:NEW]: $repo/compare/v$env:OLD...v$env:NEW")
+          Set-Content CHANGELOG.en.md $changelog -NoNewline
           git diff
 
       - name: Download dependencies and test homebrews
@@ -151,15 +155,17 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898099+github-actions[bot]@users.noreply.github.com'
           ./build/update-screenshots.ps1 -Exe publish/AnyPS5-Conversor.exe
-          git add build/dependencies.json Directory.Build.props CHANGELOG.md docs/screenshot-pt.png docs/screenshot-en.png
+          git add build/dependencies.json Directory.Build.props CHANGELOG.md CHANGELOG.en.md docs/screenshot-pt.png docs/screenshot-en.png
           git commit -m "chore: update AnyPS5 to $env:TAG"
           git tag -a "v$env:NEW" -m "AnyPS5 Conversor $env:NEW"
           git push origin HEAD:main "v$env:NEW"
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
-          $section = [regex]::Match((Get-Content CHANGELOG.md -Raw), "(?s)## \[$([regex]::Escape($env:NEW))\][^\n]*\n(.*?)(?=\n## \[)").Groups[1].Value.Trim()
+          function Section([string]$file) {
+            [regex]::Match((Get-Content $file -Raw), "(?s)## \[$([regex]::Escape($env:NEW))\][^\n]*\n(.*?)(?=\n## \[)").Groups[1].Value.Trim()
+          }
           $footer = (Get-Content build/release-footer.md -Raw).Replace('{anyps5}', $env:TAG)
-          Set-Content notes.md ($section + "`n" + $footer)
+          Set-Content notes.md ("## Português`n`n" + (Section CHANGELOG.md) + "`n`n## English`n`n" + (Section CHANGELOG.en.md) + "`n" + $footer)
           gh release create "v$env:NEW" publish/AnyPS5-Conversor.exe publish/AnyPS5-Conversor.exe.sha256 THIRD-PARTY-NOTICES.txt `
             --title "AnyPS5 Conversor v$env:NEW" --notes-file notes.md --latest
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
@@ -173,13 +179,14 @@ jobs:
           OWNER: ${{ github.repository_owner }}
         run: |
           $body = @"
-          @$env:OWNER o AnyPS5 $env:TAG foi adotado e o **AnyPS5 Conversor v$env:NEW** já está publicado:
-          https://github.com/$env:GITHUB_REPOSITORY/releases/tag/v$env:NEW
+          @$env:OWNER o AnyPS5 $env:TAG foi adotado e o **AnyPS5 Conversor v$env:NEW** já está publicado. Passou na compilação, nos testes e na conversão real dos homebrews de teste.
 
-          Passou na compilação, nos testes e na conversão real dos homebrews de teste.
-          Notas do AnyPS5: https://github.com/$env:UPSTREAM/releases/tag/$env:TAG
+          AnyPS5 $env:TAG was adopted and **AnyPS5 Conversor v$env:NEW** is published. It passed the build, the tests and the real conversion of the test homebrew.
+
+          Release: https://github.com/$env:GITHUB_REPOSITORY/releases/tag/v$env:NEW
+          AnyPS5: https://github.com/$env:UPSTREAM/releases/tag/$env:TAG
           "@
-          $url = gh issue create --title "AnyPS5 $env:TAG adotado: v$env:NEW publicada" --body $body
+          $url = gh issue create --title "AnyPS5 $env:TAG adotado, v$env:NEW publicada / adopted, v$env:NEW published" --body $body
           gh issue close $url
 
       - name: Notify failure
@@ -189,13 +196,15 @@ jobs:
           TAG: ${{ steps.check.outputs.tag }}
           OWNER: ${{ github.repository_owner }}
         run: |
-          $title = if ($env:TAG) { "Atualização para o AnyPS5 $env:TAG falhou" } else { 'Verificação de atualização do AnyPS5 falhou' }
+          $title = if ($env:TAG) { "Atualização para o AnyPS5 $env:TAG falhou / Update to AnyPS5 $env:TAG failed" } else { 'Verificação de atualização do AnyPS5 falhou / AnyPS5 update check failed' }
           # Um aviso por problema: enquanto a issue estiver aberta, as próximas falhas iguais não avisam de novo.
           $open = gh issue list --state open --search "in:title `"$title`"" --json title | ConvertFrom-Json | Where-Object title -eq $title
           if ($open) { exit 0 }
           $body = @"
           @$env:OWNER a atualização automática parou e **nada foi publicado**; os usuários continuam na versão atual.
 
-          Detalhes da execução: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID
+          The automatic update stopped and **nothing was published**; users stay on the current version.
+
+          Execução / Run: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID
           "@
           gh issue create --title $title --body $body

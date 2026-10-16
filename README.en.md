@@ -85,8 +85,8 @@ The result is a single `publish/AnyPS5-Conversor.exe`, with the .NET runtime, th
 libraries embedded. Official builds are made by GitHub Actions for every `vX.Y.Z` tag and published
 in Releases along with their SHA-256.
 
-Details on versions, commits and tests are in [CONTRIBUTING.md](CONTRIBUTING.md) (in Portuguese).
-The change history is in [CHANGELOG.md](CHANGELOG.md), and how to report security problems in
+Details on versions, commits and tests are in [CONTRIBUTING.en.md](CONTRIBUTING.en.md).
+The change history is in [CHANGELOG.en.md](CHANGELOG.en.md), and how to report security problems in
 [SECURITY.md](SECURITY.md).
 
 ## Legal notice
