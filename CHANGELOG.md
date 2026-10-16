@@ -6,6 +6,25 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-16
+
+### Alterado
+
+- A geração do `.exe` roda ao mesmo tempo que a cópia do jogo para `app0/` e a instalação das
+  bibliotecas; a conversão leva o tempo da etapa mais lenta, não a soma delas.
+- Pasta de jogo no mesmo disco do destino vai para `app0/` por link físico: instantâneo e sem ocupar
+  espaço a mais. O original não é alterado, e apagar um não afeta o outro. Arquivos somente leitura,
+  outros discos e sistemas de arquivos sem suporte continuam sendo copiados.
+- As cópias reservam o tamanho do arquivo antes de gravar.
+
+### Corrigido
+
+- Cancelar para na hora: o relinker é encerrado de imediato, a limpeza do que já foi gerado não trava a
+  janela e o botão fica bloqueado depois do primeiro clique, com o aviso "Cancelando…".
+- Arquivo compactado sem `eboot.bin` ganha um aviso próprio, que fala do arquivo e não de "esta pasta".
+- Extração que não vira jogo (sem `eboot.bin`, senha cancelada ou erro) apaga na hora a pasta de
+  trabalho em "Onde salvar", em vez de esperar o programa fechar.
+
 ## [0.5.0] - 2026-10-16
 
 ### Alterado
@@ -110,7 +129,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Botões para jogar e abrir a pasta ao final, com as últimas linhas de `anyps5.log` se o jogo
   fechar com erro.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.3.1...v0.4.0

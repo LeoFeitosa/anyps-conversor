@@ -2,7 +2,7 @@
   <PropertyGroup>
     <!-- Versão do app (SemVer), única fonte da verdade: a tag vX.Y.Z precisa ser igual, senão o build falha.
          Builds fora de uma tag recebem o sufixo -dev.N e aparecem assim no rodapé do programa. -->
-    <VersionPrefix>0.5.0</VersionPrefix>
+    <VersionPrefix>0.6.0</VersionPrefix>
     <Authors>LeoFeitosa</Authors>
     <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

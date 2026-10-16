@@ -298,6 +298,8 @@ public sealed class MainForm : Form
                 SetStatus("status_extracting", false, 0);
                 var progress = new Progress<int>(p =>
                 {
+                    if (running?.IsCancellationRequested == true)
+                        return;
                     progressBar.Value = p * 10;
                     percentLabel.Text = $"{p}%";
                     SetStatus("status_extracting", false, p);
@@ -330,6 +332,11 @@ public sealed class MainForm : Form
             try
             {
                 loaded = await Task.Run(() => GameInfo.Load(extracted ?? path, fallbackName));
+            }
+            catch (UserException e) when (extracted is not null && e.Key == "err_no_eboot")
+            {
+                Archives.TryDelete(extracted);
+                throw new UserException("err_no_eboot_archive", Path.GetFileName(path));
             }
             catch
             {
@@ -367,6 +374,10 @@ public sealed class MainForm : Form
         }
         finally
         {
+            // Extração que não virou jogo (sem eboot.bin, senha cancelada, erro): não deixa a pasta de trabalho
+            // para trás, a menos que ela ainda guarde a extração do jogo carregado antes.
+            if (Archives.IsArchive(path) && extractionParent != outputBox.Text)
+                Archives.DeleteWorkRoot(outputBox.Text);
             percentLabel.Text = "";
             progressBar.Value = 0;
             running.Dispose();
@@ -400,6 +411,7 @@ public sealed class MainForm : Form
         progressBar.Animated = busy;
         convertButton.Text = busy ? T("cancel") : T("convert");
         convertButton.Primary = !busy;
+        convertButton.Enabled = true;
         // O idioma pode mudar a qualquer momento, inclusive no meio de uma extração ou conversão.
         browseFolderButton.Enabled = browseFileButton.Enabled = changeButton.Enabled = outputButton.Enabled = !busy;
         UseWaitCursor = false;
@@ -427,7 +439,10 @@ public sealed class MainForm : Form
     {
         if (running is not null)
         {
+            // Um clique basta: o botão trava até a limpeza terminar e a janela voltar ao normal.
             running.Cancel();
+            convertButton.Enabled = false;
+            SetStatus("status_cancelling");
             return;
         }
         if (game is null)
@@ -444,8 +459,8 @@ public sealed class MainForm : Form
         var finished = false;
         var progress = new Progress<ConversionProgress>(p =>
         {
-            // Avisos atrasados da conversão não podem sobrescrever o status final.
-            if (finished)
+            // Avisos atrasados da conversão não podem sobrescrever o status final nem o "cancelando".
+            if (finished || running?.IsCancellationRequested == true)
                 return;
             progressBar.Value = (int)(Math.Clamp(p.Fraction, 0, 1) * 1000);
             percentLabel.Text = $"{(int)(Math.Clamp(p.Fraction, 0, 1) * 100)}%";
