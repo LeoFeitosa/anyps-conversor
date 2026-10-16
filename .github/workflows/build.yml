@@ -1,0 +1,78 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Download AnyPS5 dependencies
+        shell: pwsh
+        run: ./build/download-dependencies.ps1
+
+      - name: Test
+        run: dotnet test --project tests/AnyPS5Conversor.Tests -c Release
+
+      - name: Publish
+        shell: pwsh
+        run: |
+          $version = if ('${{ github.ref_type }}' -eq 'tag') { '${{ github.ref_name }}'.TrimStart('v') } else { $null }
+          $extra = if ($version) { "-p:Version=$version" } else { '' }
+          dotnet publish src/AnyPS5Conversor -c Release -o publish $extra
+          $hash = (Get-FileHash publish/AnyPS5-Conversor.exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  AnyPS5-Conversor.exe" | Set-Content publish/AnyPS5-Conversor.exe.sha256 -NoNewline
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: AnyPS5-Conversor
+          path: |
+            publish/AnyPS5-Conversor.exe
+            publish/AnyPS5-Conversor.exe.sha256
+          if-no-files-found: error
+
+  release:
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: AnyPS5-Conversor
+          path: dist
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#v}"
+          awk -v v="$version" '$0 ~ "^## \\[" v "\\]" {found=1; next} found && /^## \[/ {exit} found' CHANGELOG.md > notes.md
+          test -s notes.md || { echo "CHANGELOG.md has no section for $version"; exit 1; }
+          gh release create "$TAG" dist/AnyPS5-Conversor.exe dist/AnyPS5-Conversor.exe.sha256 \
+            --repo "$GITHUB_REPOSITORY" --title "AnyPS5 Conversor $TAG" --notes-file notes.md

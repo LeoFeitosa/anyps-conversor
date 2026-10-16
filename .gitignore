@@ -1,0 +1,28 @@
+# Build
+bin/
+obj/
+publish/
+artifacts/
+*.user
+.vs/
+.idea/
+.vscode/
+
+# Dependências baixadas por build/download-dependencies.ps1
+deps/
+
+# Nunca versionar conteúdo de jogos ou saídas de conversão
+*.pkg
+*.self
+*.sprx
+*.wad
+eboot.bin
+sce_sys/
+sce_module/
+app0/
+shader_cache/
+anyps5.log
+
+# Sistema
+Thumbs.db
+.DS_Store

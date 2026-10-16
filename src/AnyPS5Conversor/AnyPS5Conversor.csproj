@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>AnyPS5Conversor</RootNamespace>
+    <AssemblyName>AnyPS5-Conversor</AssemblyName>
+    <ApplicationIcon>..\..\assets\icon.ico</ApplicationIcon>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <Product>AnyPS5 Conversor</Product>
+    <Description>Graphical converter of PS5 executables to Windows, based on AnyPS5.</Description>
+    <Copyright>GPL-2.0-only</Copyright>
+
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SharpCompress" Version="0.50.5" />
+  </ItemGroup>
+
+  <!-- Baixadas e conferidas por build/download-dependencies.ps1; não são versionadas. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\deps\relinker.exe" LogicalName="relinker.exe" />
+    <EmbeddedResource Include="..\..\deps\prx-windows.zip" LogicalName="prx-windows.zip" />
+    <EmbeddedResource Include="..\..\deps\VERSION" LogicalName="anyps5-version" />
+  </ItemGroup>
+
+  <Target Name="CheckDependencies" BeforeTargets="BeforeBuild">
+    <Error Condition="!Exists('..\..\deps\VERSION')" Text="Dependencies missing. Run: pwsh build/download-dependencies.ps1" />
+  </Target>
+
+</Project>
