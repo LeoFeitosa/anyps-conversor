@@ -119,7 +119,7 @@ public static class Strings
                        "Your processor lacks instructions PS5 games require ({0}). Conversion works, but the game will not start on this PC."),
         ["err_game_exit"] = ("O jogo fechou com erro (código {0}).\n\nÚltimas linhas do registro:\n\n{1}",
                              "The game closed with an error (code {0}).\n\nLast lines of the log:\n\n{1}"),
-        ["err_title"] = ("AnyPS5 Conversor", "AnyPS5 Converter"),
+        ["err_heading"] = ("Atenção", "Attention"),
 
         ["pick_game"] = ("Escolha a pasta do jogo (a que contém o eboot.bin)", "Choose the game folder (the one with eboot.bin)"),
         ["pick_file"] = ("Escolha o arquivo do jogo (.zip, .rar, .7z…) ou o eboot.bin", "Choose the game file (.zip, .rar, .7z…) or eboot.bin"),
