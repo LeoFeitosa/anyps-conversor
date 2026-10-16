@@ -2,7 +2,7 @@ using SharpCompress.Archives;
 using SharpCompress.Common;
 using SharpCompress.Readers;
 
-namespace AnyPS5Conversor;
+namespace AnyPSConversor;
 
 /// <summary>O arquivo tem senha: nenhuma foi informada (<see cref="Wrong"/> falso) ou a informada não abre.</summary>
 public sealed class PasswordException(bool wrong) : Exception("password required")
@@ -25,8 +25,12 @@ public static class Archives
     public static bool IsArchive(string path) =>
         File.Exists(path) && Extensions.Any(e => path.EndsWith(e, StringComparison.OrdinalIgnoreCase));
 
-    static readonly string TempBase = Path.Combine(Path.GetTempPath(), "AnyPS5-Conversor");
-    const string WorkFolderName = ".AnyPS5-Conversor";
+    static readonly string TempBase = Path.Combine(Path.GetTempPath(), Settings.Name);
+    const string WorkFolderName = "." + Settings.Name;
+
+    /// <summary>Nomes da versão 0.6 e anteriores: o que sobrou neles também é limpo.</summary>
+    static readonly string LegacyTempBase = Path.Combine(Path.GetTempPath(), Settings.LegacyName);
+    const string LegacyWorkFolderName = "." + Settings.LegacyName;
     static readonly string RunName = "run-" + Environment.ProcessId;
 
     /// <summary>
@@ -59,7 +63,11 @@ public static class Archives
     /// </summary>
     public static void CleanStaleTemp(params string?[] outputParents)
     {
-        var bases = outputParents.Where(p => !string.IsNullOrEmpty(p)).Select(p => Path.Combine(p!, WorkFolderName)).Prepend(TempBase);
+        var bases = outputParents
+            .Where(p => !string.IsNullOrEmpty(p))
+            .SelectMany(p => new[] { Path.Combine(p!, WorkFolderName), Path.Combine(p!, LegacyWorkFolderName) })
+            .Prepend(LegacyTempBase)
+            .Prepend(TempBase);
         foreach (var folderBase in bases)
         {
             if (!Directory.Exists(folderBase))
@@ -94,8 +102,9 @@ public static class Archives
         try
         {
             using var process = System.Diagnostics.Process.GetProcessById(pid);
-            return pid == Environment.ProcessId
-                || process.ProcessName.Equals(System.Diagnostics.Process.GetCurrentProcess().ProcessName, StringComparison.OrdinalIgnoreCase);
+            // Uma versão antiga (AnyPS5-Conversor.exe) aberta ao mesmo tempo continua dona das pastas dela.
+            string[] names = [System.Diagnostics.Process.GetCurrentProcess().ProcessName, Settings.Name, Settings.LegacyName];
+            return pid == Environment.ProcessId || names.Contains(process.ProcessName, StringComparer.OrdinalIgnoreCase);
         }
         catch (ArgumentException)
         {
@@ -179,33 +188,23 @@ public static class Archives
     }
 
     /// <summary>
-    /// Recusa antes de extrair tudo o que não pode virar jogo: sem eboot.bin no índice, ou com ele criptografado
-    /// (só ele é lido, em memória). Num arquivo grande, o aviso chega em segundos e nada é gravado no disco.
+    /// Recusa antes de extrair tudo o que não pode virar jogo: sem o arquivo principal de nenhum console no índice
+    /// (no PS5, o eboot.bin), ou com ele inutilizável, como criptografado. Só ele é lido, em memória: num arquivo
+    /// grande, o aviso chega em segundos e nada é gravado no disco.
     /// </summary>
     static void CheckRequiredFiles(string path, List<IArchiveEntry> entries)
     {
-        var eboot = entries
-            .Where(e => (e.Key ?? "").Replace('\\', '/').Split('/')[^1].Equals("eboot.bin", StringComparison.OrdinalIgnoreCase))
-            .OrderBy(e => e.Key!.Length)
-            .FirstOrDefault()
-            ?? throw new UserException("err_no_eboot_archive", Path.GetFileName(path));
-        using var input = eboot.OpenEntryStream();
+        var (main, platform) = entries
+            .Select(e => (Entry: e, Platform: ConsolePlatform.ForMainFile((e.Key ?? "").Replace('\\', '/').Split('/')[^1])))
+            .Where(m => m.Platform is not null)
+            .OrderBy(m => m.Entry.Key!.Length)
+            .FirstOrDefault();
+        if (main is null)
+            throw new UserException("err_no_eboot_archive", Path.GetFileName(path));
+        using var input = main.OpenEntryStream();
         using var data = new MemoryStream();
         input.CopyTo(data);
-        if (!SelfUnwrapper.IsSelf(data.GetBuffer().AsSpan(0, (int)data.Length)))
-            return;
-        try
-        {
-            SelfUnwrapper.Unwrap(data.ToArray());
-        }
-        catch (EncryptedSelfException)
-        {
-            throw new UserException("err_encrypted", "eboot.bin");
-        }
-        catch (SelfException)
-        {
-            // Outros defeitos do SELF são explicados na conversão, com o registro completo.
-        }
+        platform!.CheckMainFile(data.ToArray());
     }
 
     static void ExtractStream(string path, string target, ReaderOptions options, IProgress<ExtractProgress> progress, CancellationToken cancel)

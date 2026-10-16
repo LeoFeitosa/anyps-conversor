@@ -1,6 +1,6 @@
-using static AnyPS5Conversor.Strings;
+using static AnyPSConversor.Strings;
 
-namespace AnyPS5Conversor;
+namespace AnyPSConversor;
 
 /// <summary>Pede a senha de um arquivo compactado. A senha não é guardada em lugar nenhum.</summary>
 sealed class PasswordDialog : Form

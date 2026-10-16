@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/AnyPSConversor/AnyPSConversor.csproj" />
+  <Project Path="tests/AnyPSConversor.Tests/AnyPSConversor.Tests.csproj" />
+</Solution>

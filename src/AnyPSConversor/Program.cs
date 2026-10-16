@@ -1,4 +1,4 @@
-namespace AnyPS5Conversor;
+namespace AnyPSConversor;
 
 static class Program
 {
@@ -13,7 +13,7 @@ static class Program
             MainForm.SaveScreenshot(file);
             return;
         }
-        Archives.CleanStaleTemp(Settings.Output, Settings.DefaultOutput);
+        Archives.CleanStaleTemp(Settings.Output, Settings.DefaultOutput, Settings.LegacyDefaultOutput);
         Converter.CleanLocalData();
         Application.Run(new MainForm(args.FirstOrDefault()));
     }

@@ -8,6 +8,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-16
+
+### Changed
+
+- The project is now called **AnyPS Conversor** (`anyps-conversor`), so it can take other PlayStation
+  consoles in the future. The executable is now `AnyPS-Conversor.exe`, and the default folder for
+  converted games is `%USERPROFILE%\AnyPS`. PS5 is still handled by AnyPS5.
+- Settings and logs from the previous version (`%APPDATA%\AnyPS5-Conversor` and
+  `%LOCALAPPDATA%\AnyPS5-Conversor`) are moved to the new folders on the first run: language and chosen
+  location stay the same.
+- Leftovers of earlier versions in temporary folders with the old name are cleaned up, but only when
+  the program that owns them is no longer open; an old version running at the same time is not
+  affected.
+- Internally, everything that depends on the console (the file that identifies a game, validation,
+  reading and conversion) goes through a platform, currently only PS5.
+
 ## [0.6.3] - 2026-10-16
 
 ### Added
@@ -176,16 +192,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Buttons to play and open the folder at the end, with the last lines of `anyps5.log` if the game
   closes with an error.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.6.3...HEAD
-[0.6.3]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.6.2...v0.6.3
-[0.6.2]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.6.1...v0.6.2
-[0.6.1]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.6.0...v0.6.1
-[0.6.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.5.0...v0.6.0
-[0.5.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.4.1...v0.5.0
-[0.4.1]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.4.0...v0.4.1
-[0.4.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.3.1...v0.4.0
-[0.3.1]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.3.0...v0.3.1
-[0.3.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.2.1...v0.3.0
-[0.2.1]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.2.0...v0.2.1
-[0.2.0]: https://github.com/LeoFeitosa/anyps5-conversor/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/LeoFeitosa/anyps5-conversor/releases/tag/v0.1.0
+[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.6.3...v0.7.0
+[0.6.3]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.6.2...v0.6.3
+[0.6.2]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.6.1...v0.6.2
+[0.6.1]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.6.0...v0.6.1
+[0.6.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.4.1...v0.5.0
+[0.4.1]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.3.1...v0.4.0
+[0.3.1]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.2.1...v0.3.0
+[0.2.1]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/LeoFeitosa/anyps-conversor/releases/tag/v0.1.0

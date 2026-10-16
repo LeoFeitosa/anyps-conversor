@@ -4,7 +4,7 @@
 
 ## Português
 
-**O que o programa é.** O AnyPS5 Conversor é uma interface gráfica, livre e de código aberto, para as
+**O que o programa é.** O AnyPS Conversor é uma interface gráfica, livre e de código aberto, para as
 ferramentas do [AnyPS5](https://github.com/boykopovar/AnyPS5). Ele serve para rodar no Windows
 software de PS5 que o próprio usuário tem o direito de usar, como homebrew de distribuição livre e
 cópias extraídas do próprio console.
@@ -45,7 +45,7 @@ chaves, firmware, links para esse tipo de material nem capturas de tela de jogos
 conteúdo é removido.
 
 **Pedidos de remoção.** Se você acredita que algo neste repositório viola um direito seu, abra uma
-[issue](https://github.com/LeoFeitosa/anyps5-conversor/issues) descrevendo o conteúdo, ou use o
+[issue](https://github.com/LeoFeitosa/anyps-conversor/issues) descrevendo o conteúdo, ou use o
 [processo de notificação do GitHub](https://docs.github.com/pt/site-policy/content-removal-policies/dmca-takedown-policy).
 O pedido será analisado e, se procedente, o conteúdo será removido.
 
@@ -53,7 +53,7 @@ O pedido será analisado e, se procedente, o conteúdo será removido.
 
 ## English
 
-**What the program is.** AnyPS5 Conversor is a free and open source graphical interface for the
+**What the program is.** AnyPS Conversor is a free and open source graphical interface for the
 [AnyPS5](https://github.com/boykopovar/AnyPS5) tools. It is meant to run on Windows PS5 software that
 the user has the right to use, such as freely distributed homebrew and copies dumped from the user's
 own console.
@@ -95,6 +95,6 @@ repository and remain under their authors' licenses.
 firmware, links to such material or screenshots of commercial games. Such content is removed.
 
 **Removal requests.** If you believe something in this repository infringes your rights, open an
-[issue](https://github.com/LeoFeitosa/anyps5-conversor/issues) describing the content, or use
+[issue](https://github.com/LeoFeitosa/anyps-conversor/issues) describing the content, or use
 [GitHub's notice process](https://docs.github.com/en/site-policy/content-removal-policies/dmca-takedown-policy).
 The request will be reviewed and, if valid, the content will be removed.

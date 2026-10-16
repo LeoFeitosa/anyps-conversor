@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 
-namespace AnyPS5Conversor;
+namespace AnyPSConversor;
 
 /// <summary>Arquivo SELF que não pode ser desembrulhado.</summary>
 public class SelfException(string message) : Exception(message);

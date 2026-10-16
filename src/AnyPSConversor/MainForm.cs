@@ -2,14 +2,14 @@ using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using static AnyPS5Conversor.Strings;
+using static AnyPSConversor.Strings;
 
-namespace AnyPS5Conversor;
+namespace AnyPSConversor;
 
 public sealed class MainForm : Form
 {
     const string UpstreamUrl = "https://github.com/boykopovar/AnyPS5";
-    const string ProjectUrl = "https://github.com/LeoFeitosa/anyps5-conversor";
+    const string ProjectUrl = "https://github.com/LeoFeitosa/anyps-conversor";
 
     static readonly string AppVersion =
         (Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "0.0.0")
@@ -292,7 +292,7 @@ public sealed class MainForm : Form
     {
         if (running is not null)
             return;
-        var patterns = string.Join(";", Archives.Extensions.Select(e => "*" + e).Append("eboot.bin"));
+        var patterns = string.Join(";", Archives.Extensions.Select(e => "*" + e).Concat(ConsolePlatform.All.Select(p => p.MainFile)));
         using var dialog = new OpenFileDialog { Title = T("pick_file"), Filter = $"{T("file_filter")}|{patterns}" };
         if (dialog.ShowDialog(this) == DialogResult.OK)
             await LoadGameAsync(dialog.FileName);
@@ -328,7 +328,7 @@ public sealed class MainForm : Form
     public static void SaveScreenshot(string file)
     {
         using var form = new MainForm { StartPosition = FormStartPosition.Manual, Location = new Point(-8000, -8000), ShowInTaskbar = false };
-        form.outputBox.Text = @"C:\Users\Jogador\AnyPS5";
+        form.outputBox.Text = @"C:\Users\Jogador\AnyPS";
         form.Show();
         Application.DoEvents();
         GetWindowRect(form.Handle, out var window);
@@ -409,7 +409,7 @@ public sealed class MainForm : Form
             GameInfo loaded;
             try
             {
-                loaded = await Task.Run(() => GameInfo.Load(extracted ?? path, fallbackName));
+                loaded = await Task.Run(() => ConsolePlatform.Load(extracted ?? path, fallbackName));
             }
             catch (UserException e) when (extracted is not null && e.Key == "err_no_eboot")
             {
@@ -557,12 +557,12 @@ public sealed class MainForm : Form
             catch (IOException) { }
             BeginInvoke(() => logBox.AppendText(line + Environment.NewLine));
         }
-        Log($"AnyPS5 Conversor {AppVersion} | {game.Name} ({game.TitleId}) | {game.Folder} -> {outputBox.Text}");
+        Log($"AnyPS Conversor {AppVersion} | {game.Name} ({game.TitleId}) | {game.Folder} -> {outputBox.Text}");
 
         try
         {
             Directory.CreateDirectory(outputBox.Text);
-            convertedExe = await Converter.ConvertAsync(game, outputBox.Text, extractedFolder is not null, progress, Log, running.Token);
+            convertedExe = await game.Platform.ConvertAsync(game, outputBox.Text, extractedFolder is not null, progress, Log, running.Token);
             finished = true;
             progressBar.Value = 1000;
             percentLabel.Text = "100%";
@@ -603,7 +603,7 @@ public sealed class MainForm : Form
             if (convertedExe is null)
                 percentLabel.Text = "";
             // Se a conversão falhou depois de mover a extração para app0/, ela ficou incompleta: pede o jogo de novo.
-            if (convertedExe is null && extractedFolder is not null && game is not null && !File.Exists(Path.Combine(game.Folder, "eboot.bin")))
+            if (convertedExe is null && extractedFolder is not null && game is not null && !File.Exists(Path.Combine(game.Folder, game.Platform.MainFile)))
                 ResetGame();
         }
     }

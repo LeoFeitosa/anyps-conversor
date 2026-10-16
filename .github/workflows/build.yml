@@ -41,22 +41,22 @@ jobs:
         run: ./build/download-dependencies.ps1
 
       - name: Test
-        run: dotnet test --project tests/AnyPS5Conversor.Tests -c Release
+        run: dotnet test --project tests/AnyPSConversor.Tests -c Release
 
       - name: Publish
         shell: pwsh
         run: |
           $suffix = if ('${{ github.ref_type }}' -eq 'tag') { '' } else { '-p:VersionSuffix=dev.${{ github.run_number }}' }
-          dotnet publish src/AnyPS5Conversor -c Release -o publish $suffix
-          $hash = (Get-FileHash publish/AnyPS5-Conversor.exe -Algorithm SHA256).Hash.ToLower()
-          "$hash  AnyPS5-Conversor.exe" | Set-Content publish/AnyPS5-Conversor.exe.sha256 -NoNewline
+          dotnet publish src/AnyPSConversor -c Release -o publish $suffix
+          $hash = (Get-FileHash publish/AnyPS-Conversor.exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  AnyPS-Conversor.exe" | Set-Content publish/AnyPS-Conversor.exe.sha256 -NoNewline
 
       - uses: actions/upload-artifact@v7
         with:
-          name: AnyPS5-Conversor
+          name: AnyPS-Conversor
           path: |
-            publish/AnyPS5-Conversor.exe
-            publish/AnyPS5-Conversor.exe.sha256
+            publish/AnyPS-Conversor.exe
+            publish/AnyPS-Conversor.exe.sha256
           if-no-files-found: error
 
   release:
@@ -72,7 +72,7 @@ jobs:
 
       - uses: actions/download-artifact@v8
         with:
-          name: AnyPS5-Conversor
+          name: AnyPS-Conversor
           path: dist
 
       - name: Create release
@@ -87,8 +87,8 @@ jobs:
           done
           { echo "## Português"; section CHANGELOG.md; echo "## English"; section CHANGELOG.en.md; } > notes.md
           sed "s/{anyps5}/$(jq -r .anyps5 build/dependencies.json)/g" build/release-footer.md >> notes.md
-          gh release create "$TAG" dist/AnyPS5-Conversor.exe dist/AnyPS5-Conversor.exe.sha256 THIRD-PARTY-NOTICES.txt \
-            --repo "$GITHUB_REPOSITORY" --title "AnyPS5 Conversor $TAG" --notes-file notes.md
+          gh release create "$TAG" dist/AnyPS-Conversor.exe dist/AnyPS-Conversor.exe.sha256 THIRD-PARTY-NOTICES.txt \
+            --repo "$GITHUB_REPOSITORY" --title "AnyPS Conversor $TAG" --notes-file notes.md
 
   # A imagem do README mostra sempre a versão publicada: gerada do próprio .exe, em português e inglês.
   screenshots:
@@ -104,7 +104,7 @@ jobs:
 
       - uses: actions/download-artifact@v8
         with:
-          name: AnyPS5-Conversor
+          name: AnyPS-Conversor
           path: dist
 
       - name: Update the README screenshots
@@ -116,7 +116,7 @@ jobs:
           [xml]$props = Get-Content Directory.Build.props
           $current = @($props.Project.PropertyGroup.VersionPrefix | Where-Object { $_ })[0]
           if ("v$current" -ne $env:TAG) { "Skipping: $env:TAG is not the current version (v$current)."; exit 0 }
-          ./build/update-screenshots.ps1 -Exe dist/AnyPS5-Conversor.exe
+          ./build/update-screenshots.ps1 -Exe dist/AnyPS-Conversor.exe
           git add docs/screenshot-pt.png docs/screenshot-en.png
           git diff --cached --quiet
           if ($LASTEXITCODE -eq 0) { 'Screenshots already up to date.'; exit 0 }

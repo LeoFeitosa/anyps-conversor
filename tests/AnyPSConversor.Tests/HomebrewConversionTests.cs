@@ -1,8 +1,8 @@
 using System.Text.Json;
-using AnyPS5Conversor;
+using AnyPSConversor;
 using Xunit;
 
-namespace AnyPS5Conversor.Tests;
+namespace AnyPSConversor.Tests;
 
 /// <summary>
 /// Converte de verdade os homebrews livres de build/homebrew.json, baixados por build/download-homebrew.ps1
@@ -39,11 +39,11 @@ public sealed class HomebrewConversionTests
         var log = new List<string>();
         try
         {
-            var game = GameInfo.Load(Path.Combine(Homebrew!, id));
+            var game = ConsolePlatform.Load(Path.Combine(Homebrew!, id));
             string exe;
             try
             {
-                exe = await Converter.ConvertAsync(game, output, false, new Progress<ConversionProgress>(),
+                exe = await game.Platform.ConvertAsync(game, output, false, new Progress<ConversionProgress>(),
                     line => { lock (log) log.Add(line); }, TestContext.Current.CancellationToken);
             }
             catch (UserException e) when (expect == "syscall" && e.Key == "err_syscall")

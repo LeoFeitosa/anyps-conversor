@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace AnyPS5Conversor;
+namespace AnyPSConversor;
 
 public enum Language { Portuguese, English }
 
@@ -8,7 +8,7 @@ public enum Language { Portuguese, English }
 public static class Strings
 {
     static readonly string SettingsFile = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "AnyPS5-Conversor", "language.txt");
+        Settings.Folder, "language.txt");
 
     public static Language Current { get; private set; } = LoadLanguage();
 
@@ -146,6 +146,6 @@ public static class Strings
         ["footer_disclaimer"] = ("Projeto independente, sem vínculo com a Sony.", "Independent project, not affiliated with Sony."),
         ["footer_licenses"] = ("Licenças", "Licenses"),
         ["licenses_title"] = ("Licenças de terceiros", "Third-party licenses"),
-        ["app_name"] = ("AnyPS5 Conversor", "AnyPS5 Converter"),
+        ["app_name"] = ("AnyPS Conversor", "AnyPS Converter"),
     };
 }

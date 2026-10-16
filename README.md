@@ -1,7 +1,7 @@
-# AnyPS5 Conversor
+# AnyPS Conversor
 
-[![Build](https://github.com/LeoFeitosa/anyps5-conversor/actions/workflows/build.yml/badge.svg)](https://github.com/LeoFeitosa/anyps5-conversor/actions/workflows/build.yml)
-[![Release](https://img.shields.io/github/v/release/LeoFeitosa/anyps5-conversor)](https://github.com/LeoFeitosa/anyps5-conversor/releases/latest)
+[![Build](https://github.com/LeoFeitosa/anyps-conversor/actions/workflows/build.yml/badge.svg)](https://github.com/LeoFeitosa/anyps-conversor/actions/workflows/build.yml)
+[![Release](https://img.shields.io/github/v/release/LeoFeitosa/anyps-conversor)](https://github.com/LeoFeitosa/anyps-conversor/releases/latest)
 [![License: GPL-2.0](https://img.shields.io/badge/license-GPL--2.0-blue)](LICENSE)
 
 Interface gráfica para Windows que converte jogos e apps de PS5 em executáveis do Windows, sem
@@ -10,16 +10,16 @@ em **Jogar agora**.
 
 **Português** | [English](README.en.md)
 
-**[⬇ Baixar a versão mais recente (AnyPS5-Conversor.exe)](https://github.com/LeoFeitosa/anyps5-conversor/releases/latest/download/AnyPS5-Conversor.exe)**
+**[⬇ Baixar a versão mais recente (AnyPS-Conversor.exe)](https://github.com/LeoFeitosa/anyps-conversor/releases/latest/download/AnyPS-Conversor.exe)**
 
-![Tela do AnyPS5 Conversor](docs/screenshot-pt.png)
+![Tela do AnyPS Conversor](docs/screenshot-pt.png)
 
 ## Baseado no AnyPS5
 
 Este projeto é uma interface para o [AnyPS5](https://github.com/boykopovar/AnyPS5), de
 [boykopovar](https://github.com/boykopovar) e colaboradores. Todo o trabalho pesado é deles: o
 relinker que transforma o executável do PS5 num executável nativo e as bibliotecas do sistema
-reimplementadas. O AnyPS5 Conversor só junta essas peças num programa que qualquer pessoa consegue
+reimplementadas. O AnyPS Conversor só junta essas peças num programa que qualquer pessoa consegue
 usar:
 
 | Parte | Origem |
@@ -35,8 +35,8 @@ repositório (`anyps5-<versão>`), usada só se o release oficial deixar de exis
 
 ## Como usar
 
-1. [Baixe o `AnyPS5-Conversor.exe`](https://github.com/LeoFeitosa/anyps5-conversor/releases/latest/download/AnyPS5-Conversor.exe) (sempre a versão mais recente; versões anteriores ficam em
-   [Releases](https://github.com/LeoFeitosa/anyps5-conversor/releases)).
+1. [Baixe o `AnyPS-Conversor.exe`](https://github.com/LeoFeitosa/anyps-conversor/releases/latest/download/AnyPS-Conversor.exe) (sempre a versão mais recente; versões anteriores ficam em
+   [Releases](https://github.com/LeoFeitosa/anyps-conversor/releases)).
 2. Abra o programa. Não precisa instalar nada.
 3. Arraste o jogo para a janela, ou use **Escolher pasta** ou **Escolher arquivo**. Pode ser a pasta
    onde fica o `eboot.bin` ou um arquivo `.zip`, `.rar`, `.7z`, `.tar`, `.tar.gz`, `.tgz`, `.bz2` ou
@@ -50,11 +50,11 @@ para a Lixeira**. Eles vão para a Lixeira do Windows, de onde podem ser restaur
 Arquivos compactados são extraídos no próprio local escolhido em "Onde salvar" (numa pasta oculta,
 apagada ao final), então salvar em outro disco também tira a extração do C:.
 
-O jogo convertido fica numa pasta nova, por padrão em `%USERPROFILE%\AnyPS5\<nome do jogo>`, com o
+O jogo convertido fica numa pasta nova, por padrão em `%USERPROFILE%\AnyPS\<nome do jogo>`, com o
 executável, a pasta `libs/` e os arquivos originais em `app0/`. A pasta pode ser movida para
 qualquer lugar.
 
-Também dá para arrastar a pasta do jogo direto sobre o ícone do `AnyPS5-Conversor.exe`.
+Também dá para arrastar a pasta do jogo direto sobre o ícone do `AnyPS-Conversor.exe`.
 
 ## Requisitos
 
@@ -67,7 +67,7 @@ Também dá para arrastar a pasta do jogo direto sobre o ícone do `AnyPS5-Conve
 - O jogo precisa estar **descriptografado**. Arquivos criptografados são recusados, assim como pacotes
   `.pkg` da loja, que são criptografados.
 
-Quando uma conversão falha, o registro dela fica em `%LOCALAPPDATA%\AnyPS5-Conversor\logs` (os 10
+Quando uma conversão falha, o registro dela fica em `%LOCALAPPDATA%\AnyPS-Conversor\logs` (os 10
 mais recentes, por até 30 dias). Fora isso o programa só guarda o idioma e a pasta escolhidos e apaga os
 temporários ao terminar. Se um jogo converte mas não abre ou trava, quase sempre é uma função do sistema que o AnyPS5 ainda
 não implementa. O progresso por título fica no
@@ -81,10 +81,10 @@ Requisitos: [.NET SDK 10](https://dotnet.microsoft.com/download) e PowerShell 7.
 ```powershell
 pwsh build/download-dependencies.ps1
 dotnet test
-dotnet publish src/AnyPS5Conversor -c Release -o publish
+dotnet publish src/AnyPSConversor -c Release -o publish
 ```
 
-O resultado é um único `publish/AnyPS5-Conversor.exe`, com o runtime do .NET, o relinker e as
+O resultado é um único `publish/AnyPS-Conversor.exe`, com o runtime do .NET, o relinker e as
 bibliotecas embutidos. Os builds oficiais são feitos pelo GitHub Actions a cada tag `vX.Y.Z` e
 publicados em Releases junto com o SHA-256.
 

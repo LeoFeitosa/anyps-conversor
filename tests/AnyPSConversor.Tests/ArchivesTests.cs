@@ -1,9 +1,9 @@
 using System.Formats.Tar;
 using System.IO.Compression;
-using AnyPS5Conversor;
+using AnyPSConversor;
 using Xunit;
 
-namespace AnyPS5Conversor.Tests;
+namespace AnyPSConversor.Tests;
 
 public sealed class ArchivesTests : IDisposable
 {
@@ -172,7 +172,7 @@ public sealed class ArchivesTests : IDisposable
 
         var folder = Archives.Extract(zip, null, Archives.WorkRoot(output), new Progress<ExtractProgress>(), CancellationToken.None);
 
-        var work = Path.Combine(output, ".AnyPS5-Conversor");
+        var work = Path.Combine(output, ".AnyPS-Conversor");
         Assert.StartsWith(work, folder);
         if (OperatingSystem.IsWindows())
             Assert.True(File.GetAttributes(work).HasFlag(FileAttributes.Hidden));
@@ -184,12 +184,12 @@ public sealed class ArchivesTests : IDisposable
     public void CleansStaleWorkFoldersInTheOutput()
     {
         var output = Path.Combine(root, "saida");
-        var dead = Path.Combine(output, ".AnyPS5-Conversor", "run-999999999", "extract-x");
+        var dead = Path.Combine(output, ".AnyPS-Conversor", "run-999999999", "extract-x");
         Directory.CreateDirectory(dead);
 
         Archives.CleanStaleTemp(output);
 
-        Assert.False(Directory.Exists(Path.Combine(output, ".AnyPS5-Conversor")));
+        Assert.False(Directory.Exists(Path.Combine(output, ".AnyPS-Conversor")));
     }
 
     [Fact]

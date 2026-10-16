@@ -15,7 +15,7 @@ sistema não implementadas e falhas do relinker devem ser reportados lá.
   (`feat:`, `fix:`, `docs:`, `build:`, `ci:`, `test:`, `refactor:`).
 - Versões seguem o [SemVer](https://semver.org/lang/pt-BR/). Toda mudança visível ao usuário entra
   em `CHANGELOG.md` e `CHANGELOG.en.md`, na seção `[Unreleased]`.
-- Todo texto público existe em português e inglês: interface (`src/AnyPS5Conversor/Strings.cs`),
+- Todo texto público existe em português e inglês: interface (`src/AnyPSConversor/Strings.cs`),
   READMEs, CHANGELOGs, documentos e modelos do GitHub. Um texto novo precisa das duas versões.
 
 ## Ambiente
@@ -25,10 +25,10 @@ Requisitos: [.NET SDK 10](https://dotnet.microsoft.com/download) e PowerShell 7.
 ```powershell
 pwsh build/download-dependencies.ps1   # baixa e confere o relinker e as bibliotecas do AnyPS5
 dotnet test                            # testes (os de conversão real precisam de ANYPS5_HOMEBREW)
-dotnet publish src/AnyPS5Conversor -c Release -o publish
+dotnet publish src/AnyPSConversor -c Release -o publish
 ```
 
-O executável final fica em `publish/AnyPS5-Conversor.exe`.
+O executável final fica em `publish/AnyPS-Conversor.exe`.
 
 ## Atualizar o AnyPS5
 

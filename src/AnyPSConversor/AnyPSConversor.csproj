@@ -7,13 +7,13 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>AnyPS5Conversor</RootNamespace>
-    <AssemblyName>AnyPS5-Conversor</AssemblyName>
+    <RootNamespace>AnyPSConversor</RootNamespace>
+    <AssemblyName>AnyPS-Conversor</AssemblyName>
     <ApplicationIcon>..\..\assets\icon.ico</ApplicationIcon>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ApplicationManifest>app.manifest</ApplicationManifest>
 
-    <Product>AnyPS5 Conversor</Product>
+    <Product>AnyPS Conversor</Product>
     <Description>Graphical converter of PS5 executables to Windows, based on AnyPS5.</Description>
     <Copyright>GPL-2.0-only</Copyright>
 
