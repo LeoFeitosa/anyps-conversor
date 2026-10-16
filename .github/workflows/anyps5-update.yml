@@ -1,0 +1,200 @@
+name: AnyPS5 update
+
+# Adota sozinho cada versão nova do AnyPS5 depois de 7 dias publicada: atualiza build/dependencies.json,
+# sobe a versão do conversor, compila, roda os testes (inclusive a conversão real de homebrews livres) e
+# publica o release. Sem versão nova, termina sem fazer nada. Com versão nova, avisa o dono do repositório
+# por uma issue: fechada quando deu certo, aberta quando algo falhou (e então nada é publicado).
+
+on:
+  schedule:
+    - cron: '17 9 * * *'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Tag do AnyPS5 a testar (vazio = a mais recente com 7 dias ou mais)'
+        required: false
+      dry_run:
+        description: 'Só testar: não publica nem abre issue'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: anyps5-update
+  cancel-in-progress: false
+
+env:
+  UPSTREAM: boykopovar/AnyPS5
+  GH_TOKEN: ${{ github.token }}
+  DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+
+jobs:
+  update:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Look for a new AnyPS5 release
+        id: check
+        shell: pwsh
+        env:
+          REQUESTED: ${{ inputs.version }}
+        run: |
+          function Version([string]$tag) { [version]($tag.TrimStart('v') -replace '[^0-9.].*$', '') }
+          $current = (Get-Content build/dependencies.json -Raw | ConvertFrom-Json).anyps5
+          $tag = $env:REQUESTED
+          if (-not $tag) {
+            $cutoff = [DateTime]::UtcNow.AddDays(-7)
+            $tag = gh release list -R $env:UPSTREAM --exclude-drafts --exclude-pre-releases --limit 30 --json tagName,publishedAt |
+              ConvertFrom-Json |
+              Where-Object { ([DateTime]$_.publishedAt).ToUniversalTime() -lt $cutoff } |
+              Sort-Object { Version $_.tagName } -Descending |
+              Select-Object -First 1 -ExpandProperty tagName
+            if (-not $tag -or (Version $tag) -le (Version $current)) {
+              "Nothing new: the converter already uses AnyPS5 $current."
+              "update=false" >> $env:GITHUB_OUTPUT
+              exit 0
+            }
+          }
+          [xml]$props = Get-Content Directory.Build.props
+          $old = @($props.Project.PropertyGroup.VersionPrefix | Where-Object { $_ })[0]
+          $v = [version]$old
+          $new = "$($v.Major).$($v.Minor).$($v.Build + 1)"
+          "AnyPS5 $current -> $tag; converter $old -> $new"
+          "update=true" >> $env:GITHUB_OUTPUT
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "current=$current" >> $env:GITHUB_OUTPUT
+          "old=$old" >> $env:GITHUB_OUTPUT
+          "new=$new" >> $env:GITHUB_OUTPUT
+
+      - uses: actions/setup-dotnet@v5
+        if: steps.check.outputs.update == 'true'
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Update the pinned AnyPS5 version
+        if: steps.check.outputs.update == 'true'
+        shell: pwsh
+        env:
+          TAG: ${{ steps.check.outputs.tag }}
+          CURRENT: ${{ steps.check.outputs.current }}
+          OLD: ${{ steps.check.outputs.old }}
+          NEW: ${{ steps.check.outputs.new }}
+        run: |
+          $download = Join-Path $env:RUNNER_TEMP 'anyps5'
+          $assets = [ordered]@{ 'relinker.exe' = "relinker-$env:TAG.exe"; 'prx-windows.zip' = "prx-windows-$env:TAG.zip" }
+          $files = [ordered]@{}
+          foreach ($entry in $assets.GetEnumerator()) {
+            gh release download $env:TAG -R $env:UPSTREAM -p $entry.Value -D $download
+            if ($LASTEXITCODE) { throw "AnyPS5 $env:TAG has no asset $($entry.Value)" }
+            $hash = (Get-FileHash (Join-Path $download $entry.Value) -Algorithm SHA256).Hash.ToLower()
+            $files[$entry.Key] = [ordered]@{ asset = $entry.Value; sha256 = $hash }
+          }
+          $json = [ordered]@{ anyps5 = $env:TAG; files = $files } | ConvertTo-Json -Depth 5
+          Set-Content build/dependencies.json (($json -replace "`r`n", "`n") + "`n") -NoNewline
+
+          $props = Get-Content Directory.Build.props -Raw
+          Set-Content Directory.Build.props $props.Replace("<VersionPrefix>$env:OLD</VersionPrefix>", "<VersionPrefix>$env:NEW</VersionPrefix>") -NoNewline
+
+          $repo = "https://github.com/$env:GITHUB_REPOSITORY"
+          $date = [DateTime]::UtcNow.ToString('yyyy-MM-dd')
+          $changelog = (Get-Content CHANGELOG.md -Raw).
+            Replace("## [Unreleased]`n", "## [Unreleased]`n`n## [$env:NEW] - $date`n`n### AnyPS5`n`n- AnyPS5 atualizado de $env:CURRENT para $env:TAG ([notas da versão](https://github.com/$env:UPSTREAM/releases/tag/$env:TAG)).`n").
+            Replace("[Unreleased]: $repo/compare/v$env:OLD...HEAD", "[Unreleased]: $repo/compare/v$env:NEW...HEAD`n[$env:NEW]: $repo/compare/v$env:OLD...v$env:NEW")
+          Set-Content CHANGELOG.md $changelog -NoNewline
+          git diff
+
+      - name: Download dependencies and test homebrews
+        if: steps.check.outputs.update == 'true'
+        shell: pwsh
+        run: |
+          ./build/download-dependencies.ps1
+          ./build/download-homebrew.ps1 -Destination (Join-Path $env:RUNNER_TEMP 'homebrew')
+
+      - name: Test, including real conversions
+        if: steps.check.outputs.update == 'true'
+        shell: pwsh
+        run: |
+          $env:ANYPS5_HOMEBREW = Join-Path $env:RUNNER_TEMP 'homebrew'
+          dotnet test --project tests/AnyPS5Conversor.Tests -c Release
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+      - name: Publish
+        if: steps.check.outputs.update == 'true'
+        shell: pwsh
+        run: |
+          dotnet publish src/AnyPS5Conversor -c Release -o publish
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $hash = (Get-FileHash publish/AnyPS5-Conversor.exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  AnyPS5-Conversor.exe" | Set-Content publish/AnyPS5-Conversor.exe.sha256 -NoNewline
+
+      - uses: actions/upload-artifact@v5
+        if: steps.check.outputs.update == 'true'
+        with:
+          name: AnyPS5-Conversor
+          path: |
+            publish/AnyPS5-Conversor.exe
+            publish/AnyPS5-Conversor.exe.sha256
+          if-no-files-found: error
+
+      - name: Commit, tag and release
+        if: steps.check.outputs.update == 'true' && env.DRY_RUN != 'true'
+        shell: pwsh
+        env:
+          TAG: ${{ steps.check.outputs.tag }}
+          NEW: ${{ steps.check.outputs.new }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898099+github-actions[bot]@users.noreply.github.com'
+          git add build/dependencies.json Directory.Build.props CHANGELOG.md
+          git commit -m "chore: update AnyPS5 to $env:TAG"
+          git tag -a "v$env:NEW" -m "AnyPS5 Conversor $env:NEW"
+          git push origin HEAD:main "v$env:NEW"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+          $section = [regex]::Match((Get-Content CHANGELOG.md -Raw), "(?s)## \[$([regex]::Escape($env:NEW))\][^\n]*\n(.*?)(?=\n## \[)").Groups[1].Value.Trim()
+          $footer = (Get-Content build/release-footer.md -Raw).Replace('{anyps5}', $env:TAG)
+          Set-Content notes.md ($section + "`n" + $footer)
+          gh release create "v$env:NEW" publish/AnyPS5-Conversor.exe publish/AnyPS5-Conversor.exe.sha256 THIRD-PARTY-NOTICES.txt `
+            --title "AnyPS5 Conversor v$env:NEW" --notes-file notes.md --latest
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+      - name: Notify success
+        if: steps.check.outputs.update == 'true' && env.DRY_RUN != 'true'
+        shell: pwsh
+        env:
+          TAG: ${{ steps.check.outputs.tag }}
+          NEW: ${{ steps.check.outputs.new }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          $body = @"
+          @$env:OWNER o AnyPS5 $env:TAG foi adotado e o **AnyPS5 Conversor v$env:NEW** já está publicado:
+          https://github.com/$env:GITHUB_REPOSITORY/releases/tag/v$env:NEW
+
+          Passou na compilação, nos testes e na conversão real dos homebrews de teste.
+          Notas do AnyPS5: https://github.com/$env:UPSTREAM/releases/tag/$env:TAG
+          "@
+          $url = gh issue create --title "AnyPS5 $env:TAG adotado: v$env:NEW publicada" --body $body
+          gh issue close $url
+
+      - name: Notify failure
+        if: failure() && env.DRY_RUN != 'true'
+        shell: pwsh
+        env:
+          TAG: ${{ steps.check.outputs.tag }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          $title = if ($env:TAG) { "Atualização para o AnyPS5 $env:TAG falhou" } else { 'Verificação de atualização do AnyPS5 falhou' }
+          # Um aviso por problema: enquanto a issue estiver aberta, as próximas falhas iguais não avisam de novo.
+          $open = gh issue list --state open --search "in:title `"$title`"" --json title | ConvertFrom-Json | Where-Object title -eq $title
+          if ($open) { exit 0 }
+          $body = @"
+          @$env:OWNER a atualização automática parou e **nada foi publicado**; os usuários continuam na versão atual.
+
+          Detalhes da execução: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID
+          "@
+          gh issue create --title $title --body $body
