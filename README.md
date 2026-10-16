@@ -36,7 +36,8 @@ com o hash SHA-256 de cada arquivo.
 2. Abra o programa. Não precisa instalar nada.
 3. Arraste o jogo para a janela, ou use **Escolher pasta** ou **Escolher arquivo**. Pode ser a pasta
    onde fica o `eboot.bin` ou um arquivo `.zip`, `.rar`, `.7z`, `.tar`, `.tar.gz`, `.tgz`, `.bz2` ou
-   `.xz` com ela dentro.
+   `.xz` com ela dentro. Se o arquivo tiver senha, o programa pede. Não precisa ter 7-Zip
+   ou WinRAR instalado.
 4. Clique em **Converter para Windows** e depois em **Jogar agora**.
 
 O jogo convertido fica numa pasta nova, por padrão em `%USERPROFILE%\AnyPS5\<nome do jogo>`, com o

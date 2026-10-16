@@ -4,6 +4,12 @@ using SharpCompress.Readers;
 
 namespace AnyPS5Conversor;
 
+/// <summary>O arquivo tem senha: nenhuma foi informada (<see cref="Wrong"/> falso) ou a informada não abre.</summary>
+public sealed class PasswordException(bool wrong) : Exception("password required")
+{
+    public bool Wrong { get; } = wrong;
+}
+
 /// <summary>Extrai o jogo de um arquivo compactado (.zip, .rar, .7z, .tar e variações) para uma pasta temporária.</summary>
 public static class Archives
 {
@@ -15,25 +21,35 @@ public static class Archives
     /// <summary>Pasta temporária onde ficam as extrações desta execução.</summary>
     public static string TempRoot { get; } = Path.Combine(Path.GetTempPath(), "AnyPS5-Conversor");
 
-    public static string Extract(string archive, IProgress<int> progress, CancellationToken cancel)
+    /// <param name="password">Senha do arquivo; nula até o usuário informar uma.</param>
+    /// <exception cref="PasswordException">O arquivo tem senha e ela falta ou não confere.</exception>
+    public static string Extract(string archive, string? password, IProgress<int> progress, CancellationToken cancel)
     {
+        // Zip, rar e 7z têm índice e são abertos inteiros; tar, gz, bz2 e xz são lidos em sequência e não têm senha.
+        var indexed = new[] { ".zip", ".rar", ".7z" }.Any(e => archive.EndsWith(e, StringComparison.OrdinalIgnoreCase));
+        if (indexed && password is null && NeedsPassword(archive))
+            throw new PasswordException(wrong: false);
+
         var target = Path.Combine(TempRoot, "extract-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(target);
         try
         {
-            // Zip, rar e 7z têm índice e são abertos inteiros; tar, gz, bz2 e xz são lidos em sequência.
-            var indexed = new[] { ".zip", ".rar", ".7z" }.Any(e => archive.EndsWith(e, StringComparison.OrdinalIgnoreCase));
+            var options = new ReaderOptions { Password = password };
             if (indexed)
-                ExtractIndexed(archive, target, progress, cancel);
+                ExtractIndexed(archive, target, options, progress, cancel);
             else
-                ExtractStream(archive, target, progress, cancel);
+                ExtractStream(archive, target, options, progress, cancel);
             return target;
         }
         catch (Exception e) when (e is not OperationCanceledException and not UserException)
         {
             TryDelete(target);
-            if (e is CryptographicException || e.Message.Contains("password", StringComparison.OrdinalIgnoreCase))
-                throw new UserException("err_archive_password", Path.GetFileName(archive));
+            // Cada formato acusa a senha errada de um jeito (CryptographicException, "bad password",
+            // erro de dados no 7z); com senha informada, qualquer falha de leitura é tratada como senha errada.
+            if (password is not null)
+                throw new PasswordException(wrong: true);
+            if (e is CryptographicException)
+                throw new PasswordException(wrong: false);
             throw new UserException("err_archive", Path.GetFileName(archive), e.Message);
         }
         catch
@@ -43,9 +59,23 @@ public static class Archives
         }
     }
 
-    static void ExtractIndexed(string path, string target, IProgress<int> progress, CancellationToken cancel)
+    /// <summary>Verdadeiro se alguma entrada é criptografada ou se até a lista de arquivos é protegida.</summary>
+    static bool NeedsPassword(string path)
     {
-        using var archive = ArchiveFactory.OpenArchive(path, new ReaderOptions());
+        try
+        {
+            using var archive = ArchiveFactory.OpenArchive(path, new ReaderOptions());
+            return archive.Entries.Any(e => e.IsEncrypted);
+        }
+        catch (CryptographicException)
+        {
+            return true;
+        }
+    }
+
+    static void ExtractIndexed(string path, string target, ReaderOptions options, IProgress<int> progress, CancellationToken cancel)
+    {
+        using var archive = ArchiveFactory.OpenArchive(path, options);
         var entries = archive.Entries.Where(e => !e.IsDirectory).ToList();
         var total = Math.Max(1, entries.Sum(e => Math.Max(0, e.Size)));
         long done = 0;
@@ -56,10 +86,10 @@ public static class Archives
         }
     }
 
-    static void ExtractStream(string path, string target, IProgress<int> progress, CancellationToken cancel)
+    static void ExtractStream(string path, string target, ReaderOptions options, IProgress<int> progress, CancellationToken cancel)
     {
         using var file = File.OpenRead(path);
-        using var reader = ReaderFactory.OpenReader(file, new ReaderOptions());
+        using var reader = ReaderFactory.OpenReader(file, options);
         while (reader.MoveToNextEntry())
         {
             if (reader.Entry.IsDirectory)
