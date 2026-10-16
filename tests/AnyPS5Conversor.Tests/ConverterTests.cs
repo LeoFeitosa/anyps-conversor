@@ -13,6 +13,14 @@ public class ConverterTests
     public void ReadsRelinkerProgress(string line, double expected) =>
         Assert.Equal(expected, Converter.RelinkerFraction(line)!.Value, precision: 3);
 
+    [Fact]
+    public void ReadsRelinkerStageAndItem()
+    {
+        var step = Converter.ParseRelinker("PRX conversion         | libc.prx  |  57% (0/1)")!.Value;
+        Assert.Equal(2, step.Stage);
+        Assert.Equal("libc.prx", step.Item);
+    }
+
     [Theory]
     [InlineData("Conversion complete")]
     [InlineData("NID input: 171 references")]

@@ -52,6 +52,7 @@ public sealed class MainForm : Form
     readonly RoundButton openButton = Theme.SecondaryButton();
     readonly GameProgress progressBar = new();
     readonly Label statusLabel = Theme.Label("", Theme.Body, Theme.Muted);
+    readonly Label stepLabel = Theme.Label("", Theme.Small, Theme.Muted);
     readonly Label percentLabel = Theme.Label("", Theme.CardTitle, Theme.Text, ContentAlignment.TopRight);
     readonly LinkLabel detailsLink = Theme.Link();
     readonly TextBox logBox = new()
@@ -76,6 +77,8 @@ public sealed class MainForm : Form
     string statusKey = "status_idle";
     object[] statusArgs = [];
     bool statusIsError;
+    string? stepKey, stepItem;
+    TimeSpan? remaining;
     readonly string[] missingCpu = Converter.MissingCpuFeatures();
 
     const int BaseHeight = 734;
@@ -155,10 +158,11 @@ public sealed class MainForm : Form
         progressBar.SetBounds(20, 126, 600, 14);
         percentLabel.SetBounds(626, 120, 66, 26);
         statusLabel.SetBounds(20, 148, 672, 36);
+        stepLabel.SetBounds(20, 170, 672, 18);
         detailsLink.SetBounds(560, 18, 132, 20);
         detailsLink.TextAlign = ContentAlignment.TopRight;
         detailsLink.LinkClicked += (_, _) => ToggleDetails();
-        convertCard.Controls.AddRange([convertButton, donePanel, progressBar, percentLabel, statusLabel, detailsLink]);
+        convertCard.Controls.AddRange([convertButton, donePanel, progressBar, percentLabel, stepLabel, statusLabel, detailsLink]);
 
         logBox.SetBounds(24, 684, 712, LogHeight - 12);
 
@@ -228,6 +232,7 @@ public sealed class MainForm : Form
         if (game is not null)
             ShowGameTexts(game);
         SetStatus(statusKey, statusIsError, statusArgs);
+        SetStep(stepKey, stepItem);
         Invalidate(true);
     }
 
@@ -248,8 +253,30 @@ public sealed class MainForm : Form
             text = T("err_cpu", string.Join(", ", missingCpu));
             error = true;
         }
+        if (key == "status_extracting" && remaining is { } left)
+            text += " " + (left.TotalSeconds < 60 ? T("eta_under_minute") : T("eta_minutes", (int)Math.Ceiling(left.TotalMinutes)));
         statusLabel.Text = text;
         statusLabel.ForeColor = error ? Theme.Error : key is "status_done" or "status_done_recycled" ? Theme.Success : Theme.Muted;
+    }
+
+    /// <summary>Linha de detalhe embaixo do status: o arquivo ou a etapa da vez. Nula apaga.</summary>
+    void SetStep(string? key, string? item)
+    {
+        stepKey = key;
+        stepItem = item;
+        if (key is null)
+        {
+            stepLabel.Text = "";
+            return;
+        }
+        if (string.IsNullOrEmpty(item))
+        {
+            stepLabel.Text = T(key, "").TrimEnd(' ', '·');
+            return;
+        }
+        // Só o nome do arquivo é encurtado (pelo meio); o texto da etapa aparece sempre inteiro.
+        var room = LogicalToDeviceUnits(stepLabel.Width) - TextRenderer.MeasureText(T(key, ""), Theme.Small).Width - 8;
+        stepLabel.Text = T(key, Theme.ShortenMiddle(item.Replace('\\', '/'), Theme.Small, room));
     }
 
     async Task PickFolderAsync()
@@ -338,13 +365,20 @@ public sealed class MainForm : Form
                         fallbackName = fallbackName[..^extension.Length];
                 progressBar.Value = 0;
                 SetStatus("status_extracting", false, 0);
-                var progress = new Progress<int>(p =>
+                // Tempo restante só depois de 5 s e 3% medidos neste PC: a média até ali já é estável.
+                var clock = Stopwatch.StartNew();
+                var progress = new Progress<ExtractProgress>(p =>
                 {
                     if (running?.IsCancellationRequested == true)
                         return;
-                    progressBar.Value = p * 10;
-                    percentLabel.Text = $"{p}%";
-                    SetStatus("status_extracting", false, p);
+                    progressBar.Value = p.Percent * 10;
+                    percentLabel.Text = $"{p.Percent}%";
+                    remaining = clock.Elapsed.TotalSeconds >= 5 && p.Percent is >= 3 and < 100
+                        ? clock.Elapsed * ((100.0 - p.Percent) / p.Percent)
+                        : null;
+                    SetStatus("status_extracting", false, p.Percent);
+                    if (p.Entry is not null)
+                        SetStep("step_extracting", p.Entry);
                 });
                 var token = running.Token;
                 string? password = null;
@@ -365,6 +399,8 @@ public sealed class MainForm : Form
                             SetStatus(game is null ? "status_idle" : "status_ready");
                             return;
                         }
+                        clock.Restart();
+                        remaining = null;
                         SetStatus("status_extracting", false, 0);
                     }
                 }
@@ -454,6 +490,8 @@ public sealed class MainForm : Form
         convertButton.Text = busy ? T("cancel") : T("convert");
         convertButton.Primary = !busy;
         convertButton.Enabled = true;
+        remaining = null;
+        SetStep(null, null);
         // O idioma pode mudar a qualquer momento, inclusive no meio de uma extração ou conversão.
         browseFolderButton.Enabled = browseFileButton.Enabled = changeButton.Enabled = outputButton.Enabled = !busy;
         UseWaitCursor = false;
@@ -485,6 +523,7 @@ public sealed class MainForm : Form
             running.Cancel();
             convertButton.Enabled = false;
             SetStatus("status_cancelling");
+            SetStep(null, null);
             return;
         }
         if (game is null)
@@ -507,6 +546,7 @@ public sealed class MainForm : Form
             progressBar.Value = (int)(Math.Clamp(p.Fraction, 0, 1) * 1000);
             percentLabel.Text = $"{(int)(Math.Clamp(p.Fraction, 0, 1) * 100)}%";
             SetStatus(p.StatusKey, false, p.Args);
+            SetStep(p.StepKey, p.StepItem);
         });
         void Log(string line)
         {

@@ -10,6 +10,9 @@ public sealed class PasswordException(bool wrong) : Exception("password required
     public bool Wrong { get; } = wrong;
 }
 
+/// <summary>Andamento da extração: porcentagem e, ao começar cada entrada, o caminho dela no arquivo.</summary>
+public readonly record struct ExtractProgress(int Percent, string? Entry);
+
 /// <summary>
 /// Extrai o jogo de um arquivo compactado (.zip, .rar, .7z, .tar e variações) para uma pasta de trabalho no
 /// mesmo local onde o jogo convertido será salvo, para usar o disco escolhido pelo usuário e poder mover
@@ -103,7 +106,7 @@ public static class Archives
     /// <param name="password">Senha do arquivo; nula até o usuário informar uma.</param>
     /// <param name="workRoot">Onde extrair; normalmente <see cref="WorkRoot"/> do local de saída.</param>
     /// <exception cref="PasswordException">O arquivo tem senha e ela falta ou não confere.</exception>
-    public static string Extract(string archive, string? password, string workRoot, IProgress<int> progress, CancellationToken cancel)
+    public static string Extract(string archive, string? password, string workRoot, IProgress<ExtractProgress> progress, CancellationToken cancel)
     {
         // Zip, rar e 7z têm índice e são abertos inteiros; tar, gz, bz2 e xz são lidos em sequência e não têm senha.
         var indexed = new[] { ".zip", ".rar", ".7z" }.Any(e => archive.EndsWith(e, StringComparison.OrdinalIgnoreCase));
@@ -155,21 +158,57 @@ public static class Archives
         }
     }
 
-    static void ExtractIndexed(string path, string target, ReaderOptions options, IProgress<int> progress, CancellationToken cancel)
+    static void ExtractIndexed(string path, string target, ReaderOptions options, IProgress<ExtractProgress> progress, CancellationToken cancel)
     {
         using var archive = ArchiveFactory.OpenArchive(path, options);
         var entries = archive.Entries.Where(e => !e.IsDirectory).ToList();
+        CheckRequiredFiles(path, entries);
         var total = Math.Max(1, entries.Sum(e => Math.Max(0, e.Size)));
         DiskSpace.Ensure(target, total);
         long done = 0;
         foreach (var entry in entries)
         {
+            progress.Report(new((int)(100 * done / total), entry.Key));
             using var input = entry.OpenEntryStream();
-            done = Write(input, Destination(target, entry.Key), done, total, progress, cancel);
+            Write(input, Destination(target, entry.Key), read =>
+            {
+                done += read;
+                progress.Report(new((int)Math.Min(100, 100 * done / total), null));
+            }, cancel);
         }
     }
 
-    static void ExtractStream(string path, string target, ReaderOptions options, IProgress<int> progress, CancellationToken cancel)
+    /// <summary>
+    /// Recusa antes de extrair tudo o que não pode virar jogo: sem eboot.bin no índice, ou com ele criptografado
+    /// (só ele é lido, em memória). Num arquivo grande, o aviso chega em segundos e nada é gravado no disco.
+    /// </summary>
+    static void CheckRequiredFiles(string path, List<IArchiveEntry> entries)
+    {
+        var eboot = entries
+            .Where(e => (e.Key ?? "").Replace('\\', '/').Split('/')[^1].Equals("eboot.bin", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(e => e.Key!.Length)
+            .FirstOrDefault()
+            ?? throw new UserException("err_no_eboot_archive", Path.GetFileName(path));
+        using var input = eboot.OpenEntryStream();
+        using var data = new MemoryStream();
+        input.CopyTo(data);
+        if (!SelfUnwrapper.IsSelf(data.GetBuffer().AsSpan(0, (int)data.Length)))
+            return;
+        try
+        {
+            SelfUnwrapper.Unwrap(data.ToArray());
+        }
+        catch (EncryptedSelfException)
+        {
+            throw new UserException("err_encrypted", "eboot.bin");
+        }
+        catch (SelfException)
+        {
+            // Outros defeitos do SELF são explicados na conversão, com o registro completo.
+        }
+    }
+
+    static void ExtractStream(string path, string target, ReaderOptions options, IProgress<ExtractProgress> progress, CancellationToken cancel)
     {
         // Só o .tar sem compressão diz o tamanho final de antemão; nos demais, o disco cheio é tratado ao gravar.
         if (path.EndsWith(".tar", StringComparison.OrdinalIgnoreCase))
@@ -180,9 +219,12 @@ public static class Archives
         {
             if (reader.Entry.IsDirectory)
                 continue;
+            progress.Report(new((int)(100 * file.Position / Math.Max(1, file.Length)), reader.Entry.Key));
             using var input = reader.OpenEntryStream();
-            Write(input, Destination(target, reader.Entry.Key), 0, 1, null, cancel);
-            progress.Report((int)(100 * file.Position / Math.Max(1, file.Length)));
+            // Sem o tamanho final, o andamento é a posição no arquivo compactado; anda também dentro de uma
+            // entrada grande, senão a barra ficaria parada até ela terminar.
+            Write(input, Destination(target, reader.Entry.Key),
+                _ => progress.Report(new((int)(100 * file.Position / Math.Max(1, file.Length)), null)), cancel);
         }
     }
 
@@ -197,7 +239,7 @@ public static class Archives
         return destination;
     }
 
-    static long Write(Stream input, string destination, long done, long total, IProgress<int>? progress, CancellationToken cancel)
+    static void Write(Stream input, string destination, Action<int> written, CancellationToken cancel)
     {
         using var output = File.Create(destination);
         var buffer = new byte[1 << 20];
@@ -206,10 +248,8 @@ public static class Archives
         {
             cancel.ThrowIfCancellationRequested();
             output.Write(buffer, 0, read);
-            done += read;
-            progress?.Report((int)Math.Min(100, 100 * done / total));
+            written(read);
         }
-        return done;
     }
 
     public static void TryDelete(string? folder)

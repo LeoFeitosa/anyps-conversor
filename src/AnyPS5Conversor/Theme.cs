@@ -87,6 +87,25 @@ static class Theme
         g.FillEllipse(holeBrush, X(0.695f), Y(0.395f), S(0.07f), S(0.07f));
     }
 
+    /// <summary>
+    /// Encurta o texto pelo meio ("início…final.rar") até caber em <paramref name="limit"/> pixels, preservando o
+    /// fim (a extensão). Nomes sem espaço não quebram linha; sem isso um nome comprido empurraria o resto para fora.
+    /// </summary>
+    public static string ShortenMiddle(string name, Font font, int limit)
+    {
+        bool Fits(string s) => TextRenderer.MeasureText(s, font).Width <= limit;
+        if (Fits(name))
+            return name;
+        var tail = Math.Min(name.Length / 3, 18);
+        for (var head = name.Length - tail - 1; head > 4; head--)
+        {
+            var candidate = name[..head] + "…" + name[^tail..];
+            if (Fits(candidate))
+                return candidate;
+        }
+        return name.Length > tail + 4 ? name[..4] + "…" + name[^tail..] : name;
+    }
+
     [DllImport("dwmapi.dll")]
     static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
 
