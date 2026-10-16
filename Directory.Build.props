@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <!-- Versão do app (SemVer). O workflow de release usa a tag vX.Y.Z para sobrescrever. -->
+    <Version>0.1.0</Version>
+    <Authors>LeoFeitosa</Authors>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Caminhos da máquina de build não vão para o executável. -->
+    <PathMap>$(MSBuildThisFileDirectory)=/_/</PathMap>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+</Project>

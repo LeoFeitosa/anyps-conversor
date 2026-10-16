@@ -1,0 +1,36 @@
+name: Problema no conversor / Converter bug
+description: A interface ou a conversão não funcionou como esperado. / The interface or the conversion did not work as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Não anexe jogos, arquivos de jogos, chaves nem links para eles.** Issues com esse conteúdo são removidas.
+        **Do not attach games, game files, keys or links to them.** Issues with such content are removed.
+  - type: input
+    id: version
+    attributes:
+      label: Versão do conversor / Converter version
+      description: Aparece no rodapé da janela. / Shown in the window footer.
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Windows, CPU e GPU / Windows, CPU and GPU
+      placeholder: Windows 11 24H2, Ryzen 7 5800X, RTX 4070
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: O que aconteceu / What happened
+      description: Passos e mensagem de erro. / Steps and error message.
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Detalhes da conversão / Conversion details
+      description: Texto de "Mostrar detalhes" ou do anyps5.log. / Text from "Show details" or anyps5.log.
+      render: text

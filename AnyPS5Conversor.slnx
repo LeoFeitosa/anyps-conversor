@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/AnyPS5Conversor/AnyPS5Conversor.csproj" />
+  <Project Path="tests/AnyPS5Conversor.Tests/AnyPS5Conversor.Tests.csproj" />
+</Solution>

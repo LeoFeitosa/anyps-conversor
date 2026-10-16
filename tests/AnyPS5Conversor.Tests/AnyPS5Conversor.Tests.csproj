@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <!-- Só a lógica sem interface: os testes não precisam das dependências embutidas do app. -->
+  <ItemGroup>
+    <Compile Include="..\..\src\AnyPS5Conversor\SelfUnwrapper.cs" Link="SelfUnwrapper.cs" />
+    <Compile Include="..\..\src\AnyPS5Conversor\GameInfo.cs" Link="GameInfo.cs" />
+    <Compile Include="..\..\src\AnyPS5Conversor\Converter.cs" Link="Converter.cs" />
+    <Compile Include="..\..\src\AnyPS5Conversor\Archives.cs" Link="Archives.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SharpCompress" Version="0.50.5" />
+    <PackageReference Include="xunit.v3" Version="4.0.2" />
+  </ItemGroup>
+
+</Project>
