@@ -1,0 +1,10 @@
+{
+  "titles": [
+    { "id": "ps5-doom", "repo": "lowbit/ps5-doom", "tag": "v1.1.1", "asset": "PPSA99666.zip", "sha256": "4d8e5b785b61696fbf1988c2d0d87c5c977734ff60b1ce11cc49134b0e711b5f", "expect": "converts" },
+    { "id": "syobon-action", "repo": "kvaps/syobon-action-ps5", "tag": "01.001.000", "asset": "PPSA47402.zip", "sha256": "86e763fac842e90c48e54ddb4915ef517c5c17f37d4506574848e4e0a8aa51f5", "expect": "converts" },
+    { "id": "screentester5", "repo": "Marice/ScreenTester5", "tag": "01.000.000", "asset": "PPSA69420.zip", "sha256": "49a5c6d7bbb08f5a1539feb65b7fd2b537b6d7b304bdd3eed1c923e4ccbec8fd", "expect": "converts" },
+    { "id": "vlc", "repo": "ZiZc3/VLC", "tag": "v0.4", "asset": "PPSA85300.zip", "sha256": "876e68993e498dcf8d5802122391cf42a56bdf997536e47882730b734731c13d", "expect": "converts" },
+    { "id": "snes9x", "repo": "MisterTemaki/snes9xPS5", "tag": "v2.6", "asset": "Snes9xPS5-v2.6-PPSA99922.zip", "sha256": "8535ff7e15533a06a37388fef2f655039bcc4600033fee8f4e75d68c07681b4b", "expect": "converts" },
+    { "id": "ps5sx2", "repo": "Swordpdf/PS5SX2", "tag": "vk-285-171", "asset": "PS5SX2-vk-285-171.zip", "sha256": "226ac24866f0b94566c0680c3b99c0d5abfe8030723f5b28dae20af039c76963", "expect": "syscall" }
+  ]
+}

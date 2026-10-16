@@ -6,6 +6,13 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+### Adicionado
+
+- README completo em inglês (`README.en.md`), com seletor de idioma, e link de download direto da
+  versão mais recente no topo das duas versões.
+- Teste de conversão real (`HomebrewConversionTests`) com homebrews livres baixados do release de cada
+  autor por `build/download-homebrew.ps1`, com versão e SHA-256 fixados em `build/homebrew.json`.
+
 ## [0.6.0] - 2026-10-16
 
 ### Alterado
