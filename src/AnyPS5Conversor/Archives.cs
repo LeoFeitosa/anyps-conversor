@@ -82,6 +82,8 @@ public static class Archives
         catch (Exception e) when (e is not OperationCanceledException and not UserException)
         {
             TryDelete(target);
+            if (DiskSpace.IsDiskFull(e))
+                throw DiskSpace.DiskFull(target);
             // Cada formato acusa a senha errada de um jeito (CryptographicException, "bad password",
             // erro de dados no 7z); com senha informada, qualquer falha de leitura é tratada como senha errada.
             if (password is not null)
@@ -116,6 +118,7 @@ public static class Archives
         using var archive = ArchiveFactory.OpenArchive(path, options);
         var entries = archive.Entries.Where(e => !e.IsDirectory).ToList();
         var total = Math.Max(1, entries.Sum(e => Math.Max(0, e.Size)));
+        DiskSpace.Ensure(target, total);
         long done = 0;
         foreach (var entry in entries)
         {
@@ -126,6 +129,9 @@ public static class Archives
 
     static void ExtractStream(string path, string target, ReaderOptions options, IProgress<int> progress, CancellationToken cancel)
     {
+        // Só o .tar sem compressão diz o tamanho final de antemão; nos demais, o disco cheio é tratado ao gravar.
+        if (path.EndsWith(".tar", StringComparison.OrdinalIgnoreCase))
+            DiskSpace.Ensure(target, new FileInfo(path).Length);
         using var file = File.OpenRead(path);
         using var reader = ReaderFactory.OpenReader(file, options);
         while (reader.MoveToNextEntry())

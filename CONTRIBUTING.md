@@ -37,5 +37,5 @@ O executável final fica em `publish/AnyPS5-Conversor.exe`.
 ## Publicar uma versão
 
 1. Mova as entradas de `[Unreleased]` para uma nova seção `[X.Y.Z] - AAAA-MM-DD` no `CHANGELOG.md`.
-2. Atualize `<Version>` em `Directory.Build.props`.
+2. Atualize `<VersionPrefix>` em `Directory.Build.props`. O build falha se a tag não for igual a ele.
 3. Crie a tag `vX.Y.Z` e envie: o GitHub Actions compila, testa e publica o executável em Releases.

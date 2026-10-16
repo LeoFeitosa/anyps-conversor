@@ -30,6 +30,7 @@ public static class Converter
         try
         {
             progress.Report(new(0.02, "status_preparing"));
+            EnsureSpace(game, parentFolder);
             var relinker = ExtractRelinker();
             log($"AnyPS5 {AnyPS5Version}: {relinker}");
 
@@ -63,6 +64,11 @@ public static class Converter
             log($"OK: {exe}");
             return exe;
         }
+        catch (Exception e) when (DiskSpace.IsDiskFull(e))
+        {
+            TryDelete(output);
+            throw DiskSpace.DiskFull(output);
+        }
         catch
         {
             // A pasta de saída foi criada por nós e é nova: não deixa meio jogo para trás.
@@ -73,6 +79,18 @@ public static class Converter
         {
             TryDelete(work);
         }
+    }
+
+    /// <summary>
+    /// Destino: cópia do jogo em app0/, bibliotecas e o .exe (estimado em duas vezes os executáveis).
+    /// Temporário: os executáveis desembrulhados e o relinker.
+    /// </summary>
+    static void EnsureSpace(GameInfo game, string parentFolder)
+    {
+        var executables = new FileInfo(Path.Combine(game.Folder, "eboot.bin")).Length + game.Modules.Sum(m => new FileInfo(m).Length);
+        using (var libraries = new ZipArchive(OpenResource("prx-windows.zip"), ZipArchiveMode.Read))
+            DiskSpace.Ensure(parentFolder, DiskSpace.FolderSize(game.Folder) + libraries.Entries.Sum(e => e.Length) + 2 * executables);
+        DiskSpace.Ensure(Archives.TempRoot, executables + (8L << 20));
     }
 
     /// <summary>Instruções do Zen 2 que os jogos usam sem conferir; sem elas o jogo não abre.</summary>
