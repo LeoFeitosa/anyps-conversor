@@ -6,15 +6,16 @@ namespace AnyPS5Conversor;
 /// <summary>
 /// Aviso no visual do programa, no lugar da caixa de mensagem do Windows. Textos curtos aparecem inteiros;
 /// textos longos (como trechos de registro) ganham barra de rolagem em vez de esticar a janela.
+/// Sem <c>warning</c>, é só informativo: sem o triângulo e mais largo, para leitura (como as licenças).
 /// </summary>
 sealed class MessageDialog : Form
 {
-    const int TextLeft = 76;
-    const int TextWidth = 380;
     const int MaxTextHeight = 260;
 
-    MessageDialog(string title, string message)
+    MessageDialog(string title, string message, bool warning)
     {
+        var textLeft = warning ? 76 : 24;
+        var textWidth = warning ? 380 : 560;
         SuspendLayout();
         AutoScaleDimensions = new SizeF(96f, 96f);
         AutoScaleMode = AutoScaleMode.Dpi;
@@ -28,10 +29,10 @@ sealed class MessageDialog : Form
         var icon = new WarningIcon();
         icon.SetBounds(24, 22, 36, 36);
         var heading = Theme.Label(title, Theme.CardTitle, Theme.Text);
-        heading.SetBounds(TextLeft, 20, TextWidth, 28);
+        heading.SetBounds(textLeft, 20, textWidth, 28);
 
         var scale = DeviceDpi / 96f;
-        var measured = TextRenderer.MeasureText(message, Theme.Body, new Size((int)(TextWidth * scale), int.MaxValue),
+        var measured = TextRenderer.MeasureText(message, Theme.Body, new Size((int)(textWidth * scale), int.MaxValue),
             TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
         var textHeight = (int)Math.Ceiling(measured.Height / scale) + 4;
         Control body;
@@ -48,16 +49,16 @@ sealed class MessageDialog : Form
             };
             textHeight = MaxTextHeight;
         }
-        body.SetBounds(TextLeft, 54, TextWidth, textHeight);
+        body.SetBounds(textLeft, 54, textWidth, textHeight);
 
         var y = 54 + textHeight + 20;
         var ok = Theme.AccentButton();
         ok.Text = "OK";
-        ok.SetBounds(TextLeft + TextWidth - 120, y, 120, 36);
+        ok.SetBounds(textLeft + textWidth - 120, y, 120, 36);
         ok.DialogResult = DialogResult.OK;
-        ClientSize = new Size(TextLeft + TextWidth + 24, y + 36 + 18);
+        ClientSize = new Size(textLeft + textWidth + 24, y + 36 + 18);
 
-        Controls.AddRange([icon, heading, body, ok]);
+        Controls.AddRange(warning ? [icon, heading, body, ok] : [heading, body, ok]);
         AcceptButton = CancelButton = ok;
         Shown += (_, _) => ok.Focus();
         ResumeLayout(false);
@@ -69,9 +70,9 @@ sealed class MessageDialog : Form
         Theme.UseDarkTitleBar(Handle);
     }
 
-    public static void Show(IWin32Window owner, string title, string message)
+    public static void Show(IWin32Window owner, string title, string message, bool warning = true)
     {
-        using var dialog = new MessageDialog(title, message);
+        using var dialog = new MessageDialog(title, message, warning);
         dialog.ShowDialog(owner);
     }
 

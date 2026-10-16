@@ -88,7 +88,8 @@ bibliotecas embutidos. Os builds oficiais são feitos pelo GitHub Actions a cada
 publicados em Releases junto com o SHA-256.
 
 Detalhes sobre versões, commits e testes estão em [CONTRIBUTING.md](CONTRIBUTING.md). O histórico
-de mudanças está em [CHANGELOG.md](CHANGELOG.md).
+de mudanças está em [CHANGELOG.md](CHANGELOG.md), e como relatar falhas de segurança, em
+[SECURITY.md](SECURITY.md).
 
 ## Aviso legal
 
@@ -96,11 +97,19 @@ de mudanças está em [CHANGELOG.md](CHANGELOG.md).
   proprietárias. Use apenas jogos que você extraiu do seu próprio console ou homebrew de
   distribuição livre.
 - O programa não quebra nenhuma proteção: ele só aceita executáveis que já estão descriptografados.
-- Projeto independente, sem vínculo com a Sony Interactive Entertainment. PlayStation e PS5 são
-  marcas da Sony Interactive Entertainment, citadas aqui apenas para descrever compatibilidade.
+- Projeto independente, sem vínculo com a Sony Interactive Entertainment nem com os autores do
+  AnyPS5. PlayStation e PS5 são marcas da Sony Interactive Entertainment, citadas aqui apenas para
+  descrever compatibilidade.
+- Fornecido "como está", sem garantia. Cada usuário responde pelo uso que faz e pelo cumprimento das
+  leis do seu país.
+
+O texto completo, com marcas, licenças de terceiros e como pedir a remoção de conteúdo, está em
+[LEGAL.md](LEGAL.md).
 
 ## Licença
 
 [GNU General Public License v2.0](LICENSE), a mesma do AnyPS5. O executável distribui o relinker e
-as bibliotecas do AnyPS5; o código-fonte de ambos está em
-[boykopovar/AnyPS5](https://github.com/boykopovar/AnyPS5) e o deste programa, aqui.
+as bibliotecas do AnyPS5, cujo código-fonte está em
+[boykopovar/AnyPS5](https://github.com/boykopovar/AnyPS5) (na tag fixada em `build/dependencies.json`),
+e o deste programa, aqui. Os componentes de terceiros e suas licenças estão em
+[THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).

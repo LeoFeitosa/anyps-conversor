@@ -83,5 +83,6 @@ jobs:
           version="${TAG#v}"
           awk -v v="$version" '$0 ~ "^## \\[" v "\\]" {found=1; next} found && /^## \[/ {exit} found' CHANGELOG.md > notes.md
           test -s notes.md || { echo "CHANGELOG.md has no section for $version"; exit 1; }
-          gh release create "$TAG" dist/AnyPS5-Conversor.exe dist/AnyPS5-Conversor.exe.sha256 \
+          sed "s/{anyps5}/$(jq -r .anyps5 build/dependencies.json)/g" build/release-footer.md >> notes.md
+          gh release create "$TAG" dist/AnyPS5-Conversor.exe dist/AnyPS5-Conversor.exe.sha256 THIRD-PARTY-NOTICES.txt \
             --repo "$GITHUB_REPOSITORY" --title "AnyPS5 Conversor $TAG" --notes-file notes.md

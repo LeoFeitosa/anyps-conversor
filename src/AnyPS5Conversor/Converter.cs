@@ -19,6 +19,8 @@ public static class Converter
 
     public static string AnyPS5Version => anyPS5Version ??= ReadResourceText("anyps5-version").Trim();
 
+    public static string ThirdPartyNotices => ReadResourceText("third-party-notices");
+
     /// <param name="sourceIsExtraction">
     /// A pasta do jogo é uma extração nossa e pode ser consumida: no mesmo disco, os arquivos são movidos para
     /// app0/ em vez de copiados, o que é instantâneo e não ocupa espaço a mais.
