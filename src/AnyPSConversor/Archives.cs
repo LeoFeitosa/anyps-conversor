@@ -134,7 +134,12 @@ public static class Archives
     public static ArchivePreview Inspect(string archive, string? password)
     {
         if (!IsIndexed(archive))
-            return new(null, new FileInfo(archive).Length, 0);
+        {
+            // Sem índice de arquivos: o .xz ainda diz o tamanho final; .tar já é ele; gz e bz2 não guardam.
+            var length = new FileInfo(archive).Length;
+            var size = archive.EndsWith(".xz", StringComparison.OrdinalIgnoreCase) ? XzUncompressedSize(archive) ?? length : length;
+            return new(null, size, 0);
+        }
         if (password is null && NeedsPassword(archive))
             throw new PasswordException(wrong: false);
         try
@@ -171,6 +176,77 @@ public static class Archives
         password is not null ? new PasswordException(wrong: true)
         : e is CryptographicException ? new PasswordException(wrong: false)
         : new UserException("err_archive", Path.GetFileName(archive), e.Message);
+
+    /// <summary>
+    /// Tamanho descompactado de um .xz, somado do índice que cada stream guarda no fim (formato .xz 1.0.4,
+    /// seções 2.1.2 e 4). Lê só alguns bytes do fim do arquivo. Nulo se o arquivo não seguir o formato.
+    /// </summary>
+    public static long? XzUncompressedSize(string path)
+    {
+        try
+        {
+            using var file = File.OpenRead(path);
+            var footer = new byte[12];
+            long end = file.Length, total = 0;
+            while (end > 0)
+            {
+                // Preenchimento entre streams: blocos de 4 bytes zerados.
+                while (end >= 4)
+                {
+                    file.Position = end - 4;
+                    file.ReadExactly(footer, 0, 4);
+                    if (footer[0] != 0 || footer[1] != 0 || footer[2] != 0 || footer[3] != 0)
+                        break;
+                    end -= 4;
+                }
+                if (end < 24)
+                    return null;
+                file.Position = end - 12;
+                file.ReadExactly(footer);
+                if (footer[10] != (byte)'Y' || footer[11] != (byte)'Z')
+                    return null;
+                var indexSize = ((long)BitConverter.ToUInt32(footer, 4) + 1) * 4;
+                var indexStart = end - 12 - indexSize;
+                if (indexStart < 12)
+                    return null;
+                var index = new byte[indexSize];
+                file.Position = indexStart;
+                file.ReadExactly(index);
+                var position = 0;
+                if (index[position++] != 0)
+                    return null;
+                long blocks = 0;
+                for (var records = ReadVarint(index, ref position); records > 0; records--)
+                {
+                    var unpadded = ReadVarint(index, ref position);
+                    total += ReadVarint(index, ref position);
+                    blocks += (unpadded + 3) & ~3L;
+                }
+                // Antes dos blocos vem o cabeçalho de 12 bytes do stream; antes dele, o stream anterior.
+                end = indexStart - blocks - 12;
+                if (end < 0)
+                    return null;
+            }
+            return total;
+        }
+        catch (Exception e) when (e is IOException or IndexOutOfRangeException or InvalidDataException)
+        {
+            return null;
+        }
+    }
+
+    static long ReadVarint(byte[] data, ref int position)
+    {
+        long value = 0;
+        for (var shift = 0; shift < 63; shift += 7)
+        {
+            var current = data[position++];
+            value |= (long)(current & 0x7F) << shift;
+            if ((current & 0x80) == 0)
+                return value;
+        }
+        throw new InvalidDataException("xz varint too long");
+    }
 
     static string EntryPath(IArchiveEntry entry) => (entry.Key ?? "").Replace('\\', '/').TrimStart('/');
 

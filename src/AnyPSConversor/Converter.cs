@@ -43,6 +43,10 @@ public static class Converter
         Action<string> log,
         CancellationToken cancel)
     {
+        // Salvar dentro da pasta do jogo misturaria o convertido com o original e faria a cópia ler o que ela
+        // mesma está gravando.
+        if (SourceCleanup.IsSameOrInside(SourceCleanup.Normalize(parentFolder), SourceCleanup.Normalize(game.Folder)))
+            throw new UserException("err_output_in_game");
         var output = UniqueFolder(Path.Combine(parentFolder, game.SafeName));
         var move = sourceIsExtraction && SameVolume(game.Folder, parentFolder);
         var work = Path.Combine(Archives.TempRoot, "work-" + Guid.NewGuid().ToString("N"));
@@ -162,15 +166,21 @@ public static class Converter
         EnsureSpace(parentFolder, move ? 0 : DiskSpace.FolderSize(game.Folder), ExecutableBytes(game));
 
     /// <summary>
-    /// Confere o espaço de uma conversão inteira. Destino: <paramref name="gameFiles"/> (o jogo em app0/, ou o
-    /// jogo inteiro a extrair quando vem de um arquivo compactado), as bibliotecas e o .exe, estimado em duas
-    /// vezes os executáveis. Temporário: os executáveis desembrulhados e o relinker.
+    /// Confere o espaço do processo inteiro, somado por disco. Destino: <paramref name="gameFiles"/> (o jogo em
+    /// app0/, ou o jogo inteiro a extrair quando vem de um arquivo compactado), as bibliotecas e o .exe, estimado
+    /// em duas vezes os executáveis. Temporário: os executáveis desembrulhados e o próprio relinker.
     /// </summary>
     public static void EnsureSpace(string parentFolder, long gameFiles, long executables)
     {
-        using (var libraries = new ZipArchive(OpenResource("prx-windows.zip"), ZipArchiveMode.Read))
-            DiskSpace.Ensure(parentFolder, gameFiles + libraries.Entries.Sum(e => e.Length) + 2 * executables);
-        DiskSpace.Ensure(Archives.TempRoot, executables + (8L << 20));
+        long libraries, relinker;
+        using (var zip = new ZipArchive(OpenResource("prx-windows.zip"), ZipArchiveMode.Read))
+            libraries = zip.Entries.Sum(e => e.Length);
+        using (var resource = OpenResource("relinker.exe"))
+            relinker = resource.Length;
+        DiskSpace.EnsureAll([
+            (parentFolder, gameFiles + libraries + 2 * executables),
+            (Archives.TempRoot, executables + relinker),
+        ]);
     }
 
     /// <summary>Tamanho dos executáveis do jogo (o principal e os módulos): base do .exe e do tempo de conversão.</summary>

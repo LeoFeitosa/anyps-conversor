@@ -145,6 +145,14 @@ public sealed class ArchivesTests : IDisposable
     }
 
     [Fact]
+    public void ReadsTheFinalSizeOfAnXzFromItsIndex()
+    {
+        // Dois streams (70000 e 30001 bytes) e preenchimento de zeros no fim, como o formato permite.
+        Assert.Equal(100001, Archives.XzUncompressedSize(Path.Combine(AppContext.BaseDirectory, "Fixtures", "dois-blocos.xz")));
+        Assert.Null(Archives.XzUncompressedSize(Path.Combine(AppContext.BaseDirectory, "Fixtures", "aes.zip")));
+    }
+
+    [Fact]
     public void InspectsAnArchiveWithoutExtracting()
     {
         var source = CreateGameFolder();
