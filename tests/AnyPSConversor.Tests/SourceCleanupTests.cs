@@ -12,6 +12,20 @@ public sealed class SourceCleanupTests : IDisposable
     public void Dispose() => Directory.Delete(root, recursive: true);
 
     [Fact]
+    public void RecycleMovesFilesAndFoldersToTheRecycleBin()
+    {
+        Assert.SkipUnless(OperatingSystem.IsWindows(), "Lixeira só existe no Windows");
+        var file = Path.Combine(root, "jogo.rar");
+        var folder = Path.Combine(root, "PPSA00001");
+        File.WriteAllText(file, "x");
+        Directory.CreateDirectory(folder);
+        SourceCleanup.Recycle(file, IntPtr.Zero);
+        SourceCleanup.Recycle(folder, IntPtr.Zero);
+        Assert.False(File.Exists(file));
+        Assert.False(Directory.Exists(folder));
+    }
+
+    [Fact]
     public void RecyclesTheArchiveOrOnlyTheGameFolder()
     {
         var archive = Path.Combine(root, "game.zip");

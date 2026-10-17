@@ -56,6 +56,19 @@ public static class Archives
         return Path.Combine(root, RunName);
     }
 
+    /// <summary>
+    /// Verdadeiro dentro de uma pasta de trabalho (desta ou de outra execução, inclusive das versões antigas):
+    /// tudo nela é apagado quando a execução dona termina ou na próxima vez que o programa abre.
+    /// </summary>
+    public static bool IsInsideWorkFolder(string path)
+    {
+        var full = SourceCleanup.Normalize(path);
+        return full.Split(Path.DirectorySeparatorChar).Any(p =>
+                   p.Equals(WorkFolderName, StringComparison.OrdinalIgnoreCase) || p.Equals(LegacyWorkFolderName, StringComparison.OrdinalIgnoreCase))
+               || SourceCleanup.IsSameOrInside(full, SourceCleanup.Normalize(TempBase))
+               || SourceCleanup.IsSameOrInside(full, SourceCleanup.Normalize(LegacyTempBase));
+    }
+
     /// <summary>Apaga a pasta de trabalho desta execução e, se ficar vazia, a pasta oculta que a contém.</summary>
     public static void DeleteWorkRoot(string outputParent)
     {

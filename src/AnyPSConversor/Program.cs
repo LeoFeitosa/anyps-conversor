@@ -15,7 +15,9 @@ static class Program
             return;
         }
         Settings.MigrateLegacyFolders();
-        Archives.CleanStaleTemp(Settings.Output, Settings.DefaultOutput, Settings.LegacyDefaultOutput);
+        // Em segundo plano: uma extração abandonada pode ter dezenas de GB e a janela não pode esperar por ela.
+        var output = Settings.Output;
+        _ = Task.Run(() => Archives.CleanStaleTemp(output, Settings.DefaultOutput, Settings.LegacyDefaultOutput));
         Converter.CleanLocalData();
         Application.Run(new MainForm(args.FirstOrDefault()));
     }

@@ -799,12 +799,7 @@ public sealed class MainForm : Form
         }
         try
         {
-            if (File.Exists(source))
-                Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(source,
-                    Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
-            else if (Directory.Exists(source))
-                Microsoft.VisualBasic.FileIO.FileSystem.DeleteDirectory(source,
-                    Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+            SourceCleanup.Recycle(source, Handle);
             log("moved to the Recycle Bin: " + source);
             SetStatus("status_done_recycled");
         }

@@ -47,6 +47,12 @@ public static class Converter
         // mesma está gravando.
         if (SourceCleanup.IsSameOrInside(SourceCleanup.Normalize(parentFolder), SourceCleanup.Normalize(game.Folder)))
             throw new UserException("err_output_in_game");
+        // Pastas de trabalho são apagadas quando a execução dona termina ou o programa abre de novo: o jogo
+        // convertido não pode ficar nelas, nem o original escolhido ali direto (só a extração desta conversão).
+        if (Archives.IsInsideWorkFolder(parentFolder))
+            throw new UserException("err_output_in_work");
+        if (!sourceIsExtraction && Archives.IsInsideWorkFolder(game.Folder))
+            throw new UserException("err_game_in_work");
         var output = UniqueFolder(Path.Combine(parentFolder, game.SafeName));
         var move = sourceIsExtraction && SameVolume(game.Folder, parentFolder);
         var work = Path.Combine(Archives.TempRoot, "work-" + Guid.NewGuid().ToString("N"));

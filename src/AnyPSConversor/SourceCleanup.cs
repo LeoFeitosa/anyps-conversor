@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace AnyPSConversor;
 
 /// <summary>
@@ -43,4 +45,43 @@ public static class SourceCleanup
 
     public static string Normalize(string path) =>
         path.Length == 0 ? "" : Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
+
+    /// <summary>
+    /// Manda para a Lixeira. Se não couber nela (um arquivo de dezenas de GB costuma não caber), o Windows pergunta
+    /// antes de apagar de vez; a API do VisualBasic com OnlyErrorDialogs pulava essa pergunta e apagava sem volta.
+    /// </summary>
+    public static void Recycle(string path, IntPtr owner)
+    {
+        var operation = new ShFileOperation
+        {
+            Owner = owner,
+            Function = FoDelete,
+            From = Path.GetFullPath(path) + "\0\0",
+            Flags = FofAllowUndo | FofNoConfirmation | FofWantNukeWarning | FofSilent,
+        };
+        var result = SHFileOperation(ref operation);
+        if (operation.AnyOperationsAborted || (File.Exists(path) || Directory.Exists(path)) && result == 0)
+            throw new OperationCanceledException("kept by the user");
+        if (result != 0)
+            throw new IOException($"SHFileOperation error 0x{result:X}");
+    }
+
+    const uint FoDelete = 3;
+    const ushort FofSilent = 0x4, FofNoConfirmation = 0x10, FofAllowUndo = 0x40, FofWantNukeWarning = 0x4000;
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    struct ShFileOperation
+    {
+        public IntPtr Owner;
+        public uint Function;
+        public string From;
+        public string? To;
+        public ushort Flags;
+        [MarshalAs(UnmanagedType.Bool)] public bool AnyOperationsAborted;
+        public IntPtr NameMappings;
+        public string? ProgressTitle;
+    }
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    static extern int SHFileOperation(ref ShFileOperation operation);
 }

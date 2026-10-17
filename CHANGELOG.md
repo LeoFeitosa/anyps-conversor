@@ -8,6 +8,19 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-10-16
+
+### Corrigido
+
+- Um jogo convertido salvo dentro da pasta temporária de extração (`.AnyPS-Conversor` ou
+  `.AnyPS5-Conversor`) era apagado junto com ela quando o programa abria de novo. Agora o conversor
+  recusa salvar nessas pastas e também recusa converter um jogo escolhido direto de dentro delas, com
+  um aviso para mover a pasta do jogo antes.
+- A limpeza de extrações abandonadas roda em segundo plano: com dezenas de GB, a janela demorava a
+  aparecer e o programa parecia travado.
+- A opção de mandar os originais para a Lixeira podia apagar de vez, sem perguntar, um arquivo grande
+  demais para a Lixeira. Agora o Windows pergunta antes, e o original fica se a resposta for não.
+
 ## [0.11.0] - 2026-10-16
 
 ### Alterado
