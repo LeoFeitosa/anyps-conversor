@@ -94,7 +94,7 @@ public static class Strings
         ["step_libs"] = ("Instalando as bibliotecas do AnyPS5", "Installing the AnyPS5 libraries"),
         ["step_copying"] = ("Copiando {0}", "Copying {0}"),
         ["step_moving"] = ("Movendo {0}", "Moving {0}"),
-        ["eta"] = ("· cerca de {0} restantes", "· about {0} left"),
+        ["elapsed"] = ("· há {0}", "· {0} elapsed"),
         ["eta_extract"] = ("· cerca de {0} para extrair", "· about {0} to extract"),
         ["status_done"] = ("Jogo convertido. Clique em Jogar agora.", "Game converted. Click Play now."),
         ["status_done_recycled"] = ("Jogo convertido. Os arquivos originais foram para a Lixeira.", "Game converted. The original files were moved to the Recycle Bin."),

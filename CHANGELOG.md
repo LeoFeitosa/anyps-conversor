@@ -8,6 +8,16 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-16
+
+### Alterado
+
+- A conversão deixa de ter previsão de tempo e passa a mostrar um cronômetro ("há 2:15"), que anda a
+  cada segundo. A previsão, baseada no tempo por MB de conversões anteriores, não conferia com a
+  realidade: no mesmo PC, o ASTRO BOT levou quase 4 vezes mais por MB que o VLC, e a etapa mais longa
+  do relinker não informa andamento. A extração continua com a contagem regressiva medida ao vivo.
+- O arquivo `conversion-rate.txt`, criado pelas versões 0.9 e 0.10, é apagado ao abrir o programa.
+
 ## [0.10.0] - 2026-10-16
 
 ### Alterado
@@ -247,7 +257,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Botões para jogar e abrir a pasta ao final, com as últimas linhas de `anyps5.log` se o jogo
   fechar com erro.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.7.0...v0.8.0

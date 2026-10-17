@@ -8,6 +8,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-16
+
+### Changed
+
+- Conversion no longer shows a time estimate; it shows a timer ("2:15 elapsed") that moves every
+  second. The estimate, based on the time per MB of earlier conversions, did not match reality: on the
+  same PC, ASTRO BOT took almost 4 times longer per MB than VLC, and the longest relinker step reports
+  no progress. Extraction keeps its countdown measured live.
+- The `conversion-rate.txt` file created by versions 0.9 and 0.10 is deleted when the program opens.
+
 ## [0.10.0] - 2026-10-16
 
 ### Changed
@@ -250,7 +260,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Buttons to play and open the folder at the end, with the last lines of `anyps5.log` if the game
   closes with an error.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.7.0...v0.8.0

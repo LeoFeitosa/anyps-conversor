@@ -443,6 +443,13 @@ public static class Converter
     /// </summary>
     public static void CleanLocalData()
     {
+        // A medida de tempo de conversão das versões 0.9 e 0.10 deixou de ser usada: não fica no disco.
+        try
+        {
+            File.Delete(Path.Combine(Settings.Folder, "conversion-rate.txt"));
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
         var local = Path.GetDirectoryName(LogFolder)!;
         if (Directory.Exists(local))
             foreach (var folder in Directory.GetDirectories(local, "v*"))
