@@ -8,6 +8,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-10-16
+
+### Fixed
+
+- A converted game saved inside the temporary extraction folder (`.AnyPS-Conversor` or
+  `.AnyPS5-Conversor`) was deleted along with it the next time the program opened. The converter now
+  refuses to save in those folders and refuses to convert a game chosen directly from inside them,
+  with a notice to move the game folder first.
+- Cleaning up abandoned extractions runs in the background: with tens of GB, the window took long to
+  appear and the program seemed frozen.
+- The option to move the originals to the Recycle Bin could permanently delete, without asking, a file
+  too large for the Recycle Bin. Windows now asks first, and the original is kept if the answer is no.
+
 ## [0.11.0] - 2026-10-16
 
 ### Changed

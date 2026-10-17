@@ -27,6 +27,29 @@ public class ConverterTests
         }
     }
 
+    [Fact]
+    public async Task RefusesWorkFoldersAsOutputOrGame()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "anyps-work-tests-" + Guid.NewGuid().ToString("N"));
+        var game = Path.Combine(root, ".AnyPS5-Conversor", "run-1", "extract-x", "PPSA00001");
+        Directory.CreateDirectory(game);
+        File.WriteAllBytes(Path.Combine(game, "eboot.bin"), SelfUnwrapperTests.BuildSelf(i => (byte)(i % 7)));
+        try
+        {
+            var info = GameInfo.Load(game);
+            var error = await Assert.ThrowsAsync<UserException>(() => Converter.ConvertAsync(
+                info, root, false, new Progress<ConversionProgress>(), _ => { }, TestContext.Current.CancellationToken));
+            Assert.Equal("err_game_in_work", error.Key);
+            error = await Assert.ThrowsAsync<UserException>(() => Converter.ConvertAsync(
+                info, Path.Combine(root, ".AnyPS-Conversor", "run-2"), true, new Progress<ConversionProgress>(), _ => { }, TestContext.Current.CancellationToken));
+            Assert.Equal("err_output_in_work", error.Key);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     [Theory]
     [InlineData("Instruction scan       | libc.prx  |   0%", 0.0)]
     [InlineData("Syscall scan           | eboot.bin | 100%", 0.4)]
