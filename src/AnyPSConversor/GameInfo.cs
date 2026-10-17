@@ -24,6 +24,16 @@ public sealed record GameInfo(
     /// <summary>Pastas de módulos que o relinker procura ao lado do eboot.bin.</summary>
     public static readonly string[] ModuleDirectories = ["sce_module", "sce_modules", "prx"];
 
+    /// <summary>
+    /// Extensões de módulo que o relinker reconhece. Outros arquivos nas pastas de módulos, como as cópias
+    /// .esbak que ferramentas de assinatura deixam, não são módulos: repassados, o relinker veria dois libc.prx
+    /// e recusaria o jogo ("Ambiguous guest dependency name").
+    /// </summary>
+    public static readonly string[] ModuleExtensions = [".prx", ".sprx", ".suprx", ".debug_prx"];
+
+    public static bool IsModuleFile(string name) =>
+        ModuleExtensions.Any(e => name.EndsWith(e, StringComparison.OrdinalIgnoreCase));
+
     /// <param name="path">Pasta do jogo, uma pasta acima dela ou o próprio eboot.bin.</param>
     /// <param name="fallbackName">Nome usado quando não há sce_sys/param.json.</param>
     public static GameInfo Load(string path, string? fallbackName = null)
@@ -40,7 +50,7 @@ public sealed record GameInfo(
             .Select(d => Path.Combine(folder, d))
             .Where(Directory.Exists)
             .SelectMany(d => Directory.GetFiles(d))
-            .Where(f => IsExecutable(f))
+            .Where(f => IsModuleFile(f) && IsExecutable(f))
             .ToList();
 
         var fallback = fallbackName ?? Path.GetFileName(folder.TrimEnd(Path.DirectorySeparatorChar));

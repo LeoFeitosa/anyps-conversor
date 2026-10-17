@@ -158,14 +158,24 @@ public static class Converter
     /// Destino: cópia do jogo em app0/, bibliotecas e o .exe (estimado em duas vezes os executáveis).
     /// Temporário: os executáveis desembrulhados e o relinker.
     /// </summary>
-    static void EnsureSpace(GameInfo game, string parentFolder, bool move)
+    static void EnsureSpace(GameInfo game, string parentFolder, bool move) =>
+        EnsureSpace(parentFolder, move ? 0 : DiskSpace.FolderSize(game.Folder), ExecutableBytes(game));
+
+    /// <summary>
+    /// Confere o espaço de uma conversão inteira. Destino: <paramref name="gameFiles"/> (o jogo em app0/, ou o
+    /// jogo inteiro a extrair quando vem de um arquivo compactado), as bibliotecas e o .exe, estimado em duas
+    /// vezes os executáveis. Temporário: os executáveis desembrulhados e o relinker.
+    /// </summary>
+    public static void EnsureSpace(string parentFolder, long gameFiles, long executables)
     {
-        var executables = new FileInfo(Path.Combine(game.Folder, "eboot.bin")).Length + game.Modules.Sum(m => new FileInfo(m).Length);
-        var gameFiles = move ? 0 : DiskSpace.FolderSize(game.Folder);
         using (var libraries = new ZipArchive(OpenResource("prx-windows.zip"), ZipArchiveMode.Read))
             DiskSpace.Ensure(parentFolder, gameFiles + libraries.Entries.Sum(e => e.Length) + 2 * executables);
         DiskSpace.Ensure(Archives.TempRoot, executables + (8L << 20));
     }
+
+    /// <summary>Tamanho dos executáveis do jogo (o principal e os módulos): base do .exe e do tempo de conversão.</summary>
+    public static long ExecutableBytes(GameInfo game) =>
+        new FileInfo(Path.Combine(game.Folder, game.Platform.MainFile)).Length + game.Modules.Sum(m => new FileInfo(m).Length);
 
     /// <summary>Instruções do Zen 2 que os jogos usam sem conferir; sem elas o jogo não abre.</summary>
     public static string[] MissingCpuFeatures()

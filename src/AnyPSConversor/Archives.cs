@@ -15,9 +15,11 @@ public readonly record struct ExtractProgress(int Percent, string? Entry);
 
 /// <summary>
 /// O que se sabe de um arquivo compactado antes de extraí-lo: o jogo (nome e ícone, quando dá para ler sem
-/// descompactar o arquivo inteiro) e o tamanho a extrair, que pesa na divisão da barra de progresso.
+/// descompactar o arquivo inteiro), o tamanho a extrair e o dos executáveis. Os tamanhos vêm do índice e
+/// servem para conferir o espaço do processo inteiro, dividir a barra e estimar o tempo; em tar, gz, bz2 e xz,
+/// que não têm índice, ficam o tamanho do próprio arquivo e zero.
 /// </summary>
-public sealed record ArchivePreview(GamePreview? Game, long Size);
+public sealed record ArchivePreview(GamePreview? Game, long Size, long Executables);
 
 /// <summary>
 /// Extrai o jogo de um arquivo compactado (.zip, .rar, .7z, .tar e variações) para uma pasta de trabalho no
@@ -132,7 +134,7 @@ public static class Archives
     public static ArchivePreview Inspect(string archive, string? password)
     {
         if (!IsIndexed(archive))
-            return new(null, new FileInfo(archive).Length);
+            return new(null, new FileInfo(archive).Length, 0);
         if (password is null && NeedsPassword(archive))
             throw new PasswordException(wrong: false);
         try
@@ -141,14 +143,18 @@ public static class Archives
             var entries = opened.Entries.Where(e => !e.IsDirectory).ToList();
             var size = entries.Sum(e => Math.Max(0, e.Size));
             var (main, platform) = CheckRequiredFiles(archive, opened, entries);
-            if (opened.IsSolid)
-                return new(null, size);
             var folder = EntryPath(main)[..(EntryPath(main).LastIndexOf('/') + 1)];
+            var executables = entries
+                .Where(e => EntryPath(e).StartsWith(folder, StringComparison.OrdinalIgnoreCase)
+                    && platform.IsExecutable(EntryPath(e)[folder.Length..]))
+                .Sum(e => Math.Max(0, e.Size));
+            if (opened.IsSolid)
+                return new(null, size, executables);
             byte[]? Read(string relative) =>
                 entries.FirstOrDefault(e => EntryPath(e).Equals(folder + relative, StringComparison.OrdinalIgnoreCase)) is { } entry
                     ? ReadEntry(entry)
                     : null;
-            return new(platform.Preview(Read), size);
+            return new(platform.Preview(Read), size, executables);
         }
         catch (Exception e) when (e is not UserException and not PasswordException)
         {

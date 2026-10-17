@@ -12,6 +12,29 @@ public static class Settings
     static readonly string OutputFile = Path.Combine(Folder, "output.txt");
     static readonly string AutoPlayFile = Path.Combine(Folder, "auto-play.txt");
 
+    static readonly string RateFile = Path.Combine(Folder, "conversion-rate.txt");
+
+    /// <summary>
+    /// Segundos que este PC leva para converter cada MB de executável, medidos nas conversões anteriores. Nulo
+    /// até a primeira: sem medida, o programa não estima o tempo da conversão.
+    /// </summary>
+    public static double? ConversionSecondsPerMB
+    {
+        get
+        {
+            try
+            {
+                return File.Exists(RateFile)
+                    && double.TryParse(File.ReadAllText(RateFile), System.Globalization.CultureInfo.InvariantCulture, out var rate) && rate > 0
+                    ? rate
+                    : null;
+            }
+            catch (IOException) { return null; }
+            catch (UnauthorizedAccessException) { return null; }
+        }
+        set => Save(RateFile, value?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "");
+    }
+
     /// <summary>Abrir o jogo assim que a conversão terminar; desligado por padrão.</summary>
     public static bool AutoPlay
     {

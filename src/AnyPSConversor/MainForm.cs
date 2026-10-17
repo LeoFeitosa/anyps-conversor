@@ -85,6 +85,9 @@ public sealed class MainForm : Form
     bool statusIsError;
     string? stepKey, stepItem;
     TimeSpan? remaining;
+
+    /// <summary>O tempo restante cobre só a extração: este PC ainda não converteu nada para medir a conversão.</summary>
+    bool remainingExtractOnly;
     readonly string[] missingCpu = Converter.MissingCpuFeatures();
 
     const int BaseHeight = 762;
@@ -267,8 +270,10 @@ public sealed class MainForm : Form
             text = T("err_cpu", string.Join(", ", missingCpu));
             error = true;
         }
-        if (key == "status_extracting" && remaining is { } left)
-            text += " " + (left.TotalSeconds < 60 ? T("eta_under_minute") : T("eta_minutes", (int)Math.Ceiling(left.TotalMinutes)));
+        if (remaining is { } left && key is "status_extracting" or "status_unwrapping" or "status_relinking" or "status_copying")
+            text += " " + (left.TotalSeconds < 60
+                ? T(remainingExtractOnly ? "eta_extract_under_minute" : "eta_under_minute")
+                : T(remainingExtractOnly ? "eta_extract_minutes" : "eta_minutes", (int)Math.Ceiling(left.TotalMinutes)));
         statusLabel.Text = text;
         statusLabel.ForeColor = error ? Theme.Error : key is "status_done" or "status_done_recycled" ? Theme.Success : Theme.Muted;
     }
@@ -469,8 +474,9 @@ public sealed class MainForm : Form
     static double ExtractShare(long size) => Math.Clamp(size / (size + 1.5e9), 0.1, 0.95);
 
     /// <summary>Extrai o arquivo escolhido no local de saída, ocupando o começo da barra.</summary>
-    async Task<string> ExtractAsync(PendingArchive pending, double share, CancellationToken cancel)
+    async Task<string> ExtractAsync(PendingArchive pending, double share, TimeSpan? conversion, CancellationToken cancel)
     {
+        remainingExtractOnly = conversion is null;
         SetStatus("status_extracting");
         // Tempo restante só depois de 5 s e 3% medidos neste PC: a média até ali já é estável.
         var clock = Stopwatch.StartNew();
@@ -481,8 +487,9 @@ public sealed class MainForm : Form
             var overall = share * p.Percent / 100;
             progressBar.Value = (int)(overall * 1000);
             percentLabel.Text = $"{(int)(overall * 100)}%";
+            // Processo inteiro: o que falta extrair, medido agora, mais a conversão, medida em conversões anteriores.
             remaining = clock.Elapsed.TotalSeconds >= 5 && p.Percent is >= 3 and < 100
-                ? clock.Elapsed * ((100.0 - p.Percent) / p.Percent)
+                ? clock.Elapsed * ((100.0 - p.Percent) / p.Percent) + (conversion ?? TimeSpan.Zero)
                 : null;
             SetStatus("status_extracting");
             if (p.Entry is not null)
@@ -496,8 +503,15 @@ public sealed class MainForm : Form
         finally
         {
             remaining = null;
+            remainingExtractOnly = false;
         }
     }
+
+    /// <summary>Tempo de conversão esperado neste PC, pelo que ele levou antes por MB de executável.</summary>
+    static TimeSpan? ConversionEstimate(long executables) =>
+        Settings.ConversionSecondsPerMB is { } rate && executables > 0
+            ? TimeSpan.FromSeconds(rate * Math.Max(1, executables / 1048576.0))
+            : null;
 
     /// <summary>Volta para a área de soltar para escolher outro jogo.</summary>
     void ResetGame()
@@ -596,11 +610,14 @@ public sealed class MainForm : Form
         // Arquivo compactado: extração e conversão numa barra só, dividida pelo tamanho do jogo.
         var share = pending is null ? 0 : ExtractShare(pending.Preview.Size);
         var finished = false;
+        var conversionClock = new Stopwatch();
+        TimeSpan? conversionEstimate = null;
         var progress = new Progress<ConversionProgress>(p =>
         {
             // Avisos atrasados da conversão não podem sobrescrever o status final nem o "cancelando".
             if (finished || running?.IsCancellationRequested == true)
                 return;
+            remaining = conversionEstimate - conversionClock.Elapsed is { TotalSeconds: > 0 } left ? left : null;
             var overall = share + (1 - share) * Math.Clamp(p.Fraction, 0, 1);
             progressBar.Value = (int)(overall * 1000);
             percentLabel.Text = $"{(int)(overall * 100)}%";
@@ -623,7 +640,11 @@ public sealed class MainForm : Form
             if (pending is not null)
             {
                 Log($"AnyPS Conversor {AppVersion} | {pending.Path} -> {outputBox.Text}");
-                extractedFolder = await ExtractAsync(pending, share, running.Token);
+                // Espaço do processo inteiro, antes de extrair: o jogo extraído (depois movido para app0/), as
+                // bibliotecas e o .exe. Faltando, o aviso vem agora, e não depois de uma extração longa.
+                SetStatus("status_preparing");
+                await Task.Run(() => Converter.EnsureSpace(outputBox.Text, pending.Preview.Size, pending.Preview.Executables));
+                extractedFolder = await ExtractAsync(pending, share, ConversionEstimate(pending.Preview.Executables), running.Token);
                 extractionParent = outputBox.Text;
                 try
                 {
@@ -638,7 +659,13 @@ public sealed class MainForm : Form
                 ShowGame(game);
             }
             Log($"AnyPS Conversor {AppVersion} | {game!.Name} ({game.TitleId}) | {game.Folder} -> {outputBox.Text}");
+            var executables = Converter.ExecutableBytes(game);
+            conversionEstimate = ConversionEstimate(executables);
+            conversionClock.Start();
             convertedExe = await game.Platform.ConvertAsync(game, outputBox.Text, extractedFolder is not null, progress, Log, running.Token);
+            // Aprende quanto este PC leva: a próxima estimativa usa a média com esta medida.
+            var measured = conversionClock.Elapsed.TotalSeconds / Math.Max(1, executables / 1048576.0);
+            Settings.ConversionSecondsPerMB = Settings.ConversionSecondsPerMB is { } previous ? (previous + measured) / 2 : measured;
             finished = true;
             progressBar.Value = 1000;
             percentLabel.Text = "100%";

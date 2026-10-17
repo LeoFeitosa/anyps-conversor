@@ -19,6 +19,9 @@ public interface IConsolePlatform
     /// </summary>
     void CheckMainFile(byte[] data);
 
+    /// <summary>Se o arquivo, relativo à pasta do arquivo principal, é um executável que a conversão processa.</summary>
+    bool IsExecutable(string relativePath);
+
     /// <summary>
     /// Nome, código e ícone do jogo lidos de dentro de um arquivo compactado, antes de extrair.
     /// <paramref name="read"/> devolve um arquivo pelo caminho relativo à pasta do arquivo principal, ou nulo.
@@ -90,6 +93,11 @@ public sealed class Ps5Platform : IConsolePlatform
             // Outros defeitos do SELF são explicados na conversão, com o registro completo.
         }
     }
+
+    public bool IsExecutable(string relativePath) =>
+        relativePath.Equals(MainFile, StringComparison.OrdinalIgnoreCase)
+        || (GameInfo.IsModuleFile(relativePath)
+            && GameInfo.ModuleDirectories.Any(d => relativePath.StartsWith(d + "/", StringComparison.OrdinalIgnoreCase)));
 
     public GamePreview Preview(Func<string, byte[]?> read)
     {
