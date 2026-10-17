@@ -85,17 +85,14 @@ public sealed class MainForm : Form
     bool statusIsError;
     string? stepKey, stepItem;
     /// <summary>
-    /// Quando a extração deve terminar, medido ao vivo neste PC. A contagem regressiva anda a cada segundo
-    /// (<see cref="clock"/>) e o horário é recalculado a cada avanço, então a estimativa se corrige sozinha.
+    /// Quando o processo inteiro (extração, se houver, e conversão até o .exe pronto) deve terminar, medido ao
+    /// vivo neste PC: a cada segundo (<see cref="clock"/>), o tempo decorrido desde o início dividido pelo
+    /// andamento da barra. Numa etapa que não informa andamento a barra para e a previsão sobe sozinha;
+    /// quando ela volta a andar, a previsão desce. Nada vem de outro PC nem de outro jogo.
     /// </summary>
     DateTime? finishAt;
-
-    /// <summary>
-    /// Início da conversão, para o cronômetro. A conversão não tem previsão: o tempo do relinker varia várias
-    /// vezes de um jogo para outro no mesmo PC (0,2 s/MB no VLC, 0,8 s/MB no ASTRO BOT) e a etapa mais longa
-    /// não informa andamento. O tempo decorrido é sempre verdadeiro.
-    /// </summary>
-    DateTime? convertingSince;
+    DateTime? startedAt;
+    double overallDone;
 
     readonly System.Windows.Forms.Timer clock = new() { Interval = 1000 };
 
@@ -209,18 +206,25 @@ public sealed class MainForm : Form
         EnableDrop(this);
         clock.Tick += (_, _) =>
         {
-            if (running is not null && (finishAt is not null || convertingSince is not null))
-                SetStatus(statusKey, statusIsError, statusArgs);
+            if (running is null || startedAt is null)
+                return;
+            UpdateFinishAt();
+            SetStatus(statusKey, statusIsError, statusArgs);
         };
         clock.Start();
         ApplyTexts();
         ResumeLayout(false);
         if (initialGame is not null)
             Shown += async (_, _) => await LoadGameAsync(initialGame);
+        // Fechar encerra tudo na hora: o relinker morre junto e uma extração de dezenas de GB é apagada por um
+        // processo à parte, sem deixar o programa aberto (e sem janela) enquanto isso.
         FormClosed += (_, _) =>
         {
+            running?.Cancel();
+            Converter.KillRunning();
             Archives.TryDelete(Archives.TempRoot);
-            DiscardExtraction();
+            // Durante a extração ela ainda não tem extractionParent; o destino não muda enquanto algo roda.
+            Archives.DeleteAfterExit(extractionParent ?? outputBox.Text, Converter.Unfinished);
         };
     }
 
@@ -288,12 +292,29 @@ public sealed class MainForm : Form
             error = true;
         }
         // Passado do horário previsto, some: melhor nada do que um tempo que não confere.
-        if (key == "status_extracting" && finishAt - DateTime.Now is { TotalSeconds: >= 1 } left)
-            text += " " + T("eta_extract", Clock(left));
-        else if (key is "status_unwrapping" or "status_relinking" or "status_copying" && DateTime.Now - convertingSince is { } elapsed)
-            text += " " + T("elapsed", Clock(elapsed));
+        if (key is "status_extracting" or "status_unwrapping" or "status_relinking" or "status_copying"
+            && finishAt - DateTime.Now is { TotalSeconds: >= 1 } left)
+            text += " " + T("eta_total", Clock(left));
         statusLabel.Text = text;
         statusLabel.ForeColor = error ? Theme.Error : key is "status_done" or "status_done_recycled" ? Theme.Success : Theme.Muted;
+    }
+
+    /// <summary>Recalcula <see cref="finishAt"/> pelo andamento real. Antes de 5 s e 3% a média ainda oscila demais.</summary>
+    void UpdateFinishAt()
+    {
+        var elapsed = DateTime.Now - startedAt!.Value;
+        if (elapsed.TotalSeconds < 5 || overallDone is < 0.03 or >= 1)
+            return;
+        var target = DateTime.Now + elapsed * ((1 - overallDone) / overallDone);
+        // Aproximar aos poucos do novo horário: a contagem desce contínua, sem saltos a cada ponto da barra.
+        finishAt = finishAt is { } current ? current + (target - current) * 0.15 : target;
+    }
+
+    void ShowOverall(double overall)
+    {
+        overallDone = overall;
+        progressBar.Value = (int)(overall * 1000);
+        percentLabel.Text = $"{(int)(overall * 100)}%";
     }
 
     static string Clock(TimeSpan time) =>
@@ -498,35 +519,17 @@ public sealed class MainForm : Form
     async Task<string> ExtractAsync(PendingArchive pending, double share, CancellationToken cancel)
     {
         SetStatus("status_extracting");
-        // Tempo restante só depois de 5 s e 3% medidos neste PC: a média até ali já é estável.
-        var watch = Stopwatch.StartNew();
         var progress = new Progress<ExtractProgress>(p =>
         {
             if (running?.IsCancellationRequested == true)
                 return;
-            var overall = share * p.Percent / 100;
-            progressBar.Value = (int)(overall * 1000);
-            percentLabel.Text = $"{(int)(overall * 100)}%";
-            if (watch.Elapsed.TotalSeconds >= 5 && p.Percent is >= 3 and < 100)
-            {
-                var target = DateTime.Now + watch.Elapsed * ((100.0 - p.Percent) / p.Percent);
-                // A porcentagem é inteira: cada ponto a mais faz a conta saltar alguns segundos. Aproximar aos
-                // poucos do novo horário deixa a contagem descer contínua, sem ir e voltar.
-                finishAt = finishAt is { } current ? current + (target - current) * 0.15 : target;
-            }
+            ShowOverall(share * p.Percent / 100);
             SetStatus("status_extracting");
             if (p.Entry is not null)
                 SetStep("step_extracting", p.Entry);
         });
         var workRoot = Archives.WorkRoot(outputBox.Text);
-        try
-        {
-            return await Task.Run(() => Archives.Extract(pending.Path, pending.Password, workRoot, progress, cancel), cancel);
-        }
-        finally
-        {
-            finishAt = null;
-        }
+        return await Task.Run(() => Archives.Extract(pending.Path, pending.Password, workRoot, progress, cancel), cancel);
     }
 
 
@@ -558,7 +561,8 @@ public sealed class MainForm : Form
         convertButton.Primary = !busy;
         convertButton.Enabled = true;
         finishAt = null;
-        convertingSince = null;
+        startedAt = busy ? DateTime.Now : null;
+        overallDone = 0;
         SetStep(null, null);
         // O idioma pode mudar a qualquer momento, inclusive no meio de uma extração ou conversão.
         browseFolderButton.Enabled = browseFileButton.Enabled = changeButton.Enabled = outputButton.Enabled = !busy;
@@ -633,9 +637,7 @@ public sealed class MainForm : Form
             // Avisos atrasados da conversão não podem sobrescrever o status final nem o "cancelando".
             if (finished || running?.IsCancellationRequested == true)
                 return;
-            var overall = share + (1 - share) * Math.Clamp(p.Fraction, 0, 1);
-            progressBar.Value = (int)(overall * 1000);
-            percentLabel.Text = $"{(int)(overall * 100)}%";
+            ShowOverall(share + (1 - share) * Math.Clamp(p.Fraction, 0, 1));
             SetStatus(p.StatusKey, false, p.Args);
             SetStep(p.StepKey, p.StepItem);
         });
@@ -674,7 +676,6 @@ public sealed class MainForm : Form
                 ShowGame(game);
             }
             Log($"AnyPS Conversor {AppVersion} | {game!.Name} ({game.TitleId}) | {game.Folder} -> {outputBox.Text}");
-            convertingSince = DateTime.Now;
             convertedExe = await game.Platform.ConvertAsync(game, outputBox.Text, extractedFolder is not null, progress, Log, running.Token);
             finished = true;
             progressBar.Value = 1000;

@@ -25,6 +25,27 @@ public delegate void StepReport(double fraction, string? stepKey, string? item);
 /// </summary>
 public static class Converter
 {
+    /// <summary>Relinkers rodando agora: ao fechar o programa eles morrem junto (<see cref="KillRunning"/>).</summary>
+    static readonly HashSet<Process> Running = [];
+
+    // ponytail: só cobre o fechamento normal; encerrar pelo Gerenciador de Tarefas deixa o relinker até ele
+    // terminar sozinho. Um Job Object com KILL_ON_JOB_CLOSE cobre esse caso, se for preciso.
+    /// <summary>Pasta do jogo que está sendo gerado agora; se o programa fechar no meio, ela é apagada.</summary>
+    public static string? Unfinished { get; private set; }
+
+    public static void KillRunning()
+    {
+        lock (Running)
+            foreach (var process in Running)
+            {
+                try
+                {
+                    process.Kill(entireProcessTree: true);
+                }
+                catch (Exception e) when (e is InvalidOperationException or System.ComponentModel.Win32Exception) { }
+            }
+    }
+
     static string? anyPS5Version;
 
     public static string AnyPS5Version => anyPS5Version ??= ReadResourceText("anyps5-version").Trim();
@@ -56,6 +77,7 @@ public static class Converter
         var output = UniqueFolder(Path.Combine(parentFolder, game.SafeName));
         var move = sourceIsExtraction && SameVolume(game.Folder, parentFolder);
         var work = Path.Combine(Archives.TempRoot, "work-" + Guid.NewGuid().ToString("N"));
+        Unfinished = output;
         try
         {
             progress.Report(new(0.02, "status_preparing"));
@@ -143,6 +165,7 @@ public static class Converter
         }
         finally
         {
+            Unfinished = null;
             TryDelete(work);
         }
     }
@@ -350,6 +373,7 @@ public static class Converter
         process.OutputDataReceived += (_, e) => Line(e.Data);
         process.ErrorDataReceived += (_, e) => Line(e.Data);
         process.Start();
+        lock (Running) Running.Add(process);
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
         try
@@ -362,6 +386,10 @@ public static class Converter
             process.Kill(entireProcessTree: true);
             await process.WaitForExitAsync(CancellationToken.None);
             throw;
+        }
+        finally
+        {
+            lock (Running) Running.Remove(process);
         }
 
         if (process.ExitCode == 0)

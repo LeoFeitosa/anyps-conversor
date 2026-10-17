@@ -69,6 +69,26 @@ public static class Archives
                || SourceCleanup.IsSameOrInside(full, SourceCleanup.Normalize(LegacyTempBase));
     }
 
+    /// <summary>
+    /// Apaga, depois que o programa fechar, a pasta de trabalho desta execução e o jogo convertido pela metade,
+    /// por um cmd à parte que espera 2 s (os arquivos abertos por este processo se soltam ao sair). O que
+    /// sobrar da pasta de trabalho a próxima abertura limpa.
+    /// </summary>
+    public static void DeleteAfterExit(string outputParent, string? unfinished)
+    {
+        var root = Path.Combine(outputParent, WorkFolderName);
+        var folders = new[] { Path.Combine(root, RunName), unfinished }.Where(Directory.Exists).ToList();
+        if (folders.Count == 0)
+            return;
+        var removes = string.Concat(folders.Select(f => $" & rd /s /q \"{f}\""));
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe",
+            $"/d /c ping -n 3 127.0.0.1 >nul{removes} & rd \"{root}\" 2>nul")
+        {
+            CreateNoWindow = true,
+            UseShellExecute = false,
+        });
+    }
+
     /// <summary>Apaga a pasta de trabalho desta execução e, se ficar vazia, a pasta oculta que a contém.</summary>
     public static void DeleteWorkRoot(string outputParent)
     {

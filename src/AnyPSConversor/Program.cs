@@ -20,5 +20,7 @@ static class Program
         _ = Task.Run(() => Archives.CleanStaleTemp(output, Settings.DefaultOutput, Settings.LegacyDefaultOutput));
         Converter.CleanLocalData();
         Application.Run(new MainForm(args.FirstOrDefault()));
+        // Janela fechada = programa encerrado, mesmo com extração ou conversão ainda rodando em segundo plano.
+        Environment.Exit(0);
     }
 }

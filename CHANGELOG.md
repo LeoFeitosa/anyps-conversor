@@ -8,6 +8,21 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-16
+
+### Alterado
+
+- Uma previsão só, para o processo inteiro: "cerca de 2:15 para terminar" conta a extração (quando há) e
+  a conversão até o .exe pronto. Ela é recalculada a cada segundo pelo andamento real da barra neste PC:
+  quando uma etapa demora mais, a previsão sobe; quando volta a andar, desce. Substitui a contagem só da
+  extração e o cronômetro da conversão.
+
+### Corrigido
+
+- Fechar o programa encerra o processo na hora, mesmo no meio de uma extração ou conversão: o relinker
+  é encerrado junto, e a extração e o jogo convertido pela metade são apagados logo depois, sem deixar o
+  programa rodando sem janela.
+
 ## [0.11.1] - 2026-10-16
 
 ### Corrigido
@@ -270,7 +285,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Botões para jogar e abrir a pasta ao final, com as últimas linhas de `anyps5.log` se o jogo
   fechar com erro.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.11.1...v0.12.0
+[0.11.1]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.8.0...v0.9.0
