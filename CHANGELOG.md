@@ -8,6 +8,28 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-16
+
+### Alterado
+
+- Arquivo compactado agora é extraído e convertido de uma vez, numa única barra de progresso, como uma
+  pasta. Ao escolher o arquivo, o programa só confere o índice, em segundos e sem extrair nada:
+  recusa o que não tem jogo, pede a senha se houver e, em `.zip` e `.rar` não sólidos, já mostra nome,
+  código e ícone do jogo. A extração começa ao clicar em **Converter**, e a barra é dividida entre
+  extração e conversão conforme o tamanho do jogo.
+- Se a conversão de um arquivo compactado falha ou é cancelada, a extração é apagada e a próxima
+  tentativa começa do zero, sem sobras no disco.
+- As configurações da versão antiga só são migradas quando nenhuma versão antiga está aberta.
+
+### Adicionado
+
+- Opção "Abrir o jogo assim que a conversão terminar", que pode ser marcada ou desmarcada a qualquer
+  momento, inclusive durante a conversão, e fica lembrada entre execuções.
+
+### Corrigido
+
+- O número e o sinal de concluído nas bolinhas dos passos ficam centralizados.
+
 ## [0.7.0] - 2026-10-16
 
 ### Alterado
@@ -190,7 +212,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Botões para jogar e abrir a pasta ao final, com as últimas linhas de `anyps5.log` se o jogo
   fechar com erro.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.6.3...v0.7.0
 [0.6.3]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.6.1...v0.6.2

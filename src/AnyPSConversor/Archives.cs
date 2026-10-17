@@ -14,6 +14,12 @@ public sealed class PasswordException(bool wrong) : Exception("password required
 public readonly record struct ExtractProgress(int Percent, string? Entry);
 
 /// <summary>
+/// O que se sabe de um arquivo compactado antes de extraí-lo: o jogo (nome e ícone, quando dá para ler sem
+/// descompactar o arquivo inteiro) e o tamanho a extrair, que pesa na divisão da barra de progresso.
+/// </summary>
+public sealed record ArchivePreview(GamePreview? Game, long Size);
+
+/// <summary>
 /// Extrai o jogo de um arquivo compactado (.zip, .rar, .7z, .tar e variações) para uma pasta de trabalho no
 /// mesmo local onde o jogo convertido será salvo, para usar o disco escolhido pelo usuário e poder mover
 /// (em vez de copiar) os arquivos para app0/.
@@ -112,13 +118,70 @@ public static class Archives
         }
     }
 
+    /// <summary>Zip, rar e 7z têm índice e são abertos inteiros; tar, gz, bz2 e xz são lidos em sequência e não têm senha.</summary>
+    static bool IsIndexed(string archive) =>
+        new[] { ".zip", ".rar", ".7z" }.Any(e => archive.EndsWith(e, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Confere o arquivo sem extrair nada, para recusar na hora o que não é jogo e mostrar o jogo antes de
+    /// converter. Pelo índice: sem o arquivo principal de nenhum console, recusa. Se o arquivo não é sólido, lê
+    /// também o principal (recusa se criptografado), o nome e o ícone; num arquivo sólido isso exigiria
+    /// descompactar quase tudo, e fica para a extração.
+    /// </summary>
+    /// <exception cref="PasswordException">O arquivo tem senha e ela falta ou não confere.</exception>
+    public static ArchivePreview Inspect(string archive, string? password)
+    {
+        if (!IsIndexed(archive))
+            return new(null, new FileInfo(archive).Length);
+        if (password is null && NeedsPassword(archive))
+            throw new PasswordException(wrong: false);
+        try
+        {
+            using var opened = ArchiveFactory.OpenArchive(archive, new ReaderOptions { Password = password });
+            var entries = opened.Entries.Where(e => !e.IsDirectory).ToList();
+            var size = entries.Sum(e => Math.Max(0, e.Size));
+            var (main, platform) = CheckRequiredFiles(archive, opened, entries);
+            if (opened.IsSolid)
+                return new(null, size);
+            var folder = EntryPath(main)[..(EntryPath(main).LastIndexOf('/') + 1)];
+            byte[]? Read(string relative) =>
+                entries.FirstOrDefault(e => EntryPath(e).Equals(folder + relative, StringComparison.OrdinalIgnoreCase)) is { } entry
+                    ? ReadEntry(entry)
+                    : null;
+            return new(platform.Preview(Read), size);
+        }
+        catch (Exception e) when (e is not UserException and not PasswordException)
+        {
+            throw ReadFailure(e, archive, password);
+        }
+    }
+
+    /// <summary>
+    /// Erro de leitura traduzido para o usuário. Cada formato acusa a senha errada de um jeito
+    /// (CryptographicException, "bad password", erro de dados no 7z); com senha informada, qualquer falha de
+    /// leitura é tratada como senha errada.
+    /// </summary>
+    static Exception ReadFailure(Exception e, string archive, string? password) =>
+        password is not null ? new PasswordException(wrong: true)
+        : e is CryptographicException ? new PasswordException(wrong: false)
+        : new UserException("err_archive", Path.GetFileName(archive), e.Message);
+
+    static string EntryPath(IArchiveEntry entry) => (entry.Key ?? "").Replace('\\', '/').TrimStart('/');
+
+    static byte[] ReadEntry(IArchiveEntry entry)
+    {
+        using var input = entry.OpenEntryStream();
+        using var data = new MemoryStream();
+        input.CopyTo(data);
+        return data.ToArray();
+    }
+
     /// <param name="password">Senha do arquivo; nula até o usuário informar uma.</param>
     /// <param name="workRoot">Onde extrair; normalmente <see cref="WorkRoot"/> do local de saída.</param>
     /// <exception cref="PasswordException">O arquivo tem senha e ela falta ou não confere.</exception>
     public static string Extract(string archive, string? password, string workRoot, IProgress<ExtractProgress> progress, CancellationToken cancel)
     {
-        // Zip, rar e 7z têm índice e são abertos inteiros; tar, gz, bz2 e xz são lidos em sequência e não têm senha.
-        var indexed = new[] { ".zip", ".rar", ".7z" }.Any(e => archive.EndsWith(e, StringComparison.OrdinalIgnoreCase));
+        var indexed = IsIndexed(archive);
         if (indexed && password is null && NeedsPassword(archive))
             throw new PasswordException(wrong: false);
 
@@ -133,18 +196,12 @@ public static class Archives
                 ExtractStream(archive, target, options, progress, cancel);
             return target;
         }
-        catch (Exception e) when (e is not OperationCanceledException and not UserException)
+        catch (Exception e) when (e is not OperationCanceledException and not UserException and not PasswordException)
         {
             TryDelete(target);
             if (DiskSpace.IsDiskFull(e))
                 throw DiskSpace.DiskFull(target);
-            // Cada formato acusa a senha errada de um jeito (CryptographicException, "bad password",
-            // erro de dados no 7z); com senha informada, qualquer falha de leitura é tratada como senha errada.
-            if (password is not null)
-                throw new PasswordException(wrong: true);
-            if (e is CryptographicException)
-                throw new PasswordException(wrong: false);
-            throw new UserException("err_archive", Path.GetFileName(archive), e.Message);
+            throw ReadFailure(e, archive, password);
         }
         catch
         {
@@ -171,7 +228,7 @@ public static class Archives
     {
         using var archive = ArchiveFactory.OpenArchive(path, options);
         var entries = archive.Entries.Where(e => !e.IsDirectory).ToList();
-        CheckRequiredFiles(path, entries);
+        CheckRequiredFiles(path, archive, entries);
         var total = Math.Max(1, entries.Sum(e => Math.Max(0, e.Size)));
         DiskSpace.Ensure(target, total);
         long done = 0;
@@ -188,23 +245,22 @@ public static class Archives
     }
 
     /// <summary>
-    /// Recusa antes de extrair tudo o que não pode virar jogo: sem o arquivo principal de nenhum console no índice
-    /// (no PS5, o eboot.bin), ou com ele inutilizável, como criptografado. Só ele é lido, em memória: num arquivo
-    /// grande, o aviso chega em segundos e nada é gravado no disco.
+    /// Recusa antes de extrair o que não pode virar jogo: sem o arquivo principal de nenhum console no índice (no
+    /// PS5, o eboot.bin) ou, num arquivo não sólido, com ele inutilizável, como criptografado. Só ele é lido, em
+    /// memória: o aviso chega em segundos e nada é gravado no disco.
     /// </summary>
-    static void CheckRequiredFiles(string path, List<IArchiveEntry> entries)
+    static (IArchiveEntry Main, IConsolePlatform Platform) CheckRequiredFiles(string path, IArchive archive, List<IArchiveEntry> entries)
     {
         var (main, platform) = entries
-            .Select(e => (Entry: e, Platform: ConsolePlatform.ForMainFile((e.Key ?? "").Replace('\\', '/').Split('/')[^1])))
+            .Select(e => (Entry: e, Platform: ConsolePlatform.ForMainFile(EntryPath(e).Split('/')[^1])))
             .Where(m => m.Platform is not null)
-            .OrderBy(m => m.Entry.Key!.Length)
+            .OrderBy(m => EntryPath(m.Entry).Length)
             .FirstOrDefault();
         if (main is null)
             throw new UserException("err_no_eboot_archive", Path.GetFileName(path));
-        using var input = main.OpenEntryStream();
-        using var data = new MemoryStream();
-        input.CopyTo(data);
-        platform!.CheckMainFile(data.ToArray());
+        if (!archive.IsSolid)
+            platform!.CheckMainFile(ReadEntry(main));
+        return (main, platform!);
     }
 
     static void ExtractStream(string path, string target, ReaderOptions options, IProgress<ExtractProgress> progress, CancellationToken cancel)

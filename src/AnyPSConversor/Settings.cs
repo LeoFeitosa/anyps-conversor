@@ -8,8 +8,24 @@ public static class Settings
     /// <summary>Nome das pastas do programa até a versão 0.6, quando ele se chamava AnyPS5 Conversor.</summary>
     public const string LegacyName = "AnyPS5-Conversor";
 
-    public static string Folder { get; } = Migrate(Environment.SpecialFolder.ApplicationData);
+    public static string Folder { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Name);
     static readonly string OutputFile = Path.Combine(Folder, "output.txt");
+    static readonly string AutoPlayFile = Path.Combine(Folder, "auto-play.txt");
+
+    /// <summary>Abrir o jogo assim que a conversão terminar; desligado por padrão.</summary>
+    public static bool AutoPlay
+    {
+        get
+        {
+            try
+            {
+                return File.Exists(AutoPlayFile) && File.ReadAllText(AutoPlayFile).Trim() == "1";
+            }
+            catch (IOException) { return false; }
+            catch (UnauthorizedAccessException) { return false; }
+        }
+        set => Save(AutoPlayFile, value ? "1" : "0");
+    }
 
     public static string DefaultOutput { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "AnyPS");
 
@@ -17,22 +33,28 @@ public static class Settings
     public static string LegacyDefaultOutput { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "AnyPS5");
 
     /// <summary>
-    /// Pasta do programa dentro de <paramref name="root"/>. Na primeira execução depois da troca de nome, a pasta
-    /// antiga é renomeada para a nova, e o usuário não perde o idioma, o local escolhido nem os registros.
+    /// Na primeira execução depois da troca de nome, renomeia as pastas antigas em %APPDATA% e %LOCALAPPDATA%
+    /// para as novas: o usuário não perde o idioma, o local escolhido nem os registros. Só a abertura normal do
+    /// programa chama isto, antes de ler qualquer configuração.
     /// </summary>
-    public static string Migrate(Environment.SpecialFolder root)
+    public static void MigrateLegacyFolders()
     {
-        var parent = Environment.GetFolderPath(root);
-        var folder = Path.Combine(parent, Name);
-        var legacy = Path.Combine(parent, LegacyName);
-        try
+        // Uma versão antiga aberta ainda usa as pastas dela; a migração fica para a próxima abertura.
+        if (System.Diagnostics.Process.GetProcessesByName(LegacyName).Length > 0)
+            return;
+        foreach (var root in new[] { Environment.SpecialFolder.ApplicationData, Environment.SpecialFolder.LocalApplicationData })
         {
-            if (Directory.Exists(legacy) && !Directory.Exists(folder))
-                Directory.Move(legacy, folder);
+            var parent = Environment.GetFolderPath(root);
+            var legacy = Path.Combine(parent, LegacyName);
+            var folder = Path.Combine(parent, Name);
+            try
+            {
+                if (Directory.Exists(legacy) && !Directory.Exists(folder))
+                    Directory.Move(legacy, folder);
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
         }
-        catch (IOException) { }
-        catch (UnauthorizedAccessException) { }
-        return folder;
     }
 
     /// <summary>Onde salvar os jogos convertidos (e extrair os compactados); o padrão é %USERPROFILE%\AnyPS.</summary>
@@ -48,15 +70,17 @@ public static class Settings
             catch (IOException) { return DefaultOutput; }
             catch (UnauthorizedAccessException) { return DefaultOutput; }
         }
-        set
+        set => Save(OutputFile, value);
+    }
+
+    static void Save(string file, string value)
+    {
+        try
         {
-            try
-            {
-                Directory.CreateDirectory(Folder);
-                File.WriteAllText(OutputFile, value);
-            }
-            catch (IOException) { }
-            catch (UnauthorizedAccessException) { }
+            Directory.CreateDirectory(Folder);
+            File.WriteAllText(file, value);
         }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
     }
 }

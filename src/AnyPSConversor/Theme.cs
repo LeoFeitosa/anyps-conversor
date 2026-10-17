@@ -228,8 +228,25 @@ sealed class StepBadge : Control
         var r = new RectangleF(0, 0, Width - 1, Height - 1);
         using var fill = new SolidBrush(done ? Theme.Success : Theme.Accent);
         g.FillEllipse(fill, r);
-        TextRenderer.DrawText(g, done ? "✓" : number.ToString(), Theme.CardTitle, ClientRectangle, Color.White,
-            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+        float cx = r.Width / 2, cy = r.Height / 2, size = r.Width;
+        if (done)
+        {
+            // Traço desenhado, não o caractere ✓: a fonte deixaria o sinal fora do centro.
+            using var pen = new Pen(Color.White, size * 0.1f) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
+            g.DrawLines(pen, [new PointF(cx - size * 0.2f, cy + size * 0.01f), new PointF(cx - size * 0.05f, cy + size * 0.16f), new PointF(cx + size * 0.22f, cy - size * 0.14f)]);
+            return;
+        }
+        // Centraliza pelo contorno real do número; a caixa do texto inclui o espaço da fonte acima dos dígitos.
+        using var path = new GraphicsPath();
+        path.AddString(number.ToString(), Theme.CardTitle.FontFamily, (int)Theme.CardTitle.Style, size * 0.46f, PointF.Empty, StringFormat.GenericTypographic);
+        var bounds = path.GetBounds();
+        using (var move = new Matrix())
+        {
+            move.Translate(cx - bounds.X - bounds.Width / 2, cy - bounds.Y - bounds.Height / 2);
+            path.Transform(move);
+        }
+        using var white = new SolidBrush(Color.White);
+        g.FillPath(white, path);
     }
 }
 

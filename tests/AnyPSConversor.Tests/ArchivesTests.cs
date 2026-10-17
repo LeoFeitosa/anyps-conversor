@@ -145,6 +145,42 @@ public sealed class ArchivesTests : IDisposable
     }
 
     [Fact]
+    public void InspectsAnArchiveWithoutExtracting()
+    {
+        var source = CreateGameFolder();
+        var sys = Path.Combine(source, "release", "PPSA00010", "sce_sys");
+        Directory.CreateDirectory(sys);
+        File.WriteAllText(Path.Combine(sys, "param.json"), """{"titleId":"PPSA00010","localizedParameters":{"en-US":{"titleName":"Jogo Teste"}}}""");
+        File.WriteAllBytes(Path.Combine(sys, "icon0.png"), [1, 2, 3]);
+        var zip = Path.Combine(root, "game.zip");
+        ZipFile.CreateFromDirectory(source, zip);
+        var before = Directory.Exists(Archives.TempRoot) ? Directory.GetDirectories(Archives.TempRoot).Length : 0;
+
+        var preview = Archives.Inspect(zip, null);
+
+        Assert.Equal("Jogo Teste", preview.Game!.Name);
+        Assert.Equal("PPSA00010", preview.Game.TitleId);
+        Assert.Equal([1, 2, 3], preview.Game.Icon);
+        Assert.True(preview.Size > 0);
+        Assert.Equal(before, Directory.Exists(Archives.TempRoot) ? Directory.GetDirectories(Archives.TempRoot).Length : 0);
+    }
+
+    [Fact]
+    public void InspectAsksForThePasswordAndRefusesArchivesWithoutAGame()
+    {
+        var fixture = Path.Combine(AppContext.BaseDirectory, "Fixtures", "aes.zip");
+        Assert.False(Assert.Throws<PasswordException>(() => Archives.Inspect(fixture, null)).Wrong);
+        Assert.True(Assert.Throws<PasswordException>(() => Archives.Inspect(fixture, "errada")).Wrong);
+        Assert.NotNull(Archives.Inspect(fixture, "segredo123"));
+
+        var zip = Path.Combine(root, "sem-jogo.zip");
+        using (var archive = ZipFile.Open(zip, ZipArchiveMode.Create))
+        using (var writer = new StreamWriter(archive.CreateEntry("pasta/leia-me.txt").Open()))
+            writer.Write("x");
+        Assert.Equal("err_no_eboot_archive", Assert.Throws<UserException>(() => Archives.Inspect(zip, null)).Key);
+    }
+
+    [Fact]
     public void ReportsEachFileWhileExtracting()
     {
         var zip = Path.Combine(root, "game.zip");

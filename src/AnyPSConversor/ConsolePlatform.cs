@@ -19,6 +19,12 @@ public interface IConsolePlatform
     /// </summary>
     void CheckMainFile(byte[] data);
 
+    /// <summary>
+    /// Nome, código e ícone do jogo lidos de dentro de um arquivo compactado, antes de extrair.
+    /// <paramref name="read"/> devolve um arquivo pelo caminho relativo à pasta do arquivo principal, ou nulo.
+    /// </summary>
+    GamePreview Preview(Func<string, byte[]?> read);
+
     /// <summary>Lê o jogo em <paramref name="path"/>; lança "err_no_eboot" se não for um jogo deste console.</summary>
     GameInfo Load(string path, string? fallbackName);
 
@@ -26,6 +32,9 @@ public interface IConsolePlatform
     Task<string> ConvertAsync(GameInfo game, string parentFolder, bool sourceIsExtraction,
         IProgress<ConversionProgress> progress, Action<string> log, CancellationToken cancel);
 }
+
+/// <summary>O que dá para mostrar de um jogo antes de extraí-lo.</summary>
+public sealed record GamePreview(string? Name, string? TitleId, byte[]? Icon, bool HasInfo);
 
 public static class ConsolePlatform
 {
@@ -80,6 +89,13 @@ public sealed class Ps5Platform : IConsolePlatform
         {
             // Outros defeitos do SELF são explicados na conversão, com o registro completo.
         }
+    }
+
+    public GamePreview Preview(Func<string, byte[]?> read)
+    {
+        var param = read("sce_sys/param.json");
+        var (titleId, name) = param is null ? (null, null) : GameInfo.ReadParam(System.Text.Encoding.UTF8.GetString(param));
+        return new(name ?? titleId, titleId, read("sce_sys/icon0.png"), param is not null);
     }
 
     public GameInfo Load(string path, string? fallbackName) => GameInfo.Load(path, fallbackName);
