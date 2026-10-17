@@ -42,6 +42,7 @@ public sealed class MainForm : Form
     readonly TextBox outputBox = new() { ReadOnly = true, BorderStyle = BorderStyle.FixedSingle, Font = Theme.Body, BackColor = Theme.Input, ForeColor = Theme.Text };
     readonly RoundButton outputButton = Theme.SecondaryButton();
     readonly CheckBox recycleSourceBox = new() { ForeColor = Theme.Text, BackColor = Theme.Surface, Font = Theme.Body };
+    readonly CheckBox autoPlayBox = new() { ForeColor = Theme.Text, BackColor = Theme.Surface, Font = Theme.Body };
 
     readonly Card convertCard = new();
     readonly StepBadge convertBadge = new(3);
@@ -70,6 +71,11 @@ public sealed class MainForm : Form
 
     GameInfo? game;
     string? extractedFolder;
+
+    /// <summary>Arquivo compactado escolhido: só é extraído ao converter, na mesma barra da conversão.</summary>
+    sealed record PendingArchive(string Path, string? Password, ArchivePreview Preview, string Name);
+
+    PendingArchive? archive;
     string? extractionParent;
     string? sourceInput;
     string? convertedExe;
@@ -81,7 +87,7 @@ public sealed class MainForm : Form
     TimeSpan? remaining;
     readonly string[] missingCpu = Converter.MissingCpuFeatures();
 
-    const int BaseHeight = 734;
+    const int BaseHeight = 762;
     const int LogHeight = 190;
 
     /// <param name="initialGame">Pasta solta sobre o ícone do .exe, se houver.</param>
@@ -133,17 +139,22 @@ public sealed class MainForm : Form
         gameCard.Controls.AddRange([dropZone, gamePanel, legalHint]);
 
         // 2. Destino
-        outputCard.SetBounds(24, 324, 712, 140);
+        outputCard.SetBounds(24, 324, 712, 168);
         PlaceStep(outputCard, outputBadge, outputTitle, outputHint);
         outputBox.SetBounds(20, 74, 532, 28);
         outputBox.Text = Settings.Output;
         outputButton.SetBounds(564, 70, 128, 34);
         outputButton.Click += (_, _) => PickOutput();
         recycleSourceBox.SetBounds(20, 108, 672, 24);
-        outputCard.Controls.AddRange([outputBox, outputButton, recycleSourceBox]);
+        // Pode ser marcada ou desmarcada a qualquer momento, inclusive durante a conversão: vale o que estiver
+        // marcado quando ela termina.
+        autoPlayBox.SetBounds(20, 136, 672, 24);
+        autoPlayBox.Checked = Settings.AutoPlay;
+        autoPlayBox.CheckedChanged += (_, _) => Settings.AutoPlay = autoPlayBox.Checked;
+        outputCard.Controls.AddRange([outputBox, outputButton, recycleSourceBox, autoPlayBox]);
 
         // 3. Converter
-        convertCard.SetBounds(24, 480, 712, 192);
+        convertCard.SetBounds(24, 508, 712, 192);
         PlaceStep(convertCard, convertBadge, convertTitle, null);
         convertButton.SetBounds(20, 62, 672, 50);
         convertButton.Font = Theme.BigButton;
@@ -164,7 +175,7 @@ public sealed class MainForm : Form
         detailsLink.LinkClicked += (_, _) => ToggleDetails();
         convertCard.Controls.AddRange([convertButton, donePanel, progressBar, percentLabel, stepLabel, statusLabel, detailsLink]);
 
-        logBox.SetBounds(24, 684, 712, LogHeight - 12);
+        logBox.SetBounds(24, 712, 712, LogHeight - 12);
 
         var footer = new Panel { BackColor = Theme.Footer, Dock = DockStyle.Bottom, Height = 46 };
         upstreamLink.SetBounds(24, 6, 360, 18);
@@ -221,6 +232,7 @@ public sealed class MainForm : Form
         outputHint.Text = T("step2_hint");
         outputButton.Text = T("change");
         recycleSourceBox.Text = T("recycle_source");
+        autoPlayBox.Text = T("auto_play");
         convertTitle.Text = T("step3_title");
         convertButton.Text = running is null ? T("convert") : T("cancel");
         playButton.Text = T("play");
@@ -231,6 +243,8 @@ public sealed class MainForm : Form
         licensesLink.Text = T("footer_licenses");
         if (game is not null)
             ShowGameTexts(game);
+        else if (archive is not null)
+            ShowArchiveTexts(archive);
         SetStatus(statusKey, statusIsError, statusArgs);
         SetStep(stepKey, stepItem);
         Invalidate(true);
@@ -325,10 +339,17 @@ public sealed class MainForm : Form
     /// Imagem da janela inicial para o README. A janela abre fora da área visível e o Windows a desenha
     /// inteira, com a barra de título; a pasta de saída mostrada é um exemplo, nunca a de quem gera.
     /// </summary>
-    public static void SaveScreenshot(string file)
+    public static void SaveScreenshot(string file, string? gameFolder = null)
     {
         using var form = new MainForm { StartPosition = FormStartPosition.Manual, Location = new Point(-8000, -8000), ShowInTaskbar = false };
         form.outputBox.Text = @"C:\Users\Jogador\AnyPS";
+        if (gameFolder is not null)
+        {
+            form.game = ConsolePlatform.Load(gameFolder);
+            form.ShowGame(form.game);
+            form.gameBadge.Done = true;
+            form.SetStatus("status_ready");
+        }
         form.Show();
         Application.DoEvents();
         GetWindowRect(form.Handle, out var window);
@@ -346,7 +367,10 @@ public sealed class MainForm : Form
         image.Save(file, System.Drawing.Imaging.ImageFormat.Png);
     }
 
-    /// <summary>Carrega uma pasta, um eboot.bin ou um arquivo compactado com o jogo.</summary>
+    /// <summary>
+    /// Carrega uma pasta, um eboot.bin ou um arquivo compactado com o jogo. O arquivo compactado só é conferido
+    /// aqui (pelo índice, em segundos); a extração acontece ao converter, na mesma barra.
+    /// </summary>
     async Task LoadGameAsync(string path)
     {
         if (running is not null)
@@ -355,40 +379,18 @@ public sealed class MainForm : Form
         SetBusy(true);
         try
         {
-            string? fallbackName = null;
-            string? extracted = null;
             if (Archives.IsArchive(path))
             {
-                fallbackName = Path.GetFileName(path);
-                foreach (var extension in Archives.Extensions.Concat([".tar"]))
-                    if (fallbackName.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
-                        fallbackName = fallbackName[..^extension.Length];
                 progressBar.Value = 0;
-                SetStatus("status_extracting", false, 0);
-                // Tempo restante só depois de 5 s e 3% medidos neste PC: a média até ali já é estável.
-                var clock = Stopwatch.StartNew();
-                var progress = new Progress<ExtractProgress>(p =>
-                {
-                    if (running?.IsCancellationRequested == true)
-                        return;
-                    progressBar.Value = p.Percent * 10;
-                    percentLabel.Text = $"{p.Percent}%";
-                    remaining = clock.Elapsed.TotalSeconds >= 5 && p.Percent is >= 3 and < 100
-                        ? clock.Elapsed * ((100.0 - p.Percent) / p.Percent)
-                        : null;
-                    SetStatus("status_extracting", false, p.Percent);
-                    if (p.Entry is not null)
-                        SetStep("step_extracting", p.Entry);
-                });
-                var token = running.Token;
+                SetStatus("status_checking");
                 string? password = null;
+                ArchivePreview preview;
                 while (true)
                 {
                     try
                     {
                         var attempt = password;
-                        var workRoot = Archives.WorkRoot(outputBox.Text);
-                        extracted = await Task.Run(() => Archives.Extract(path, attempt, workRoot, progress, token), token);
+                        preview = await Task.Run(() => Archives.Inspect(path, attempt), running.Token);
                         break;
                     }
                     catch (PasswordException e)
@@ -396,38 +398,27 @@ public sealed class MainForm : Form
                         password = PasswordDialog.Ask(this, Path.GetFileName(path), e.Wrong);
                         if (password is null)
                         {
-                            SetStatus(game is null ? "status_idle" : "status_ready");
+                            SetStatus(game is null && archive is null ? "status_idle" : "status_ready");
                             return;
                         }
-                        clock.Restart();
-                        remaining = null;
-                        SetStatus("status_extracting", false, 0);
+                        SetStatus("status_checking");
                     }
                 }
+                DiscardExtraction();
+                game = null;
+                archive = new(path, password, preview, ArchiveName(path));
+                ShowArchive(archive);
             }
-
-            GameInfo loaded;
-            try
+            else
             {
-                loaded = await Task.Run(() => ConsolePlatform.Load(extracted ?? path, fallbackName));
+                var loaded = await Task.Run(() => ConsolePlatform.Load(path));
+                DiscardExtraction();
+                archive = null;
+                game = loaded;
+                ShowGame(game);
             }
-            catch (UserException e) when (extracted is not null && e.Key == "err_no_eboot")
-            {
-                Archives.TryDelete(extracted);
-                throw new UserException("err_no_eboot_archive", Path.GetFileName(path));
-            }
-            catch
-            {
-                Archives.TryDelete(extracted);
-                throw;
-            }
-            DiscardExtraction();
-            extractedFolder = extracted;
-            extractionParent = extracted is null ? null : outputBox.Text;
-            game = loaded;
             sourceInput = path;
             convertedExe = null;
-            ShowGame(game);
             donePanel.Visible = false;
             convertButton.Visible = true;
             progressBar.Value = 0;
@@ -442,25 +433,69 @@ public sealed class MainForm : Form
         }
         catch (UserException e)
         {
-            SetStatus(game is null ? "status_idle" : "status_ready");
+            SetStatus(game is null && archive is null ? "status_idle" : "status_ready");
             ShowError(T(e.Key, e.Args));
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            SetStatus(game is null ? "status_idle" : "status_ready");
+            SetStatus(game is null && archive is null ? "status_idle" : "status_ready");
             ShowError(T("err_unexpected", e.Message));
         }
         finally
         {
-            // Extração que não virou jogo (sem eboot.bin, senha cancelada, erro): não deixa a pasta de trabalho
-            // para trás, a menos que ela ainda guarde a extração do jogo carregado antes.
-            if (Archives.IsArchive(path) && extractionParent != outputBox.Text)
-                Archives.DeleteWorkRoot(outputBox.Text);
             percentLabel.Text = "";
             progressBar.Value = 0;
             running.Dispose();
             running = null;
             SetBusy(false);
+        }
+    }
+
+    /// <summary>Nome do arquivo sem as extensões de compactação, usado quando o jogo não diz o próprio nome.</summary>
+    static string ArchiveName(string path)
+    {
+        var name = Path.GetFileName(path);
+        foreach (var extension in Archives.Extensions.Concat([".tar"]))
+            if (name.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
+                name = name[..^extension.Length];
+        return name;
+    }
+
+    /// <summary>
+    /// Parte da barra que cabe à extração: num jogo grande ela é quase todo o tempo; num homebrew pequeno, a
+    /// geração do .exe pesa mais.
+    /// </summary>
+    // ponytail: proporção fixa pelo tamanho (1,5 GB = metade da barra); medir a velocidade real se ficar injusta.
+    static double ExtractShare(long size) => Math.Clamp(size / (size + 1.5e9), 0.1, 0.95);
+
+    /// <summary>Extrai o arquivo escolhido no local de saída, ocupando o começo da barra.</summary>
+    async Task<string> ExtractAsync(PendingArchive pending, double share, CancellationToken cancel)
+    {
+        SetStatus("status_extracting");
+        // Tempo restante só depois de 5 s e 3% medidos neste PC: a média até ali já é estável.
+        var clock = Stopwatch.StartNew();
+        var progress = new Progress<ExtractProgress>(p =>
+        {
+            if (running?.IsCancellationRequested == true)
+                return;
+            var overall = share * p.Percent / 100;
+            progressBar.Value = (int)(overall * 1000);
+            percentLabel.Text = $"{(int)(overall * 100)}%";
+            remaining = clock.Elapsed.TotalSeconds >= 5 && p.Percent is >= 3 and < 100
+                ? clock.Elapsed * ((100.0 - p.Percent) / p.Percent)
+                : null;
+            SetStatus("status_extracting");
+            if (p.Entry is not null)
+                SetStep("step_extracting", p.Entry);
+        });
+        var workRoot = Archives.WorkRoot(outputBox.Text);
+        try
+        {
+            return await Task.Run(() => Archives.Extract(pending.Path, pending.Password, workRoot, progress, cancel), cancel);
+        }
+        finally
+        {
+            remaining = null;
         }
     }
 
@@ -470,6 +505,7 @@ public sealed class MainForm : Form
         if (running is not null)
             return;
         game = null;
+        archive = null;
         sourceInput = null;
         convertedExe = null;
         gameIcon.Image?.Dispose();
@@ -515,6 +551,25 @@ public sealed class MainForm : Form
         gameStatus.ForeColor = info.HasParamJson ? Theme.Success : Theme.Warning;
     }
 
+    /// <summary>Jogo ainda dentro do arquivo compactado: o que deu para ler sem extrair.</summary>
+    void ShowArchive(PendingArchive pending)
+    {
+        dropZone.Visible = false;
+        gamePanel.Visible = true;
+        ShowArchiveTexts(pending);
+        gameIcon.Image?.Dispose();
+        gameIcon.Image = pending.Preview.Game?.Icon is { } icon ? Image.FromStream(new MemoryStream(icon)) : null;
+    }
+
+    void ShowArchiveTexts(PendingArchive pending)
+    {
+        var preview = pending.Preview.Game;
+        gameName.Text = preview?.Name ?? pending.Name;
+        gameMeta.Text = preview?.TitleId is { } id ? T("game_id", id) : T("game_file", Path.GetFileName(pending.Path));
+        gameStatus.Text = T("game_archive");
+        gameStatus.ForeColor = Theme.Success;
+    }
+
     async Task ConvertOrCancelAsync()
     {
         if (running is not null)
@@ -526,25 +581,29 @@ public sealed class MainForm : Form
             SetStep(null, null);
             return;
         }
-        if (game is null)
+        if (game is null && archive is null)
         {
             await PickFolderAsync();
-            if (game is null)
+            if (game is null && archive is null)
                 return;
         }
 
         running = new CancellationTokenSource();
         SetBusy(true);
         logBox.Clear();
-        var logFile = ConversionLogPath(game);
+        var pending = archive;
+        var logFile = ConversionLogPath(game?.SafeName ?? pending!.Name);
+        // Arquivo compactado: extração e conversão numa barra só, dividida pelo tamanho do jogo.
+        var share = pending is null ? 0 : ExtractShare(pending.Preview.Size);
         var finished = false;
         var progress = new Progress<ConversionProgress>(p =>
         {
             // Avisos atrasados da conversão não podem sobrescrever o status final nem o "cancelando".
             if (finished || running?.IsCancellationRequested == true)
                 return;
-            progressBar.Value = (int)(Math.Clamp(p.Fraction, 0, 1) * 1000);
-            percentLabel.Text = $"{(int)(Math.Clamp(p.Fraction, 0, 1) * 100)}%";
+            var overall = share + (1 - share) * Math.Clamp(p.Fraction, 0, 1);
+            progressBar.Value = (int)(overall * 1000);
+            percentLabel.Text = $"{(int)(overall * 100)}%";
             SetStatus(p.StatusKey, false, p.Args);
             SetStep(p.StepKey, p.StepItem);
         });
@@ -557,11 +616,28 @@ public sealed class MainForm : Form
             catch (IOException) { }
             BeginInvoke(() => logBox.AppendText(line + Environment.NewLine));
         }
-        Log($"AnyPS Conversor {AppVersion} | {game.Name} ({game.TitleId}) | {game.Folder} -> {outputBox.Text}");
 
         try
         {
             Directory.CreateDirectory(outputBox.Text);
+            if (pending is not null)
+            {
+                Log($"AnyPS Conversor {AppVersion} | {pending.Path} -> {outputBox.Text}");
+                extractedFolder = await ExtractAsync(pending, share, running.Token);
+                extractionParent = outputBox.Text;
+                try
+                {
+                    var extracted = extractedFolder;
+                    game = await Task.Run(() => ConsolePlatform.Load(extracted, pending.Name));
+                }
+                catch (UserException e) when (e.Key == "err_no_eboot")
+                {
+                    throw new UserException("err_no_eboot_archive", Path.GetFileName(pending.Path));
+                }
+                // Agora com o nome e o ícone de dentro do jogo, que um arquivo sólido não deixa ler antes.
+                ShowGame(game);
+            }
+            Log($"AnyPS Conversor {AppVersion} | {game!.Name} ({game.TitleId}) | {game.Folder} -> {outputBox.Text}");
             convertedExe = await game.Platform.ConvertAsync(game, outputBox.Text, extractedFolder is not null, progress, Log, running.Token);
             finished = true;
             progressBar.Value = 1000;
@@ -573,11 +649,14 @@ public sealed class MainForm : Form
 
             // A extração só servia de entrada para o relinker; o jogo convertido já tem a sua cópia em app0/.
             DiscardExtraction();
+            archive = null;
             if (recycleSourceBox.Checked && sourceInput is not null)
-                RecycleSource(SourceCleanup.SourceToRecycle(sourceInput, game.Folder), Log);
+                RecycleSource(SourceCleanup.SourceToRecycle(sourceInput, pending is null ? game.Folder : pending.Path), Log);
 
             // Deu certo: o registro continua em "Mostrar detalhes", mas não fica ocupando o disco.
             File.Delete(logFile);
+            if (autoPlayBox.Checked)
+                _ = PlayAsync();
         }
         catch (OperationCanceledException)
         {
@@ -601,10 +680,18 @@ public sealed class MainForm : Form
             running = null;
             SetBusy(false);
             if (convertedExe is null)
+            {
                 percentLabel.Text = "";
-            // Se a conversão falhou depois de mover a extração para app0/, ela ficou incompleta: pede o jogo de novo.
-            if (convertedExe is null && extractedFolder is not null && game is not null && !File.Exists(Path.Combine(game.Folder, game.Platform.MainFile)))
-                ResetGame();
+                progressBar.Value = 0;
+                // Do arquivo compactado não fica nada pela metade: a próxima tentativa extrai de novo.
+                if (pending is not null)
+                {
+                    DiscardExtraction();
+                    Archives.DeleteWorkRoot(outputBox.Text);
+                    game = null;
+                    ShowArchive(pending);
+                }
+            }
         }
     }
 
@@ -648,10 +735,11 @@ public sealed class MainForm : Form
     }
 
     /// <summary>Registro da conversão; só fica no disco se ela falhar.</summary>
-    static string ConversionLogPath(GameInfo info)
+    static string ConversionLogPath(string name)
     {
         Directory.CreateDirectory(Converter.LogFolder);
-        return Path.Combine(Converter.LogFolder, $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}_{info.SafeName}.log");
+        var safe = string.Concat(name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? ' ' : c));
+        return Path.Combine(Converter.LogFolder, $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}_{safe}.log");
     }
 
     /// <summary>Apaga a extração atual e a pasta de trabalho oculta no local onde ela foi feita.</summary>

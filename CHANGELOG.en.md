@@ -8,6 +8,29 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-16
+
+### Changed
+
+- Archives are now extracted and converted in one go, with a single progress bar, just like a folder.
+  When the archive is chosen, the program only checks its index, in seconds and without extracting
+  anything: it refuses what has no game, asks for the password if there is one and, in non-solid
+  `.zip` and `.rar` archives, already shows the game name, code and icon. Extraction starts when
+  **Convert** is clicked, and the bar is split between extraction and conversion according to the size
+  of the game.
+- If converting an archive fails or is cancelled, the extraction is deleted and the next attempt starts
+  from scratch, with nothing left on disk.
+- Settings from the old version are only migrated when no old version is open.
+
+### Added
+
+- "Open the game as soon as the conversion finishes" option, which can be checked or unchecked at any
+  time, even during the conversion, and is remembered between runs.
+
+### Fixed
+
+- The number and the done mark in the step circles are centered.
+
 ## [0.7.0] - 2026-10-16
 
 ### Changed
@@ -192,7 +215,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Buttons to play and open the folder at the end, with the last lines of `anyps5.log` if the game
   closes with an error.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.6.3...v0.7.0
 [0.6.3]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.6.1...v0.6.2

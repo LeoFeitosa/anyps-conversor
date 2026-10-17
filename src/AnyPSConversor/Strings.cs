@@ -60,6 +60,8 @@ public static class Strings
         ["change"] = ("Trocar…", "Change…"),
         ["game_id"] = ("Código do título: {0}", "Title ID: {0}"),
         ["game_ready"] = ("Pronto para converter", "Ready to convert"),
+        ["game_file"] = ("Arquivo: {0}", "File: {0}"),
+        ["game_archive"] = ("Pronto: será extraído e convertido de uma vez", "Ready: it will be extracted and converted in one go"),
         ["game_no_param"] = ("Falta o arquivo sce_sys/param.json. Alguns jogos precisam dele para abrir.", "The sce_sys/param.json file is missing. Some games need it to start."),
         ["legal_hint"] = ("Nenhum jogo é incluído. Use apenas cópias suas ou homebrew.", "No games are included. Use only your own copies or homebrew."),
 
@@ -68,6 +70,7 @@ public static class Strings
 
         ["recycle_source"] = ("Ao terminar, mover os arquivos originais do jogo para a Lixeira (fica só a versão convertida)",
                               "When done, move the original game files to the Recycle Bin (keep only the converted version)"),
+        ["auto_play"] = ("Abrir o jogo assim que a conversão terminar", "Open the game as soon as the conversion finishes"),
         ["step3_title"] = ("Converter", "Convert"),
         ["convert"] = ("Converter para Windows", "Convert to Windows"),
         ["cancel"] = ("Cancelar", "Cancel"),
@@ -77,6 +80,7 @@ public static class Strings
         ["status_ready"] = ("Tudo certo. Clique em Converter para Windows.", "All set. Click Convert to Windows."),
         ["status_preparing"] = ("Preparando as ferramentas…", "Preparing the tools…"),
         ["status_unwrapping"] = ("Lendo o executável do jogo…", "Reading the game executable…"),
+        ["status_checking"] = ("Conferindo o arquivo…", "Checking the file…"),
         ["status_extracting"] = ("Extraindo o arquivo…", "Extracting the file…"),
         ["status_relinking"] = ("Gerando o executável do Windows…", "Building the Windows executable…"),
         ["status_copying"] = ("Copiando os arquivos do jogo…", "Copying the game files…"),

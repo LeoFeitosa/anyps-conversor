@@ -33,7 +33,7 @@ public sealed record GameInfo(
         CheckExecutable(Path.Combine(folder, "eboot.bin"));
 
         var paramPath = Path.Combine(folder, "sce_sys", "param.json");
-        var (titleId, name) = File.Exists(paramPath) ? ReadParam(paramPath) : (null, null);
+        var (titleId, name) = File.Exists(paramPath) ? ReadParam(File.ReadAllText(paramPath)) : (null, null);
         var iconPath = Path.Combine(folder, "sce_sys", "icon0.png");
 
         var modules = ModuleDirectories
@@ -121,11 +121,12 @@ public sealed record GameInfo(
     }
 
     // Mesma escolha do AnyPS5: defaultLanguage (em localizedParameters ou no topo), depois en-US, depois o primeiro idioma.
-    static (string? TitleId, string? Name) ReadParam(string path)
+    /// <summary>Código e nome do título no conteúdo de um sce_sys/param.json.</summary>
+    public static (string? TitleId, string? Name) ReadParam(string text)
     {
         try
         {
-            using var json = JsonDocument.Parse(File.ReadAllText(path));
+            using var json = JsonDocument.Parse(text);
             var root = json.RootElement;
             var titleId = root.TryGetProperty("titleId", out var id) && id.ValueKind == JsonValueKind.String ? id.GetString() : null;
             if (!root.TryGetProperty("localizedParameters", out var localized) || localized.ValueKind != JsonValueKind.Object)
