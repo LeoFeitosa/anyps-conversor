@@ -18,6 +18,16 @@ public static class DiskSpace
             throw new UserException("err_disk_space", Format(needed), root, Format(free), Format(needed - free));
     }
 
+    /// <summary>
+    /// Confere várias necessidades de uma vez, somadas por disco: destino e pasta temporária no mesmo disco
+    /// disputam o mesmo espaço livre, e conferidos um a um cada um passaria sozinho.
+    /// </summary>
+    public static void EnsureAll(IEnumerable<(string Path, long Bytes)> needs, Func<string, long>? available = null)
+    {
+        foreach (var disk in needs.GroupBy(n => Path.GetPathRoot(Path.GetFullPath(n.Path))!, StringComparer.OrdinalIgnoreCase))
+            Ensure(disk.Key, disk.Sum(n => n.Bytes), available?.Invoke(disk.Key));
+    }
+
     /// <summary>Verdadeiro para "disco cheio" do Windows (ERROR_DISK_FULL e ERROR_HANDLE_DISK_FULL).</summary>
     public static bool IsDiskFull(Exception e) => e is IOException && (e.HResult & 0xFFFF) is 0x70 or 0x27;
 

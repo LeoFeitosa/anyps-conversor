@@ -84,7 +84,13 @@ public sealed class MainForm : Form
     object[] statusArgs = [];
     bool statusIsError;
     string? stepKey, stepItem;
-    TimeSpan? remaining;
+    /// <summary>
+    /// Quando o processo deve terminar. A contagem regressiva anda a cada segundo (<see cref="clock"/>) e o
+    /// horário é recalculado a cada aviso de progresso, então a estimativa se corrige sozinha.
+    /// </summary>
+    DateTime? finishAt;
+
+    readonly System.Windows.Forms.Timer clock = new() { Interval = 1000 };
 
     /// <summary>O tempo restante cobre só a extração: este PC ainda não converteu nada para medir a conversão.</summary>
     bool remainingExtractOnly;
@@ -196,6 +202,12 @@ public sealed class MainForm : Form
 
         Controls.AddRange([header, gameCard, outputCard, convertCard, logBox, footer]);
         EnableDrop(this);
+        clock.Tick += (_, _) =>
+        {
+            if (running is not null && finishAt is not null)
+                SetStatus(statusKey, statusIsError, statusArgs);
+        };
+        clock.Start();
         ApplyTexts();
         ResumeLayout(false);
         if (initialGame is not null)
@@ -270,10 +282,13 @@ public sealed class MainForm : Form
             text = T("err_cpu", string.Join(", ", missingCpu));
             error = true;
         }
-        if (remaining is { } left && key is "status_extracting" or "status_unwrapping" or "status_relinking" or "status_copying")
-            text += " " + (left.TotalSeconds < 60
-                ? T(remainingExtractOnly ? "eta_extract_under_minute" : "eta_under_minute")
-                : T(remainingExtractOnly ? "eta_extract_minutes" : "eta_minutes", (int)Math.Ceiling(left.TotalMinutes)));
+        // Passado do horário previsto, some: melhor nada do que um tempo que não confere.
+        if (finishAt - DateTime.Now is { TotalSeconds: >= 1 } left
+            && key is "status_extracting" or "status_unwrapping" or "status_relinking" or "status_copying")
+        {
+            var countdown = left.TotalHours >= 1 ? $"{(int)left.TotalHours}:{left.Minutes:00}:{left.Seconds:00}" : $"{left.Minutes}:{left.Seconds:00}";
+            text += " " + T(remainingExtractOnly ? "eta_extract" : "eta", countdown);
+        }
         statusLabel.Text = text;
         statusLabel.ForeColor = error ? Theme.Error : key is "status_done" or "status_done_recycled" ? Theme.Success : Theme.Muted;
     }
@@ -479,7 +494,7 @@ public sealed class MainForm : Form
         remainingExtractOnly = conversion is null;
         SetStatus("status_extracting");
         // Tempo restante só depois de 5 s e 3% medidos neste PC: a média até ali já é estável.
-        var clock = Stopwatch.StartNew();
+        var watch = Stopwatch.StartNew();
         var progress = new Progress<ExtractProgress>(p =>
         {
             if (running?.IsCancellationRequested == true)
@@ -488,9 +503,13 @@ public sealed class MainForm : Form
             progressBar.Value = (int)(overall * 1000);
             percentLabel.Text = $"{(int)(overall * 100)}%";
             // Processo inteiro: o que falta extrair, medido agora, mais a conversão, medida em conversões anteriores.
-            remaining = clock.Elapsed.TotalSeconds >= 5 && p.Percent is >= 3 and < 100
-                ? clock.Elapsed * ((100.0 - p.Percent) / p.Percent) + (conversion ?? TimeSpan.Zero)
-                : null;
+            if (watch.Elapsed.TotalSeconds >= 5 && p.Percent is >= 3 and < 100)
+            {
+                var target = DateTime.Now + watch.Elapsed * ((100.0 - p.Percent) / p.Percent) + (conversion ?? TimeSpan.Zero);
+                // A porcentagem é inteira: cada ponto a mais faz a conta saltar alguns segundos. Aproximar aos
+                // poucos do novo horário deixa a contagem descer contínua, sem ir e voltar.
+                finishAt = finishAt is { } current ? current + (target - current) * 0.15 : target;
+            }
             SetStatus("status_extracting");
             if (p.Entry is not null)
                 SetStep("step_extracting", p.Entry);
@@ -502,7 +521,7 @@ public sealed class MainForm : Form
         }
         finally
         {
-            remaining = null;
+            finishAt = null;
             remainingExtractOnly = false;
         }
     }
@@ -540,7 +559,7 @@ public sealed class MainForm : Form
         convertButton.Text = busy ? T("cancel") : T("convert");
         convertButton.Primary = !busy;
         convertButton.Enabled = true;
-        remaining = null;
+        finishAt = null;
         SetStep(null, null);
         // O idioma pode mudar a qualquer momento, inclusive no meio de uma extração ou conversão.
         browseFolderButton.Enabled = browseFileButton.Enabled = changeButton.Enabled = outputButton.Enabled = !busy;
@@ -611,13 +630,11 @@ public sealed class MainForm : Form
         var share = pending is null ? 0 : ExtractShare(pending.Preview.Size);
         var finished = false;
         var conversionClock = new Stopwatch();
-        TimeSpan? conversionEstimate = null;
         var progress = new Progress<ConversionProgress>(p =>
         {
             // Avisos atrasados da conversão não podem sobrescrever o status final nem o "cancelando".
             if (finished || running?.IsCancellationRequested == true)
                 return;
-            remaining = conversionEstimate - conversionClock.Elapsed is { TotalSeconds: > 0 } left ? left : null;
             var overall = share + (1 - share) * Math.Clamp(p.Fraction, 0, 1);
             progressBar.Value = (int)(overall * 1000);
             percentLabel.Text = $"{(int)(overall * 100)}%";
@@ -660,7 +677,7 @@ public sealed class MainForm : Form
             }
             Log($"AnyPS Conversor {AppVersion} | {game!.Name} ({game.TitleId}) | {game.Folder} -> {outputBox.Text}");
             var executables = Converter.ExecutableBytes(game);
-            conversionEstimate = ConversionEstimate(executables);
+            finishAt = DateTime.Now + ConversionEstimate(executables);
             conversionClock.Start();
             convertedExe = await game.Platform.ConvertAsync(game, outputBox.Text, extractedFolder is not null, progress, Log, running.Token);
             // Aprende quanto este PC leva: a próxima estimativa usa a média com esta medida.

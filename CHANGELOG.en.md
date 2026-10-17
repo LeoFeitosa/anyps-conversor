@@ -8,6 +8,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-16
+
+### Changed
+
+- Time left is a countdown that moves every second (`4:32`, or `1:04:32` above an hour). The expected
+  finish time is recalculated on every extraction step and eases toward the new measurement, so the
+  countdown goes down smoothly instead of jumping back and forth.
+- Space for the whole process is summed per disk: destination and temporary folder on the same disk
+  compete for the same free space. The count also includes `relinker.exe` itself.
+- For `.tar.xz`, the final size of the game is read from the format's index, without extracting, and
+  goes into the space check. `.tar.gz` and `.tar.bz2` do not store that size; for them, if the disk
+  fills up, extraction stops and is deleted.
+
+### Fixed
+
+- Choosing a folder inside the game folder in "Where to save" is now refused with a warning. Before,
+  the converted game was written mixed with the original.
+
 ## [0.9.0] - 2026-10-16
 
 ### Changed
@@ -232,7 +250,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Buttons to play and open the folder at the end, with the last lines of `anyps5.log` if the game
   closes with an error.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.6.3...v0.7.0

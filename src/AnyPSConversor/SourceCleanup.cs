@@ -37,10 +37,10 @@ public static class SourceCleanup
         return !guarded.Where(p => p.Length > 0).Any(p => IsSameOrInside(Normalize(p), path));
     }
 
-    static bool IsSameOrInside(string path, string folder) =>
+    public static bool IsSameOrInside(string path, string folder) =>
         string.Equals(path, folder, StringComparison.OrdinalIgnoreCase)
         || path.StartsWith(folder + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
 
-    static string Normalize(string path) =>
+    public static string Normalize(string path) =>
         path.Length == 0 ? "" : Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
 }

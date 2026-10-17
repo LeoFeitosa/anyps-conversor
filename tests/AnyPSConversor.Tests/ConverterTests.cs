@@ -5,6 +5,28 @@ namespace AnyPSConversor.Tests;
 
 public class ConverterTests
 {
+    [Fact]
+    public async Task RefusesToSaveInsideTheGameFolder()
+    {
+        var game = Path.Combine(Path.GetTempPath(), "anyps-output-tests-" + Guid.NewGuid().ToString("N"), "PPSA00001");
+        Directory.CreateDirectory(game);
+        File.WriteAllBytes(Path.Combine(game, "eboot.bin"), SelfUnwrapperTests.BuildSelf(i => (byte)(i % 7)));
+        try
+        {
+            var info = GameInfo.Load(game);
+            foreach (var output in new[] { game, Path.Combine(game, "saida") })
+            {
+                var error = await Assert.ThrowsAsync<UserException>(() => Converter.ConvertAsync(
+                    info, output, false, new Progress<ConversionProgress>(), _ => { }, TestContext.Current.CancellationToken));
+                Assert.Equal("err_output_in_game", error.Key);
+            }
+        }
+        finally
+        {
+            Directory.Delete(Path.GetDirectoryName(game)!, recursive: true);
+        }
+    }
+
     [Theory]
     [InlineData("Instruction scan       | libc.prx  |   0%", 0.0)]
     [InlineData("Syscall scan           | eboot.bin | 100%", 0.4)]

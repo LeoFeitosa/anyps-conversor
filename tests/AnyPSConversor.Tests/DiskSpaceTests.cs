@@ -22,6 +22,18 @@ public class DiskSpaceTests
     public void AcceptsWhenThereIsRoom() => DiskSpace.Ensure(Path.GetTempPath(), GiB, available: 10 * GiB);
 
     [Fact]
+    public void SumsTheNeedsOfTheSameDisk()
+    {
+        var temp = Path.GetTempPath();
+        DiskSpace.EnsureAll([(temp, 6 * GiB)], _ => 10 * GiB);
+
+        // Destino e pasta temporária no mesmo disco: cada um caberia sozinho, os dois juntos não.
+        var error = Assert.Throws<UserException>(() =>
+            DiskSpace.EnsureAll([(temp, 6 * GiB), (Path.Combine(temp, "outra"), 6 * GiB)], _ => 10 * GiB));
+        Assert.Equal("err_disk_space", error.Key);
+    }
+
+    [Fact]
     public void RecognizesDiskFullErrors()
     {
         Assert.True(DiskSpace.IsDiskFull(new IOException("full", unchecked((int)0x80070070))));
