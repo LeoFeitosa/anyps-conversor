@@ -8,6 +8,23 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-16
+
+### Changed
+
+- Disk space is checked for the whole process before starting: for an archive, the extracted game, the
+  AnyPS5 libraries and the generated `.exe`. If space is short, the warning comes before anything is
+  extracted, not after a long extraction.
+- Time left covers the whole process: extraction, measured live, and conversion, estimated from how
+  long this PC took in earlier conversions. On the first conversion on a PC, with no measurement yet,
+  only extraction is estimated, with the text "to extract".
+
+### Fixed
+
+- Games with backup copies of modules (such as `libc.prx.esbak`, left by signing tools) were refused
+  with "Ambiguous guest dependency name". Only real modules (`.prx`, `.sprx`, `.suprx`, `.debug_prx`)
+  are passed to the relinker.
+
 ## [0.8.0] - 2026-10-16
 
 ### Changed
@@ -215,7 +232,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Buttons to play and open the folder at the end, with the last lines of `anyps5.log` if the game
   closes with an error.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.6.3...v0.7.0
 [0.6.3]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.6.2...v0.6.3
