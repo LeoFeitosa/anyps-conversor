@@ -2,7 +2,7 @@ using static AnyPSConversor.Strings;
 
 namespace AnyPSConversor;
 
-/// <summary>Pede a senha de um arquivo compactado. A senha não é guardada em lugar nenhum.</summary>
+/// <summary>Asks for an archive's password. The password is not stored anywhere.</summary>
 sealed class PasswordDialog : Form
 {
     readonly TextBox passwordBox = new()
@@ -27,7 +27,7 @@ sealed class PasswordDialog : Form
         Font = Theme.Body;
         Text = T("password_title");
 
-        // O texto da mensagem nunca é cortado: se faltar espaço, encurta-se o nome do arquivo, pelo meio.
+        // The message text is never cut: if space runs short, the file name is shortened, in the middle.
         var text = T("password_message", Theme.ShortenMiddle(fileName, Theme.Body, (int)(ContentWidth * DeviceDpi / 96f * 0.9f)));
         var textHeight = Math.Min(MeasureHeight(text, Theme.Body, ContentWidth), 120);
 
@@ -62,7 +62,7 @@ sealed class PasswordDialog : Form
         ResumeLayout(false);
     }
 
-    /// <summary>Altura do texto quebrado em linhas, em unidades de 96 dpi como o resto do layout.</summary>
+    /// <summary>Height of the wrapped text, in 96 dpi units like the rest of the layout.</summary>
     int MeasureHeight(string text, Font font, int width)
     {
         var scale = DeviceDpi / 96f;
@@ -76,7 +76,7 @@ sealed class PasswordDialog : Form
         Theme.UseDarkTitleBar(Handle);
     }
 
-    /// <summary>Mostra a janela e devolve a senha digitada, ou nulo se o usuário cancelar.</summary>
+    /// <summary>Shows the window and returns the typed password, or null if the user cancels.</summary>
     public static string? Ask(IWin32Window owner, string fileName, bool wrong)
     {
         using var dialog = new PasswordDialog(fileName, wrong);

@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace AnyPSConversor;
 
-/// <summary>Tema escuro azul-marinho com destaque azul. Toda a arte é desenhada em código.</summary>
+/// <summary>Dark navy theme with blue accent. All artwork is drawn in code.</summary>
 static class Theme
 {
     public static readonly Color Background = Color.FromArgb(0x0F, 0x14, 0x1C);
@@ -58,7 +58,7 @@ static class Theme
         return path;
     }
 
-    /// <summary>Marca do app: controle genérico sobre quadrado arredondado. Mesma geometria de build/generate-icon.ps1.</summary>
+    /// <summary>App mark: generic controller over a rounded square. Same geometry as build/generate-icon.ps1.</summary>
     public static void DrawMark(Graphics g, RectangleF r)
     {
         using (var tile = Rounded(r, r.Width * 0.22f))
@@ -67,7 +67,7 @@ static class Theme
         DrawGamepad(g, r, Color.White, Accent);
     }
 
-    /// <summary>Controle genérico em coordenadas relativas ao quadrado <paramref name="r"/>.</summary>
+    /// <summary>Generic controller in coordinates relative to the square <paramref name="r"/>.</summary>
     public static void DrawGamepad(Graphics g, RectangleF r, Color body, Color holes)
     {
         float X(float v) => r.X + v * r.Width;
@@ -88,8 +88,8 @@ static class Theme
     }
 
     /// <summary>
-    /// Encurta o texto pelo meio ("início…final.rar") até caber em <paramref name="limit"/> pixels, preservando o
-    /// fim (a extensão). Nomes sem espaço não quebram linha; sem isso um nome comprido empurraria o resto para fora.
+    /// Shortens the text in the middle ("start…end.rar") until it fits in <paramref name="limit"/> pixels, keeping the
+    /// end (the extension). Names without spaces don't wrap; without this a long name would push the rest out.
     /// </summary>
     public static string ShortenMiddle(string name, Font font, int limit)
     {
@@ -231,12 +231,12 @@ sealed class StepBadge : Control
         float cx = r.Width / 2, cy = r.Height / 2, size = r.Width;
         if (done)
         {
-            // Traço desenhado, não o caractere ✓: a fonte deixaria o sinal fora do centro.
+            // Drawn stroke, not the ✓ character: the font would leave the mark off-center.
             using var pen = new Pen(Color.White, size * 0.1f) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
             g.DrawLines(pen, [new PointF(cx - size * 0.2f, cy + size * 0.01f), new PointF(cx - size * 0.05f, cy + size * 0.16f), new PointF(cx + size * 0.22f, cy - size * 0.14f)]);
             return;
         }
-        // Centraliza pelo contorno real do número; a caixa do texto inclui o espaço da fonte acima dos dígitos.
+        // Centers on the number's actual outline; the text box includes the font's space above the digits.
         using var path = new GraphicsPath();
         path.AddString(number.ToString(), Theme.CardTitle.FontFamily, (int)Theme.CardTitle.Style, size * 0.46f, PointF.Empty, StringFormat.GenericTypographic);
         var bounds = path.GetBounds();
@@ -251,8 +251,8 @@ sealed class StepBadge : Control
 }
 
 /// <summary>
-/// Barra de carregamento no estilo dos jogos: trilho escuro, preenchimento com listras diagonais que
-/// andam enquanto há trabalho e um brilho no topo.
+/// Game-style loading bar: dark track, fill with diagonal stripes that
+/// move while there is work, and a highlight on top.
 /// </summary>
 sealed class GameProgress : Control
 {
@@ -271,7 +271,7 @@ sealed class GameProgress : Control
         };
     }
 
-    /// <summary>De 0 a 1000.</summary>
+    /// <summary>From 0 to 1000.</summary>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public int Value
     {
@@ -283,7 +283,7 @@ sealed class GameProgress : Control
         }
     }
 
-    /// <summary>Listras em movimento enquanto há trabalho.</summary>
+    /// <summary>Moving stripes while there is work.</summary>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool Animated
     {
@@ -340,7 +340,7 @@ sealed class GameProgress : Control
     }
 }
 
-/// <summary>Botão arredondado: principal (preenchido) ou secundário (contorno).</summary>
+/// <summary>Rounded button: primary (filled) or secondary (outline).</summary>
 sealed class RoundButton : Button
 {
     bool hover, pressed, primary;

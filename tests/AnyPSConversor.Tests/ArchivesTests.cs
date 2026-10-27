@@ -77,7 +77,7 @@ public sealed class ArchivesTests : IDisposable
         Assert.Equal("err_archive_unsafe", error.Key);
     }
 
-    /// <summary>Gerados com 7-Zip e WinRAR por build/generate-test-archives.ps1; a senha é "segredo123".</summary>
+    /// <summary>Generated with 7-Zip and WinRAR by build/generate-test-archives.ps1; the password is "segredo123".</summary>
     [Theory]
     [InlineData("aes.zip")]
     [InlineData("zipcrypto.zip")]
@@ -147,7 +147,7 @@ public sealed class ArchivesTests : IDisposable
     [Fact]
     public void ReadsTheFinalSizeOfAnXzFromItsIndex()
     {
-        // Dois streams (70000 e 30001 bytes) e preenchimento de zeros no fim, como o formato permite.
+        // Two streams (70000 and 30001 bytes) and zero padding at the end, as the format allows.
         Assert.Equal(100001, Archives.XzUncompressedSize(Path.Combine(AppContext.BaseDirectory, "Fixtures", "dois-blocos.xz")));
         Assert.Null(Archives.XzUncompressedSize(Path.Combine(AppContext.BaseDirectory, "Fixtures", "aes.zip")));
     }
@@ -201,7 +201,7 @@ public sealed class ArchivesTests : IDisposable
         Assert.Contains(entries, e => e.EndsWith("libc.prx", StringComparison.Ordinal));
     }
 
-    /// <summary>Progress sem contexto de sincronização: os avisos chegam na hora, na mesma thread.</summary>
+    /// <summary>Progress without a synchronization context: notifications arrive immediately, on the same thread.</summary>
     sealed class Sync(Action<ExtractProgress> report) : IProgress<ExtractProgress>
     {
         public void Report(ExtractProgress value) => report(value);

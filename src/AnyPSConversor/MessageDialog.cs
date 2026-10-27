@@ -4,9 +4,9 @@ using static AnyPSConversor.Strings;
 namespace AnyPSConversor;
 
 /// <summary>
-/// Aviso no visual do programa, no lugar da caixa de mensagem do Windows. Textos curtos aparecem inteiros;
-/// textos longos (como trechos de registro) ganham barra de rolagem em vez de esticar a janela.
-/// Sem <c>warning</c>, é só informativo: sem o triângulo e mais largo, para leitura (como as licenças).
+/// Notice in the program's look, instead of the Windows message box. Short texts appear in full;
+/// long texts (such as log excerpts) get a scroll bar instead of stretching the window.
+/// Without <c>warning</c>, it is informational only: no triangle and wider, for reading (like the licenses).
 /// </summary>
 sealed class MessageDialog : Form
 {
@@ -76,7 +76,7 @@ sealed class MessageDialog : Form
         dialog.ShowDialog(owner);
     }
 
-    /// <summary>Triângulo de aviso desenhado em código, na cor de alerta do tema.</summary>
+    /// <summary>Warning triangle drawn in code, in the theme's alert color.</summary>
     sealed class WarningIcon : Control
     {
         public WarningIcon()

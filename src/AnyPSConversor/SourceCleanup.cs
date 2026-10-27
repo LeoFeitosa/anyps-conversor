@@ -3,8 +3,8 @@ using System.Runtime.InteropServices;
 namespace AnyPSConversor;
 
 /// <summary>
-/// Opção "mover os originais para a Lixeira" ao fim da conversão. Só move o arquivo compactado escolhido
-/// ou a pasta onde está o eboot.bin, nunca uma pasta acima dela, e recusa locais que não podem sumir.
+/// "Move the originals to the Recycle Bin" option at the end of the conversion. Only moves the chosen archive
+/// or the folder holding eboot.bin, never a folder above it, and refuses locations that cannot go away.
 /// </summary>
 public static class SourceCleanup
 {
@@ -17,13 +17,13 @@ public static class SourceCleanup
         Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolder.CommonApplicationData,
     ];
 
-    /// <summary>O que pode ir para a Lixeira: o arquivo compactado ou a pasta do jogo.</summary>
-    /// <param name="input">O que o usuário escolheu.</param>
-    /// <param name="gameFolder">Pasta com o eboot.bin (dentro da extração, quando veio de arquivo).</param>
+    /// <summary>What can go to the Recycle Bin: the archive or the game folder.</summary>
+    /// <param name="input">What the user chose.</param>
+    /// <param name="gameFolder">Folder with eboot.bin (inside the extraction, when it came from an archive).</param>
     public static string SourceToRecycle(string input, string gameFolder) =>
         Archives.IsArchive(input) ? Path.GetFullPath(input) : Path.GetFullPath(gameFolder);
 
-    /// <summary>Falso para raiz de disco, pastas do sistema ou do usuário e quando o destino está dentro da origem.</summary>
+    /// <summary>False for a drive root, system or user folders, and when the destination is inside the source.</summary>
     public static bool IsSafeToRecycle(string source, string output, IEnumerable<string>? extraProtected = null)
     {
         var path = Normalize(source);
@@ -47,8 +47,8 @@ public static class SourceCleanup
         path.Length == 0 ? "" : Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
 
     /// <summary>
-    /// Manda para a Lixeira. Se não couber nela (um arquivo de dezenas de GB costuma não caber), o Windows pergunta
-    /// antes de apagar de vez; a API do VisualBasic com OnlyErrorDialogs pulava essa pergunta e apagava sem volta.
+    /// Sends to the Recycle Bin. If it does not fit there (a file of tens of GB usually doesn't), Windows asks
+    /// before deleting permanently; the VisualBasic API with OnlyErrorDialogs skipped that question and deleted for good.
     /// </summary>
     public static void Recycle(string path, IntPtr owner)
     {

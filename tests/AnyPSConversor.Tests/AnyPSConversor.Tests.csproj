@@ -8,7 +8,7 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
 
-  <!-- Só a lógica sem interface: os testes não precisam das dependências embutidas do app. -->
+  <!-- Only the UI-free logic: the tests do not need the app's embedded dependencies. -->
   <ItemGroup>
     <Compile Include="..\..\src\AnyPSConversor\SelfUnwrapper.cs" Link="SelfUnwrapper.cs" />
     <Compile Include="..\..\src\AnyPSConversor\GameInfo.cs" Link="GameInfo.cs" />
@@ -24,7 +24,7 @@
     <None Include="Fixtures\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <!-- Com as dependências baixadas, o teste de conversão real usa o mesmo relinker e as mesmas bibliotecas do app. -->
+  <!-- With the dependencies downloaded, the real conversion test uses the same relinker and libraries as the app. -->
   <ItemGroup Condition="Exists('..\..\deps\VERSION')">
     <EmbeddedResource Include="..\..\deps\relinker.exe" LogicalName="relinker.exe" />
     <EmbeddedResource Include="..\..\deps\prx-windows.zip" LogicalName="prx-windows.zip" />

@@ -5,10 +5,10 @@ using Xunit;
 namespace AnyPSConversor.Tests;
 
 /// <summary>
-/// Converte de verdade os homebrews livres de build/homebrew.json, baixados por build/download-homebrew.ps1
-/// para a pasta em ANYPS5_HOMEBREW. Confere tudo o que depende do nosso lado: o relinker aceita as opções que
-/// passamos, a barra lê o progresso dele, o erro de syscall é reconhecido e a pasta final sai completa.
-/// Sem a variável (testes do dia a dia), é pulado.
+/// Actually converts the free homebrews from build/homebrew.json, downloaded by build/download-homebrew.ps1
+/// into the folder in ANYPS5_HOMEBREW. Checks everything that depends on our side: the relinker accepts the options
+/// we pass, the bar reads its progress, the syscall error is recognized and the final folder comes out complete.
+/// Without the variable (everyday tests), it is skipped.
 /// </summary>
 public sealed class HomebrewConversionTests
 {
@@ -32,8 +32,8 @@ public sealed class HomebrewConversionTests
     [MemberData(nameof(Titles))]
     public async Task Converts(string id, string expect)
     {
-        Assert.SkipWhen(Homebrew is null, "ANYPS5_HOMEBREW não definido; rode build/download-homebrew.ps1");
-        // A saída fica no mesmo disco dos homebrews para passar também pelos links físicos.
+        Assert.SkipWhen(Homebrew is null, "ANYPS5_HOMEBREW is not set; run build/download-homebrew.ps1");
+        // The output goes on the same drive as the homebrews so it also exercises hard links.
         var output = Path.Combine(Homebrew!, ".out", id);
         Directory.CreateDirectory(output);
         var log = new List<string>();
@@ -48,19 +48,19 @@ public sealed class HomebrewConversionTests
             }
             catch (UserException e) when (expect == "syscall" && e.Key == "err_syscall")
             {
-                // Esperado: o título fala direto com o sistema do PS5 e o aviso certo foi reconhecido.
+                // Expected: the title talks directly to the PS5 system and the right warning was recognized.
                 return;
             }
             catch (UserException e)
             {
-                // A mensagem do relinker e o fim do registro vão para o resultado: é o que a issue de falha mostra.
+                // The relinker message and the end of the log go into the result: it is what the failure issue shows.
                 lock (log)
                     Assert.Fail($"{id}: {e.Key} {string.Join(" | ", e.Args)}{Environment.NewLine}{string.Join(Environment.NewLine, log.TakeLast(15))}");
                 throw;
             }
 
             var folder = Path.GetDirectoryName(exe)!;
-            Assert.True(new FileInfo(exe).Length > 0, "o .exe não foi gerado");
+            Assert.True(new FileInfo(exe).Length > 0, "the .exe was not generated");
             Assert.True(File.Exists(Path.Combine(folder, "app0", "eboot.bin")), "app0/ incompleto");
             Assert.NotEmpty(Directory.EnumerateFiles(Path.Combine(folder, "libs"), "*", SearchOption.AllDirectories));
             Assert.Contains(log, line => Converter.RelinkerFraction(line) is not null);

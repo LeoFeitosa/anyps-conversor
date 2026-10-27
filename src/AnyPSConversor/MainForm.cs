@@ -72,7 +72,7 @@ public sealed class MainForm : Form
     GameInfo? game;
     string? extractedFolder;
 
-    /// <summary>Arquivo compactado escolhido: só é extraído ao converter, na mesma barra da conversão.</summary>
+    /// <summary>Chosen archive: only extracted when converting, in the same bar as the conversion.</summary>
     sealed record PendingArchive(string Path, string? Password, ArchivePreview Preview, string Name);
 
     PendingArchive? archive;
@@ -85,10 +85,10 @@ public sealed class MainForm : Form
     bool statusIsError;
     string? stepKey, stepItem;
     /// <summary>
-    /// Quando o processo inteiro (extração, se houver, e conversão até o .exe pronto) deve terminar, medido ao
-    /// vivo neste PC: a cada segundo (<see cref="clock"/>), o tempo decorrido desde o início dividido pelo
-    /// andamento da barra. Numa etapa que não informa andamento a barra para e a previsão sobe sozinha;
-    /// quando ela volta a andar, a previsão desce. Nada vem de outro PC nem de outro jogo.
+    /// When the whole process (extraction, if any, and conversion up to the finished .exe) should end, measured live
+    /// on this PC: every second (<see cref="clock"/>), the time elapsed since the start divided by the
+    /// bar's progress. In a stage that reports no progress the bar stops and the estimate rises on its own;
+    /// when it moves again, the estimate goes down. Nothing comes from another PC or another game.
     /// </summary>
     DateTime? finishAt;
     DateTime? startedAt;
@@ -101,7 +101,7 @@ public sealed class MainForm : Form
     const int BaseHeight = 762;
     const int LogHeight = 190;
 
-    /// <param name="initialGame">Pasta solta sobre o ícone do .exe, se houver.</param>
+    /// <param name="initialGame">Folder dropped onto the .exe icon, if any.</param>
     public MainForm(string? initialGame = null)
     {
         SuspendLayout();
@@ -126,7 +126,7 @@ public sealed class MainForm : Form
         englishButton.Click += (_, _) => ChangeLanguage(Language.English);
         header.Controls.AddRange([portugueseButton, englishButton]);
 
-        // 1. Jogo
+        // 1. Game
         gameCard.SetBounds(24, 104, 712, 204);
         PlaceStep(gameCard, gameBadge, gameTitle, gameHint);
         dropZone.SetBounds(20, 78, 672, 96);
@@ -149,7 +149,7 @@ public sealed class MainForm : Form
         legalHint.SetBounds(20, 178, 672, 20);
         gameCard.Controls.AddRange([dropZone, gamePanel, legalHint]);
 
-        // 2. Destino
+        // 2. Destination
         outputCard.SetBounds(24, 324, 712, 168);
         PlaceStep(outputCard, outputBadge, outputTitle, outputHint);
         outputBox.SetBounds(20, 74, 532, 28);
@@ -157,14 +157,14 @@ public sealed class MainForm : Form
         outputButton.SetBounds(564, 70, 128, 34);
         outputButton.Click += (_, _) => PickOutput();
         recycleSourceBox.SetBounds(20, 108, 672, 24);
-        // Pode ser marcada ou desmarcada a qualquer momento, inclusive durante a conversão: vale o que estiver
-        // marcado quando ela termina.
+        // Can be checked or unchecked at any time, including during the conversion: what counts is what is
+        // checked when it finishes.
         autoPlayBox.SetBounds(20, 136, 672, 24);
         autoPlayBox.Checked = Settings.AutoPlay;
         autoPlayBox.CheckedChanged += (_, _) => Settings.AutoPlay = autoPlayBox.Checked;
         outputCard.Controls.AddRange([outputBox, outputButton, recycleSourceBox, autoPlayBox]);
 
-        // 3. Converter
+        // 3. Convert
         convertCard.SetBounds(24, 508, 712, 192);
         PlaceStep(convertCard, convertBadge, convertTitle, null);
         convertButton.SetBounds(20, 62, 672, 50);
@@ -194,7 +194,7 @@ public sealed class MainForm : Form
         projectLink.SetBounds(400, 6, 120, 18);
         projectLink.Text = "GitHub";
         projectLink.LinkClicked += (_, _) => OpenUrl(ProjectUrl);
-        // Os avisos de licença vão dentro do .exe: quem baixa só o executável também os recebe.
+        // The license notices ship inside the .exe: whoever downloads just the executable gets them too.
         licensesLink.SetBounds(400, 25, 120, 18);
         licensesLink.LinkClicked += (_, _) => MessageDialog.Show(this, T("licenses_title"), Converter.ThirdPartyNotices, warning: false);
         disclaimer.SetBounds(24, 25, 370, 18);
@@ -216,14 +216,14 @@ public sealed class MainForm : Form
         ResumeLayout(false);
         if (initialGame is not null)
             Shown += async (_, _) => await LoadGameAsync(initialGame);
-        // Fechar encerra tudo na hora: o relinker morre junto e uma extração de dezenas de GB é apagada por um
-        // processo à parte, sem deixar o programa aberto (e sem janela) enquanto isso.
+        // Closing ends everything at once: the relinker dies with it and an extraction of tens of GB is deleted by a
+        // separate process, without keeping the program open (and windowless) meanwhile.
         FormClosed += (_, _) =>
         {
             running?.Cancel();
             Converter.KillRunning();
             Archives.TryDelete(Archives.TempRoot);
-            // Durante a extração ela ainda não tem extractionParent; o destino não muda enquanto algo roda.
+            // During extraction it has no extractionParent yet; the destination does not change while something runs.
             Archives.DeleteAfterExit(extractionParent ?? outputBox.Text, Converter.Unfinished);
         };
     }
@@ -291,7 +291,7 @@ public sealed class MainForm : Form
             text = T("err_cpu", string.Join(", ", missingCpu));
             error = true;
         }
-        // Passado do horário previsto, some: melhor nada do que um tempo que não confere.
+        // Past the expected time, it disappears: better nothing than a time that doesn't add up.
         if (key is "status_extracting" or "status_unwrapping" or "status_relinking" or "status_copying"
             && finishAt - DateTime.Now is { TotalSeconds: >= 1 } left)
             text += " " + T("eta_total", Clock(left));
@@ -299,14 +299,14 @@ public sealed class MainForm : Form
         statusLabel.ForeColor = error ? Theme.Error : key is "status_done" or "status_done_recycled" ? Theme.Success : Theme.Muted;
     }
 
-    /// <summary>Recalcula <see cref="finishAt"/> pelo andamento real. Antes de 5 s e 3% a média ainda oscila demais.</summary>
+    /// <summary>Recalculates <see cref="finishAt"/> from actual progress. Before 5 s and 3% the average still fluctuates too much.</summary>
     void UpdateFinishAt()
     {
         var elapsed = DateTime.Now - startedAt!.Value;
         if (elapsed.TotalSeconds < 5 || overallDone is < 0.03 or >= 1)
             return;
         var target = DateTime.Now + elapsed * ((1 - overallDone) / overallDone);
-        // Aproximar aos poucos do novo horário: a contagem desce contínua, sem saltos a cada ponto da barra.
+        // Approach the new time gradually: the countdown goes down smoothly, without jumps at each point of the bar.
         finishAt = finishAt is { } current ? current + (target - current) * 0.15 : target;
     }
 
@@ -320,7 +320,7 @@ public sealed class MainForm : Form
     static string Clock(TimeSpan time) =>
         time.TotalHours >= 1 ? $"{(int)time.TotalHours}:{time.Minutes:00}:{time.Seconds:00}" : $"{time.Minutes}:{time.Seconds:00}";
 
-    /// <summary>Linha de detalhe embaixo do status: o arquivo ou a etapa da vez. Nula apaga.</summary>
+    /// <summary>Detail line below the status: the current file or stage. Null clears it.</summary>
     void SetStep(string? key, string? item)
     {
         stepKey = key;
@@ -335,7 +335,7 @@ public sealed class MainForm : Form
             stepLabel.Text = T(key, "").TrimEnd(' ', '·');
             return;
         }
-        // Só o nome do arquivo é encurtado (pelo meio); o texto da etapa aparece sempre inteiro.
+        // Only the file name is shortened (in the middle); the stage text always appears in full.
         var room = LogicalToDeviceUnits(stepLabel.Width) - TextRenderer.MeasureText(T(key, ""), Theme.Small).Width - 8;
         stepLabel.Text = T(key, Theme.ShortenMiddle(item.Replace('\\', '/'), Theme.Small, room));
     }
@@ -383,8 +383,8 @@ public sealed class MainForm : Form
     struct RECT { public int Left, Top, Right, Bottom; }
 
     /// <summary>
-    /// Imagem da janela inicial para o README. A janela abre fora da área visível e o Windows a desenha
-    /// inteira, com a barra de título; a pasta de saída mostrada é um exemplo, nunca a de quem gera.
+    /// Image of the start window for the README. The window opens outside the visible area and Windows draws it
+    /// whole, with the title bar; the output folder shown is an example, never that of whoever generates it.
     /// </summary>
     public static void SaveScreenshot(string file, string? gameFolder = null)
     {
@@ -400,7 +400,7 @@ public sealed class MainForm : Form
         form.Show();
         Application.DoEvents();
         GetWindowRect(form.Handle, out var window);
-        // A borda invisível de redimensionamento fica de fora: só o que aparece na tela.
+        // The invisible resize border is left out: only what appears on screen.
         DwmGetWindowAttribute(form.Handle, 9, out var visible, Marshal.SizeOf<RECT>());
         using var full = new Bitmap(window.Right - window.Left, window.Bottom - window.Top);
         using (var g = Graphics.FromImage(full))
@@ -415,8 +415,8 @@ public sealed class MainForm : Form
     }
 
     /// <summary>
-    /// Carrega uma pasta, um eboot.bin ou um arquivo compactado com o jogo. O arquivo compactado só é conferido
-    /// aqui (pelo índice, em segundos); a extração acontece ao converter, na mesma barra.
+    /// Loads a folder, an eboot.bin or an archive with the game. The archive is only checked
+    /// here (from the index, in seconds); extraction happens when converting, in the same bar.
     /// </summary>
     async Task LoadGameAsync(string path)
     {
@@ -498,7 +498,7 @@ public sealed class MainForm : Form
         }
     }
 
-    /// <summary>Nome do arquivo sem as extensões de compactação, usado quando o jogo não diz o próprio nome.</summary>
+    /// <summary>File name without the compression extensions, used when the game does not state its own name.</summary>
     static string ArchiveName(string path)
     {
         var name = Path.GetFileName(path);
@@ -509,13 +509,13 @@ public sealed class MainForm : Form
     }
 
     /// <summary>
-    /// Parte da barra que cabe à extração: num jogo grande ela é quase todo o tempo; num homebrew pequeno, a
-    /// geração do .exe pesa mais.
+    /// Share of the bar that belongs to extraction: in a large game it is almost all the time; in a small homebrew,
+    /// generating the .exe weighs more.
     /// </summary>
-    // ponytail: proporção fixa pelo tamanho (1,5 GB = metade da barra); medir a velocidade real se ficar injusta.
+    // ponytail: fixed proportion by size (1.5 GB = half the bar); measure the real speed if it turns out unfair.
     static double ExtractShare(long size) => Math.Clamp(size / (size + 1.5e9), 0.1, 0.95);
 
-    /// <summary>Extrai o arquivo escolhido no local de saída, ocupando o começo da barra.</summary>
+    /// <summary>Extracts the chosen archive in the output location, taking up the start of the bar.</summary>
     async Task<string> ExtractAsync(PendingArchive pending, double share, CancellationToken cancel)
     {
         SetStatus("status_extracting");
@@ -533,7 +533,7 @@ public sealed class MainForm : Form
     }
 
 
-    /// <summary>Volta para a área de soltar para escolher outro jogo.</summary>
+    /// <summary>Goes back to the drop area to choose another game.</summary>
     void ResetGame()
     {
         if (running is not null)
@@ -564,7 +564,7 @@ public sealed class MainForm : Form
         startedAt = busy ? DateTime.Now : null;
         overallDone = 0;
         SetStep(null, null);
-        // O idioma pode mudar a qualquer momento, inclusive no meio de uma extração ou conversão.
+        // The language can change at any time, even in the middle of an extraction or conversion.
         browseFolderButton.Enabled = browseFileButton.Enabled = changeButton.Enabled = outputButton.Enabled = !busy;
         UseWaitCursor = false;
     }
@@ -574,7 +574,7 @@ public sealed class MainForm : Form
         dropZone.Visible = false;
         gamePanel.Visible = true;
         ShowGameTexts(info);
-        // O ícone fica em memória: a pasta de onde veio (a extração) é apagada depois da conversão.
+        // The icon is kept in memory: the folder it came from (the extraction) is deleted after the conversion.
         gameIcon.Image?.Dispose();
         gameIcon.Image = info.IconPath is null ? null : Image.FromStream(new MemoryStream(File.ReadAllBytes(info.IconPath)));
     }
@@ -587,7 +587,7 @@ public sealed class MainForm : Form
         gameStatus.ForeColor = info.HasParamJson ? Theme.Success : Theme.Warning;
     }
 
-    /// <summary>Jogo ainda dentro do arquivo compactado: o que deu para ler sem extrair.</summary>
+    /// <summary>Game still inside the archive: what could be read without extracting.</summary>
     void ShowArchive(PendingArchive pending)
     {
         dropZone.Visible = false;
@@ -610,7 +610,7 @@ public sealed class MainForm : Form
     {
         if (running is not null)
         {
-            // Um clique basta: o botão trava até a limpeza terminar e a janela voltar ao normal.
+            // One click is enough: the button locks until cleanup finishes and the window goes back to normal.
             running.Cancel();
             convertButton.Enabled = false;
             SetStatus("status_cancelling");
@@ -629,12 +629,12 @@ public sealed class MainForm : Form
         logBox.Clear();
         var pending = archive;
         var logFile = ConversionLogPath(game?.SafeName ?? pending!.Name);
-        // Arquivo compactado: extração e conversão numa barra só, dividida pelo tamanho do jogo.
+        // Archive: extraction and conversion in a single bar, split by the game's size.
         var share = pending is null ? 0 : ExtractShare(pending.Preview.Size);
         var finished = false;
         var progress = new Progress<ConversionProgress>(p =>
         {
-            // Avisos atrasados da conversão não podem sobrescrever o status final nem o "cancelando".
+            // Late conversion notifications must not overwrite the final status or the "canceling" one.
             if (finished || running?.IsCancellationRequested == true)
                 return;
             ShowOverall(share + (1 - share) * Math.Clamp(p.Fraction, 0, 1));
@@ -657,8 +657,8 @@ public sealed class MainForm : Form
             if (pending is not null)
             {
                 Log($"AnyPS Conversor {AppVersion} | {pending.Path} -> {outputBox.Text}");
-                // Espaço do processo inteiro, antes de extrair: o jogo extraído (depois movido para app0/), as
-                // bibliotecas e o .exe. Faltando, o aviso vem agora, e não depois de uma extração longa.
+                // Space for the whole process, before extracting: the extracted game (later moved to app0/), the
+                // libraries and the .exe. If it falls short, the warning comes now, not after a long extraction.
                 SetStatus("status_preparing");
                 await Task.Run(() => Converter.EnsureSpace(outputBox.Text, pending.Preview.Size, pending.Preview.Executables));
                 extractedFolder = await ExtractAsync(pending, share, running.Token);
@@ -672,7 +672,7 @@ public sealed class MainForm : Form
                 {
                     throw new UserException("err_no_eboot_archive", Path.GetFileName(pending.Path));
                 }
-                // Agora com o nome e o ícone de dentro do jogo, que um arquivo sólido não deixa ler antes.
+                // Now with the name and icon from inside the game, which a solid archive doesn't allow reading earlier.
                 ShowGame(game);
             }
             Log($"AnyPS Conversor {AppVersion} | {game!.Name} ({game.TitleId}) | {game.Folder} -> {outputBox.Text}");
@@ -685,13 +685,13 @@ public sealed class MainForm : Form
             donePanel.Visible = true;
             SetStatus("status_done");
 
-            // A extração só servia de entrada para o relinker; o jogo convertido já tem a sua cópia em app0/.
+            // The extraction only served as input for the relinker; the converted game already has its own copy in app0/.
             DiscardExtraction();
             archive = null;
             if (recycleSourceBox.Checked && sourceInput is not null)
                 RecycleSource(SourceCleanup.SourceToRecycle(sourceInput, pending is null ? game.Folder : pending.Path), Log);
 
-            // Deu certo: o registro continua em "Mostrar detalhes", mas não fica ocupando o disco.
+            // It worked: the log is still in "Show details", but it does not stay taking up disk space.
             File.Delete(logFile);
             if (autoPlayBox.Checked)
                 _ = PlayAsync();
@@ -721,7 +721,7 @@ public sealed class MainForm : Form
             {
                 percentLabel.Text = "";
                 progressBar.Value = 0;
-                // Do arquivo compactado não fica nada pela metade: a próxima tentativa extrai de novo.
+                // Nothing of the archive is left half-done: the next attempt extracts again.
                 if (pending is not null)
                 {
                     DiscardExtraction();
@@ -772,7 +772,7 @@ public sealed class MainForm : Form
         detailsLink.Text = logBox.Visible ? T("hide_details") : T("show_details");
     }
 
-    /// <summary>Registro da conversão; só fica no disco se ela falhar.</summary>
+    /// <summary>Conversion log; it only stays on disk if the conversion fails.</summary>
     static string ConversionLogPath(string name)
     {
         Directory.CreateDirectory(Converter.LogFolder);
@@ -780,7 +780,7 @@ public sealed class MainForm : Form
         return Path.Combine(Converter.LogFolder, $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}_{safe}.log");
     }
 
-    /// <summary>Apaga a extração atual e a pasta de trabalho oculta no local onde ela foi feita.</summary>
+    /// <summary>Deletes the current extraction and the hidden work folder in the location where it was made.</summary>
     void DiscardExtraction()
     {
         Archives.TryDelete(extractedFolder);
@@ -789,7 +789,7 @@ public sealed class MainForm : Form
         extractedFolder = extractionParent = null;
     }
 
-    /// <summary>Opção do usuário: manda o arquivo compactado ou a pasta do jogo para a Lixeira.</summary>
+    /// <summary>User option: sends the archive or the game folder to the Recycle Bin.</summary>
     void RecycleSource(string source, Action<string> log)
     {
         if (!SourceCleanup.IsSafeToRecycle(source, outputBox.Text, [AppContext.BaseDirectory]))

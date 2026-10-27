@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
-    Gera assets/icon.ico e assets/icon-256.png. Arte original desenhada em código, com a mesma
-    geometria de Theme.DrawMark (src/AnyPSConversor/Theme.cs). Requer Windows (System.Drawing).
+    Generates assets/icon.ico and assets/icon-256.png. Original art drawn in code, with the same
+    geometry as Theme.DrawMark (src/AnyPSConversor/Theme.cs). Requires Windows (System.Drawing).
 #>
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing

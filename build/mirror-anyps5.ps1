@@ -1,9 +1,9 @@
 #Requires -Version 7
 <#
 .SYNOPSIS
-    Guarda uma cópia dos binários do AnyPS5 fixados em build/dependencies.json num release interno deste
-    repositório (anyps5-<versão>, marcado como pré-lançamento). Se o release oficial deixar de existir, a
-    compilação continua usando a cópia, conferida pelo mesmo SHA-256. Requer o gh autenticado.
+    Keeps a copy of the AnyPS5 binaries pinned in build/dependencies.json in an internal release of this
+    repository (anyps5-<version>, marked as pre-release). If the official release stops existing, the
+    build keeps using the copy, checked against the same SHA-256. Requires an authenticated gh.
 #>
 $ErrorActionPreference = 'Stop'
 
@@ -28,13 +28,11 @@ try {
         $file
     }
     $notes = @"
-Cópia de segurança dos binários oficiais do [AnyPS5 $($manifest.anyps5)](https://github.com/boykopovar/AnyPS5/releases/tag/$($manifest.anyps5)), sem alterações, usada só para compilar o conversor se o release oficial deixar de existir. Não é uma versão do AnyPS Conversor: para baixar o programa, use o [release mais recente](https://github.com/LeoFeitosa/anyps-conversor/releases/latest). Licença GPL-2.0; código-fonte em https://github.com/boykopovar/AnyPS5/tree/$($manifest.anyps5).
-
 Backup copy of the official [AnyPS5 $($manifest.anyps5)](https://github.com/boykopovar/AnyPS5/releases/tag/$($manifest.anyps5)) binaries, unchanged, used only to build the converter if the official release is no longer available. This is not an AnyPS Conversor version: to download the program, use the [latest release](https://github.com/LeoFeitosa/anyps-conversor/releases/latest). GPL-2.0 license; source code at https://github.com/boykopovar/AnyPS5/tree/$($manifest.anyps5).
 "@
     $notesFile = Join-Path $download 'notes.md'
     Set-Content $notesFile $notes
-    gh release create $tag @files --prerelease --title "Dependência interna / Internal dependency: AnyPS5 $($manifest.anyps5)" --notes-file $notesFile
+    gh release create $tag @files --prerelease --title "Internal dependency: AnyPS5 $($manifest.anyps5)" --notes-file $notesFile
     if ($LASTEXITCODE) { exit $LASTEXITCODE }
 }
 finally {

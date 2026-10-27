@@ -1,9 +1,9 @@
 #Requires -Version 7
 <#
 .SYNOPSIS
-    Baixa os homebrews livres de build/homebrew.json direto do release de cada autor, confere o
-    SHA-256 e extrai cada um em <Destination>/<id>. Usado pelo teste de conversão real
-    (HomebrewConversionTests); nada disso entra no repositório.
+    Downloads the free homebrew from build/homebrew.json straight from each author's release, checks the
+    SHA-256 and extracts each one to <Destination>/<id>. Used by the real conversion test
+    (HomebrewConversionTests); none of it goes into the repository.
 #>
 param([Parameter(Mandatory)][string]$Destination)
 $ErrorActionPreference = 'Stop'

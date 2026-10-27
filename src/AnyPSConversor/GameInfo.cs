@@ -2,14 +2,14 @@ using System.Text.Json;
 
 namespace AnyPSConversor;
 
-/// <summary>Erro mostrado ao usuário; a mensagem é uma chave de <see cref="Strings"/>.</summary>
+/// <summary>Error shown to the user; the message is a <see cref="Strings"/> key.</summary>
 public sealed class UserException(string key, params object[] args) : Exception(key)
 {
     public string Key { get; } = key;
     public object[] Args { get; } = args;
 }
 
-/// <summary>Pasta de um jogo/app pronta para conversão. <see cref="Load"/> lê o formato do PS5.</summary>
+/// <summary>A game/app folder ready for conversion. <see cref="Load"/> reads the PS5 format.</summary>
 public sealed record GameInfo(
     string Folder,
     string TitleId,
@@ -18,24 +18,24 @@ public sealed record GameInfo(
     bool HasParamJson,
     IReadOnlyList<string> Modules)
 {
-    /// <summary>Console do jogo: quem sabe convertê-lo.</summary>
+    /// <summary>The game's console: the one that knows how to convert it.</summary>
     public required IConsolePlatform Platform { get; init; }
 
-    /// <summary>Pastas de módulos que o relinker procura ao lado do eboot.bin.</summary>
+    /// <summary>Module folders the relinker looks for next to eboot.bin.</summary>
     public static readonly string[] ModuleDirectories = ["sce_module", "sce_modules", "prx"];
 
     /// <summary>
-    /// Extensões de módulo que o relinker reconhece. Outros arquivos nas pastas de módulos, como as cópias
-    /// .esbak que ferramentas de assinatura deixam, não são módulos: repassados, o relinker veria dois libc.prx
-    /// e recusaria o jogo ("Ambiguous guest dependency name").
+    /// Module extensions the relinker recognizes. Other files in the module folders, such as the .esbak
+    /// copies that signing tools leave behind, are not modules: passed along, the relinker would see two libc.prx
+    /// and reject the game ("Ambiguous guest dependency name").
     /// </summary>
     public static readonly string[] ModuleExtensions = [".prx", ".sprx", ".suprx", ".debug_prx"];
 
     public static bool IsModuleFile(string name) =>
         ModuleExtensions.Any(e => name.EndsWith(e, StringComparison.OrdinalIgnoreCase));
 
-    /// <param name="path">Pasta do jogo, uma pasta acima dela ou o próprio eboot.bin.</param>
-    /// <param name="fallbackName">Nome usado quando não há sce_sys/param.json.</param>
+    /// <param name="path">Game folder, a folder above it, or the eboot.bin itself.</param>
+    /// <param name="fallbackName">Name used when there is no sce_sys/param.json.</param>
     public static GameInfo Load(string path, string? fallbackName = null)
     {
         var folder = FindGameFolder(File.Exists(path) ? Path.GetDirectoryName(path)! : path);
@@ -63,7 +63,7 @@ public sealed record GameInfo(
             modules) { Platform = Ps5Platform.Instance };
     }
 
-    /// <summary>Nome seguro para arquivo e pasta.</summary>
+    /// <summary>Name safe for a file and folder.</summary>
     public string SafeName
     {
         get
@@ -75,8 +75,8 @@ public sealed record GameInfo(
     }
 
     /// <summary>
-    /// Pasta com o eboot.bin: a própria ou a mais rasa entre as subpastas (até 4 níveis), como as que
-    /// vêm de um arquivo baixado com pastas a mais. Dois jogos no mesmo nível é ambíguo.
+    /// Folder with eboot.bin: itself or the shallowest among the subfolders (up to 4 levels), like those
+    /// coming from a downloaded archive with extra folders. Two games at the same level is ambiguous.
     /// </summary>
     static string FindGameFolder(string folder)
     {
@@ -130,8 +130,8 @@ public sealed record GameInfo(
         return stream.Read(head) == 4 ? head : [];
     }
 
-    // Mesma escolha do AnyPS5: defaultLanguage (em localizedParameters ou no topo), depois en-US, depois o primeiro idioma.
-    /// <summary>Código e nome do título no conteúdo de um sce_sys/param.json.</summary>
+    // Same choice as AnyPS5: defaultLanguage (in localizedParameters or at the top), then en-US, then the first language.
+    /// <summary>Title ID and name in the contents of a sce_sys/param.json.</summary>
     public static (string? TitleId, string? Name) ReadParam(string text)
     {
         try

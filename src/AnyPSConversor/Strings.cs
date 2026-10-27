@@ -4,7 +4,7 @@ namespace AnyPSConversor;
 
 public enum Language { Portuguese, English }
 
-/// <summary>Textos da interface em português e inglês. A escolha fica salva em %APPDATA%.</summary>
+/// <summary>UI text in Portuguese and English. The choice is saved in %APPDATA%.</summary>
 public static class Strings
 {
     static readonly string SettingsFile = Path.Combine(
@@ -12,7 +12,7 @@ public static class Strings
 
     public static Language Current { get; private set; } = LoadLanguage();
 
-    /// <param name="save">Falso só para a imagem do README: troca o idioma sem gravar a escolha do usuário.</param>
+    /// <param name="save">False only for the README image: switches the language without saving the user's choice.</param>
     public static void Set(Language language, bool save = true)
     {
         Current = language;

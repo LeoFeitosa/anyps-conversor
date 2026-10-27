@@ -9,7 +9,7 @@ public class SelfUnwrapperTests
     const int SegmentSize = 0x1000;
     const int Alignment = 0x4000;
 
-    /// <summary>SELF mínimo: um registro em 0x40, ELF interno em 0x200 e um PT_LOAD em 0x400.</summary>
+    /// <summary>Minimal SELF: one record at 0x40, inner ELF at 0x200 and one PT_LOAD at 0x400.</summary>
     internal static byte[] BuildSelf(Func<int, byte> segmentByte)
     {
         var data = new byte[0x400 + SegmentSize];

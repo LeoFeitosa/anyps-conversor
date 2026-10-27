@@ -2,13 +2,13 @@ using System.Globalization;
 
 namespace AnyPSConversor;
 
-/// <summary>Confere o espaço livre antes de extrair ou converter, para não parar no meio com o disco cheio.</summary>
+/// <summary>Checks free space before extracting or converting, so as not to stop midway with a full drive.</summary>
 public static class DiskSpace
 {
-    /// <summary>Folga sobre o estimado: sistema de arquivos, arquivos temporários do relinker e arredondamentos.</summary>
+    /// <summary>Margin over the estimate: file system, relinker temporary files and rounding.</summary>
     public static long WithMargin(long bytes) => bytes + bytes / 20 + (256L << 20);
 
-    /// <summary>Lança <see cref="UserException"/> "err_disk_space" se o disco de <paramref name="path"/> não comporta <paramref name="required"/> bytes.</summary>
+    /// <summary>Throws <see cref="UserException"/> "err_disk_space" if the drive of <paramref name="path"/> cannot hold <paramref name="required"/> bytes.</summary>
     public static void Ensure(string path, long required, long? available = null)
     {
         var root = Path.GetPathRoot(Path.GetFullPath(path))!;
@@ -19,8 +19,8 @@ public static class DiskSpace
     }
 
     /// <summary>
-    /// Confere várias necessidades de uma vez, somadas por disco: destino e pasta temporária no mesmo disco
-    /// disputam o mesmo espaço livre, e conferidos um a um cada um passaria sozinho.
+    /// Checks several needs at once, summed per drive: destination and temporary folder on the same drive
+    /// compete for the same free space, and checked one by one each would pass on its own.
     /// </summary>
     public static void EnsureAll(IEnumerable<(string Path, long Bytes)> needs, Func<string, long>? available = null)
     {
@@ -28,10 +28,10 @@ public static class DiskSpace
             Ensure(disk.Key, disk.Sum(n => n.Bytes), available?.Invoke(disk.Key));
     }
 
-    /// <summary>Verdadeiro para "disco cheio" do Windows (ERROR_DISK_FULL e ERROR_HANDLE_DISK_FULL).</summary>
+    /// <summary>True for Windows "disk full" (ERROR_DISK_FULL and ERROR_HANDLE_DISK_FULL).</summary>
     public static bool IsDiskFull(Exception e) => e is IOException && (e.HResult & 0xFFFF) is 0x70 or 0x27;
 
-    /// <summary>Lança a mensagem de disco cheio no lugar do erro de E/S, citando o disco de <paramref name="path"/>.</summary>
+    /// <summary>Throws the disk full message in place of the I/O error, naming the drive of <paramref name="path"/>.</summary>
     public static UserException DiskFull(string path) =>
         new("err_disk_full", Path.GetPathRoot(Path.GetFullPath(path))!);
 

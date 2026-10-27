@@ -1,54 +1,53 @@
-# Como contribuir
+# Contributing
 
-**Português** | [English](CONTRIBUTING.en.md)
+Thanks for your interest! This project is the graphical interface; the conversion itself is done by
+[AnyPS5](https://github.com/boykopovar/AnyPS5). Game compatibility problems, unimplemented system
+functions and relinker failures should be reported there.
 
-Obrigado pelo interesse! Este projeto é a interface gráfica; a conversão em si é feita pelo
-[AnyPS5](https://github.com/boykopovar/AnyPS5). Problemas de compatibilidade de jogos, funções do
-sistema não implementadas e falhas do relinker devem ser reportados lá.
+## Rules
 
-## Regras
-
-- **Nada de conteúdo protegido.** Não envie jogos, arquivos de jogos, chaves, firmware, links para
-  download desse tipo de material nem capturas de tela de jogos comerciais. Issues e pull requests
-  com esse conteúdo são fechados e removidos.
-- Commits seguem o [Conventional Commits](https://www.conventionalcommits.org/pt-br/v1.0.0/)
+- **No protected content.** Do not submit games, game files, keys, firmware, download links for such
+  material or screenshots of commercial games. Issues and pull requests with such content are closed
+  and removed.
+- Commits follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
   (`feat:`, `fix:`, `docs:`, `build:`, `ci:`, `test:`, `refactor:`).
-- Versões seguem o [SemVer](https://semver.org/lang/pt-BR/). Toda mudança visível ao usuário entra
-  em `CHANGELOG.md` e `CHANGELOG.en.md`, na seção `[Unreleased]`.
-- Todo texto público existe em português e inglês: interface (`src/AnyPSConversor/Strings.cs`),
-  READMEs, CHANGELOGs, documentos e modelos do GitHub. Um texto novo precisa das duas versões.
+- Versions follow [SemVer](https://semver.org/). Every user-visible change goes into `CHANGELOG.md`,
+  under `[Unreleased]`.
+- The interface exists in Portuguese and English (`src/AnyPSConversor/Strings.cs`): a new text needs
+  both versions. Everything else in the repository (documents, templates, commits, comments) is in
+  English only.
 
-## Ambiente
+## Environment
 
-Requisitos: [.NET SDK 10](https://dotnet.microsoft.com/download) e PowerShell 7.
+Requirements: [.NET SDK 10](https://dotnet.microsoft.com/download) and PowerShell 7.
 
 ```powershell
-pwsh build/download-dependencies.ps1   # baixa e confere o relinker e as bibliotecas do AnyPS5
-dotnet test                            # testes (os de conversão real precisam de ANYPS5_HOMEBREW)
+pwsh build/download-dependencies.ps1   # downloads and verifies the AnyPS5 relinker and libraries
+dotnet test                            # tests (the real conversion ones need ANYPS5_HOMEBREW)
 dotnet publish src/AnyPSConversor -c Release -o publish
 ```
 
-O executável final fica em `publish/AnyPS-Conversor.exe`.
+The final executable is `publish/AnyPS-Conversor.exe`.
 
-## Atualizar o AnyPS5
+## Updating AnyPS5
 
-É automático: o workflow `AnyPS5 update` procura todo dia uma versão nova do AnyPS5 publicada há 7
-dias ou mais, atualiza `build/dependencies.json`, roda os testes e as conversões reais e publica. Para
-testar uma versão à mão, rode o workflow pela aba Actions com `dry_run` marcado. Cada versão adotada ganha
-uma cópia de segurança dos binários num release interno `anyps5-<versão>` (`build/mirror-anyps5.ps1`),
-que `build/download-dependencies.ps1` usa se o release oficial sumir, sempre conferindo o mesmo SHA-256.
+It is automatic: every day the `AnyPS5 update` workflow looks for a new AnyPS5 version published 7 or
+more days earlier, updates `build/dependencies.json`, runs the tests and the real conversions and
+publishes. To try a version by hand, run the workflow from the Actions tab with `dry_run` checked. Every
+adopted version gets a backup copy of the binaries in an internal `anyps5-<version>` release
+(`build/mirror-anyps5.ps1`), which `build/download-dependencies.ps1` uses if the official release
+disappears, always checking the same SHA-256.
 
-Para conferir localmente as conversões reais:
+To run the real conversions locally:
 
 ```powershell
 pwsh build/download-homebrew.ps1 -Destination $env:TEMP\homebrew
 $env:ANYPS5_HOMEBREW = "$env:TEMP\homebrew"; dotnet test
 ```
 
-## Publicar uma versão
+## Publishing a version
 
-1. Mova as entradas de `[Unreleased]` para uma nova seção `[X.Y.Z] - AAAA-MM-DD` no `CHANGELOG.md` e
-   no `CHANGELOG.en.md`.
-2. Atualize `<VersionPrefix>` em `Directory.Build.props`. O build falha se a tag não for igual a ele.
-3. Crie a tag `vX.Y.Z` e envie: o GitHub Actions compila, testa, publica o executável em Releases e
-   atualiza as imagens do README.
+1. Move the `[Unreleased]` entries to a new `[X.Y.Z] - YYYY-MM-DD` section in `CHANGELOG.md`.
+2. Update `<VersionPrefix>` in `Directory.Build.props`. The build fails if the tag does not match it.
+3. Create and push the `vX.Y.Z` tag: GitHub Actions builds, tests, publishes the executable in
+   Releases and updates the README images.

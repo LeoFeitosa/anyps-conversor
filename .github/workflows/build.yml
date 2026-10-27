@@ -82,15 +82,13 @@ jobs:
         run: |
           version="${TAG#v}"
           section() { awk -v v="$version" '$0 ~ "^## \\[" v "\\]" {found=1; next} found && /^## \[/ {exit} found' "$1"; }
-          for file in CHANGELOG.md CHANGELOG.en.md; do
-            test -n "$(section "$file" | tr -d '[:space:]')" || { echo "$file has no section for $version"; exit 1; }
-          done
-          { echo "## Português"; section CHANGELOG.md; echo "## English"; section CHANGELOG.en.md; } > notes.md
+          test -n "$(section CHANGELOG.md | tr -d '[:space:]')" || { echo "CHANGELOG.md has no section for $version"; exit 1; }
+          section CHANGELOG.md > notes.md
           sed "s/{anyps5}/$(jq -r .anyps5 build/dependencies.json)/g" build/release-footer.md >> notes.md
           gh release create "$TAG" dist/AnyPS-Conversor.exe dist/AnyPS-Conversor.exe.sha256 THIRD-PARTY-NOTICES.txt \
             --repo "$GITHUB_REPOSITORY" --title "AnyPS Conversor $TAG" --notes-file notes.md
 
-  # A imagem do README mostra sempre a versão publicada: gerada do próprio .exe, em português e inglês.
+  # The README image always shows the published version, taken from the executable itself.
   screenshots:
     if: github.ref_type == 'tag'
     needs: release
@@ -107,21 +105,21 @@ jobs:
           name: AnyPS-Conversor
           path: dist
 
-      - name: Update the README screenshots
+      - name: Update the README screenshot
         shell: pwsh
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          # Republicar uma versão antiga não pode trocar as imagens da versão atual.
+          # Republishing an older version must not replace the current version's image.
           [xml]$props = Get-Content Directory.Build.props
           $current = @($props.Project.PropertyGroup.VersionPrefix | Where-Object { $_ })[0]
           if ("v$current" -ne $env:TAG) { "Skipping: $env:TAG is not the current version (v$current)."; exit 0 }
           ./build/update-screenshots.ps1 -Exe dist/AnyPS-Conversor.exe
-          git add docs/screenshot-pt.png docs/screenshot-en.png
+          git add docs/screenshot-en.png
           git diff --cached --quiet
-          if ($LASTEXITCODE -eq 0) { 'Screenshots already up to date.'; exit 0 }
+          if ($LASTEXITCODE -eq 0) { 'Screenshot already up to date.'; exit 0 }
           git config user.name 'github-actions[bot]'
           git config user.email '41898099+github-actions[bot]@users.noreply.github.com'
-          git commit -m "docs: update screenshots for $env:TAG"
+          git commit -m "docs: update screenshot for $env:TAG"
           git push origin HEAD:main
 

@@ -25,8 +25,8 @@ public sealed class GameInfoTests : IDisposable
     [Fact]
     public void IgnoresBackupCopiesOfModules()
     {
-        // Ferramentas de assinatura deixam libc.prx.esbak ao lado do libc.prx; repassada, a cópia faria o
-        // relinker recusar o jogo por ver dois libc.prx.
+        // Signing tools leave libc.prx.esbak next to libc.prx; passed along, the copy would make the
+        // relinker reject the game for seeing two libc.prx.
         var game = CreateGame("PPSA00001", """{"titleId":"PPSA00001"}""");
         File.WriteAllBytes(Path.Combine(game, "sce_module", "libc.prx.esbak"), SelfUnwrapperTests.BuildSelf(i => (byte)(i % 5)));
 

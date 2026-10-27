@@ -2,15 +2,15 @@ using System.Buffers.Binary;
 
 namespace AnyPSConversor;
 
-/// <summary>Arquivo SELF que não pode ser desembrulhado.</summary>
+/// <summary>SELF file that cannot be unwrapped.</summary>
 public class SelfException(string message) : Exception(message);
 
-/// <summary>Todos os segmentos de carga parecem criptografados.</summary>
+/// <summary>All payload segments look encrypted.</summary>
 public sealed class EncryptedSelfException(string message) : SelfException(message);
 
 /// <summary>
-/// Converte um contêiner SELF/fSELF já descriptografado num ELF limpo, que o relinker aceita.
-/// Porte fiel de tools/unwrap_self.py do AnyPS5 (https://github.com/boykopovar/AnyPS5, GPL-2.0).
+/// Converts an already decrypted SELF/fSELF container into a clean ELF that the relinker accepts.
+/// Faithful port of AnyPS5's tools/unwrap_self.py (https://github.com/boykopovar/AnyPS5, GPL-2.0).
 /// </summary>
 public static class SelfUnwrapper
 {

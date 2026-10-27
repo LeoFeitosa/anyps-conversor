@@ -1,295 +1,303 @@
 # Changelog
 
-**Português** | [English](CHANGELOG.en.md)
-
-Todas as mudanças relevantes deste projeto são registradas aqui.
-O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o projeto usa
-[Versionamento Semântico](https://semver.org/lang/pt-BR/).
+All notable changes to this project are recorded here.
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
+[Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+
+### Changed
+
+- The repository is in English only: `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, the legal
+  notice, issue and pull request templates, release notes and the update workflow's issues no longer
+  repeat everything in Portuguese, and the README shows the English screenshot only. The program
+  itself keeps both languages.
 
 ## [0.12.1] - 2026-10-27
 
 ### AnyPS5
 
-- AnyPS5 atualizado de v0.1.2 para v0.1.3 ([notas da versão](https://github.com/boykopovar/AnyPS5/releases/tag/v0.1.3)).
+- AnyPS5 updated from v0.1.2 to v0.1.3 ([release notes](https://github.com/boykopovar/AnyPS5/releases/tag/v0.1.3)).
 
 ## [0.12.0] - 2026-10-16
 
-### Alterado
+### Changed
 
-- Uma previsão só, para o processo inteiro: "cerca de 2:15 para terminar" conta a extração (quando há) e
-  a conversão até o .exe pronto. Ela é recalculada a cada segundo pelo andamento real da barra neste PC:
-  quando uma etapa demora mais, a previsão sobe; quando volta a andar, desce. Substitui a contagem só da
-  extração e o cronômetro da conversão.
+- A single estimate for the whole process: "about 2:15 left" covers the extraction (when there is one)
+  and the conversion until the .exe is ready. It is recalculated every second from the real progress of
+  the bar on this PC: when a step takes longer, the estimate goes up; when it moves again, it goes down.
+  Replaces the extraction-only countdown and the conversion timer.
 
-### Corrigido
+### Fixed
 
-- Fechar o programa encerra o processo na hora, mesmo no meio de uma extração ou conversão: o relinker
-  é encerrado junto, e a extração e o jogo convertido pela metade são apagados logo depois, sem deixar o
-  programa rodando sem janela.
+- Closing the program ends the process immediately, even in the middle of an extraction or conversion:
+  the relinker is stopped with it, and the extraction and the half-converted game are deleted right
+  after, without leaving the program running with no window.
 
 ## [0.11.1] - 2026-10-16
 
-### Corrigido
+### Fixed
 
-- Um jogo convertido salvo dentro da pasta temporária de extração (`.AnyPS-Conversor` ou
-  `.AnyPS5-Conversor`) era apagado junto com ela quando o programa abria de novo. Agora o conversor
-  recusa salvar nessas pastas e também recusa converter um jogo escolhido direto de dentro delas, com
-  um aviso para mover a pasta do jogo antes.
-- A limpeza de extrações abandonadas roda em segundo plano: com dezenas de GB, a janela demorava a
-  aparecer e o programa parecia travado.
-- A opção de mandar os originais para a Lixeira podia apagar de vez, sem perguntar, um arquivo grande
-  demais para a Lixeira. Agora o Windows pergunta antes, e o original fica se a resposta for não.
+- A converted game saved inside the temporary extraction folder (`.AnyPS-Conversor` or
+  `.AnyPS5-Conversor`) was deleted along with it the next time the program opened. The converter now
+  refuses to save in those folders and refuses to convert a game chosen directly from inside them,
+  with a notice to move the game folder first.
+- Cleaning up abandoned extractions runs in the background: with tens of GB, the window took long to
+  appear and the program seemed frozen.
+- The option to move the originals to the Recycle Bin could permanently delete, without asking, a file
+  too large for the Recycle Bin. Windows now asks first, and the original is kept if the answer is no.
 
 ## [0.11.0] - 2026-10-16
 
-### Alterado
+### Changed
 
-- A conversão deixa de ter previsão de tempo e passa a mostrar um cronômetro ("há 2:15"), que anda a
-  cada segundo. A previsão, baseada no tempo por MB de conversões anteriores, não conferia com a
-  realidade: no mesmo PC, o ASTRO BOT levou quase 4 vezes mais por MB que o VLC, e a etapa mais longa
-  do relinker não informa andamento. A extração continua com a contagem regressiva medida ao vivo.
-- O arquivo `conversion-rate.txt`, criado pelas versões 0.9 e 0.10, é apagado ao abrir o programa.
+- Conversion no longer shows a time estimate; it shows a timer ("2:15 elapsed") that moves every
+  second. The estimate, based on the time per MB of earlier conversions, did not match reality: on the
+  same PC, ASTRO BOT took almost 4 times longer per MB than VLC, and the longest relinker step reports
+  no progress. Extraction keeps its countdown measured live.
+- The `conversion-rate.txt` file created by versions 0.9 and 0.10 is deleted when the program opens.
 
 ## [0.10.0] - 2026-10-16
 
-### Alterado
+### Changed
 
-- O tempo restante é uma contagem regressiva que anda a cada segundo (`4:32`, ou `1:04:32` acima de
-  uma hora). O horário previsto é recalculado a cada avanço da extração e se aproxima aos poucos da
-  nova medida, então a contagem desce contínua, sem ir e voltar.
-- O espaço do processo inteiro é somado por disco: destino e pasta temporária no mesmo disco disputam o
-  mesmo espaço livre. A conta inclui também o próprio `relinker.exe`.
-- Em `.tar.xz`, o tamanho final do jogo é lido do índice do formato, sem extrair, e entra na
-  conferência de espaço. `.tar.gz` e `.tar.bz2` não guardam esse tamanho; neles, se o disco encher, a
-  extração para e é apagada.
+- Time left is a countdown that moves every second (`4:32`, or `1:04:32` above an hour). The expected
+  finish time is recalculated on every extraction step and eases toward the new measurement, so the
+  countdown goes down smoothly instead of jumping back and forth.
+- Space for the whole process is summed per disk: destination and temporary folder on the same disk
+  compete for the same free space. The count also includes `relinker.exe` itself.
+- For `.tar.xz`, the final size of the game is read from the format's index, without extracting, and
+  goes into the space check. `.tar.gz` and `.tar.bz2` do not store that size; for them, if the disk
+  fills up, extraction stops and is deleted.
 
-### Corrigido
+### Fixed
 
-- Escolher em "Onde salvar" uma pasta dentro da pasta do jogo agora é recusado com um aviso. Antes, o
-  jogo convertido era gravado misturado ao original.
+- Choosing a folder inside the game folder in "Where to save" is now refused with a warning. Before,
+  the converted game was written mixed with the original.
 
 ## [0.9.0] - 2026-10-16
 
-### Alterado
+### Changed
 
-- O espaço em disco é conferido para o processo inteiro antes de começar: num arquivo compactado, o jogo
-  extraído, as bibliotecas do AnyPS5 e o `.exe` gerado. Se faltar, o aviso vem antes de extrair
-  qualquer coisa, e não depois de uma extração longa.
-- O tempo restante cobre o processo inteiro: extração, medida ao vivo, e conversão, estimada pelo
-  que este PC levou nas conversões anteriores. Na primeira conversão num PC, ainda sem medida, só a
-  extração é estimada, com o texto "para extrair".
+- Disk space is checked for the whole process before starting: for an archive, the extracted game, the
+  AnyPS5 libraries and the generated `.exe`. If space is short, the warning comes before anything is
+  extracted, not after a long extraction.
+- Time left covers the whole process: extraction, measured live, and conversion, estimated from how
+  long this PC took in earlier conversions. On the first conversion on a PC, with no measurement yet,
+  only extraction is estimated, with the text "to extract".
 
-### Corrigido
+### Fixed
 
-- Jogos com cópias de backup de módulos (como `libc.prx.esbak`, deixadas por ferramentas de
-  assinatura) eram recusados com "Ambiguous guest dependency name". Só os módulos de verdade (`.prx`,
-  `.sprx`, `.suprx`, `.debug_prx`) vão para o relinker.
+- Games with backup copies of modules (such as `libc.prx.esbak`, left by signing tools) were refused
+  with "Ambiguous guest dependency name". Only real modules (`.prx`, `.sprx`, `.suprx`, `.debug_prx`)
+  are passed to the relinker.
 
 ## [0.8.0] - 2026-10-16
 
-### Alterado
+### Changed
 
-- Arquivo compactado agora é extraído e convertido de uma vez, numa única barra de progresso, como uma
-  pasta. Ao escolher o arquivo, o programa só confere o índice, em segundos e sem extrair nada:
-  recusa o que não tem jogo, pede a senha se houver e, em `.zip` e `.rar` não sólidos, já mostra nome,
-  código e ícone do jogo. A extração começa ao clicar em **Converter**, e a barra é dividida entre
-  extração e conversão conforme o tamanho do jogo.
-- Se a conversão de um arquivo compactado falha ou é cancelada, a extração é apagada e a próxima
-  tentativa começa do zero, sem sobras no disco.
-- As configurações da versão antiga só são migradas quando nenhuma versão antiga está aberta.
+- Archives are now extracted and converted in one go, with a single progress bar, just like a folder.
+  When the archive is chosen, the program only checks its index, in seconds and without extracting
+  anything: it refuses what has no game, asks for the password if there is one and, in non-solid
+  `.zip` and `.rar` archives, already shows the game name, code and icon. Extraction starts when
+  **Convert** is clicked, and the bar is split between extraction and conversion according to the size
+  of the game.
+- If converting an archive fails or is cancelled, the extraction is deleted and the next attempt starts
+  from scratch, with nothing left on disk.
+- Settings from the old version are only migrated when no old version is open.
 
-### Adicionado
+### Added
 
-- Opção "Abrir o jogo assim que a conversão terminar", que pode ser marcada ou desmarcada a qualquer
-  momento, inclusive durante a conversão, e fica lembrada entre execuções.
+- "Open the game as soon as the conversion finishes" option, which can be checked or unchecked at any
+  time, even during the conversion, and is remembered between runs.
 
-### Corrigido
+### Fixed
 
-- O número e o sinal de concluído nas bolinhas dos passos ficam centralizados.
+- The number and the done mark in the step circles are centered.
 
 ## [0.7.0] - 2026-10-16
 
-### Alterado
+### Changed
 
-- O projeto passa a se chamar **AnyPS Conversor** (`anyps-conversor`), para poder receber outros consoles
-  PlayStation no futuro. O executável agora é `AnyPS-Conversor.exe`, e a pasta padrão dos jogos
-  convertidos, `%USERPROFILE%\AnyPS`. O PS5 continua sendo feito pelo AnyPS5.
-- As configurações e os registros da versão anterior (`%APPDATA%\AnyPS5-Conversor` e
-  `%LOCALAPPDATA%\AnyPS5-Conversor`) são levados para as pastas novas na primeira execução: idioma e
-  local escolhido continuam os mesmos.
-- O que versões anteriores deixaram em pastas temporárias com o nome antigo é limpo, mas só quando o
-  programa dono delas não está mais aberto; uma versão antiga rodando ao mesmo tempo não é afetada.
-- Internamente, tudo o que depende do console (arquivo que identifica o jogo, validação, leitura e
-  conversão) passa por uma plataforma, hoje só a do PS5.
+- The project is now called **AnyPS Conversor** (`anyps-conversor`), so it can take other PlayStation
+  consoles in the future. The executable is now `AnyPS-Conversor.exe`, and the default folder for
+  converted games is `%USERPROFILE%\AnyPS`. PS5 is still handled by AnyPS5.
+- Settings and logs from the previous version (`%APPDATA%\AnyPS5-Conversor` and
+  `%LOCALAPPDATA%\AnyPS5-Conversor`) are moved to the new folders on the first run: language and chosen
+  location stay the same.
+- Leftovers of earlier versions in temporary folders with the old name are cleaned up, but only when
+  the program that owns them is no longer open; an old version running at the same time is not
+  affected.
+- Internally, everything that depends on the console (the file that identifies a game, validation,
+  reading and conversion) goes through a platform, currently only PS5.
 
 ## [0.6.3] - 2026-10-16
 
-### Adicionado
+### Added
 
-- Embaixo do status aparece o que está acontecendo: o arquivo sendo extraído, o executável sendo lido,
-  a etapa do relinker (análise de instruções, chamadas de sistema, bibliotecas do jogo, montagem e
-  gravação do `.exe`) e o arquivo sendo copiado. Nomes longos são encurtados pelo meio.
-- Tempo restante da extração ("cerca de N min restantes"), mostrado só depois de 5 segundos e 3%
-  medidos no próprio PC, quando a estimativa já é estável. A geração do `.exe` não tem estimativa:
-  as etapas do relinker têm durações muito diferentes de jogo para jogo, e o número não seria confiável.
-- Arquivos `.zip`, `.rar` e `.7z` são conferidos antes de extrair: sem `eboot.bin`, ou com ele
-  criptografado, o arquivo é recusado na hora, sem gravar nada no disco.
+- Below the status, the program shows what is happening: the file being extracted, the executable
+  being read, the relinker step (instruction scan, system calls, game libraries, assembling and writing
+  the `.exe`) and the file being copied. Long names are shortened in the middle.
+- Time left for extraction ("about N min left"), shown only after 5 seconds and 3% measured on the PC
+  itself, when the estimate is stable. Building the `.exe` has no estimate: the relinker steps take
+  very different times from game to game, and the number would not be reliable.
+- `.zip`, `.rar` and `.7z` archives are checked before extracting: without `eboot.bin`, or with an
+  encrypted one, the archive is refused right away, without writing anything to disk.
 
-### Corrigido
+### Fixed
 
-- Em `.tar.gz`, `.tar.xz` e `.tar.bz2`, a barra de progresso ficava parada durante um arquivo grande;
-  agora avança junto com a leitura.
+- In `.tar.gz`, `.tar.xz` and `.tar.bz2`, the progress bar stood still during a large file; it now
+  moves along with the reading.
 
 ## [0.6.2] - 2026-10-16
 
-### Adicionado
+### Added
 
-- As imagens do programa nos READMEs são geradas a partir do próprio `.exe` a cada release, em
-  português (`docs/screenshot-pt.png`) e em inglês (`docs/screenshot-en.png`), e sempre mostram a
-  versão publicada. A pasta de saída mostrada é um exemplo neutro.
+- The program images in the READMEs are generated from the `.exe` itself on every release, in
+  Portuguese (`docs/screenshot-pt.png`) and English (`docs/screenshot-en.png`), and always show the
+  published version. The output folder shown is a neutral example.
 
 ## [0.6.1] - 2026-10-16
 
-### Adicionado
+### Added
 
-- Link **Licenças** no rodapé do programa, com os avisos de licença dos componentes de terceiros
-  embutidos no `.exe` (`THIRD-PARTY-NOTICES.txt`, também anexado a cada release).
-- Aviso legal completo em português e inglês (`LEGAL.md`), política de segurança (`SECURITY.md`) e
-  confirmação obrigatória, no formulário de issue, de que nenhum conteúdo protegido está sendo
-  enviado. As notas de cada release trazem o aviso legal e o link do código-fonte do AnyPS5 incluído.
-- README completo em inglês (`README.en.md`), com seletor de idioma, e link de download direto da
-  versão mais recente no topo das duas versões.
-- Teste de conversão real (`HomebrewConversionTests`) com homebrews livres baixados do release de cada
-  autor por `build/download-homebrew.ps1`, com versão e SHA-256 fixados em `build/homebrew.json`.
-- Atualização automática do AnyPS5 (`.github/workflows/anyps5-update.yml`): uma vez por dia, adota a
-  versão nova do AnyPS5 publicada há 7 dias ou mais, compila, roda os testes e as conversões reais e
-  publica a nova versão do conversor. Avisa o dono do repositório por issue quando houver versão nova,
-  dando certo ou não; se algo falhar, nada é publicado.
+- **Licenses** link in the program footer, with the license notices of the third-party components
+  embedded in the `.exe` (`THIRD-PARTY-NOTICES.txt`, also attached to every release).
+- Full legal notice in Portuguese and English (`LEGAL.md`), security policy (`SECURITY.md`) and a
+  required confirmation, in the issue form, that no protected content is being shared. Every release
+  note carries the legal notice and the link to the source code of the included AnyPS5.
+- Full English README (`README.en.md`), with a language switch, and a direct download link to the
+  latest version at the top of both.
+- Real conversion test (`HomebrewConversionTests`) with free homebrew downloaded from each author's
+  release by `build/download-homebrew.ps1`, with version and SHA-256 pinned in `build/homebrew.json`.
+- Automatic AnyPS5 update (`.github/workflows/anyps5-update.yml`): once a day it adopts the new AnyPS5
+  version published 7 or more days earlier, builds, runs the tests and the real conversions and
+  publishes the new converter version. It notifies the repository owner through an issue whenever
+  there is a new version, whether it works or not; if anything fails, nothing is published.
 
 ## [0.6.0] - 2026-10-16
 
-### Alterado
+### Changed
 
-- A geração do `.exe` roda ao mesmo tempo que a cópia do jogo para `app0/` e a instalação das
-  bibliotecas; a conversão leva o tempo da etapa mais lenta, não a soma delas.
-- Pasta de jogo no mesmo disco do destino vai para `app0/` por link físico: instantâneo e sem ocupar
-  espaço a mais. O original não é alterado, e apagar um não afeta o outro. Arquivos somente leitura,
-  outros discos e sistemas de arquivos sem suporte continuam sendo copiados.
-- As cópias reservam o tamanho do arquivo antes de gravar.
+- Building the `.exe` runs at the same time as copying the game into `app0/` and installing the
+  libraries; a conversion takes as long as the slowest step, not the sum of them.
+- A game folder on the same drive as the destination goes into `app0/` through hard links: instant
+  and with no extra space. The original is not changed, and deleting one does not affect the other.
+  Read-only files, other drives and file systems without support are still copied.
+- Copies reserve the file size before writing.
 
-### Corrigido
+### Fixed
 
-- Cancelar para na hora: o relinker é encerrado de imediato, a limpeza do que já foi gerado não trava a
-  janela e o botão fica bloqueado depois do primeiro clique, com o aviso "Cancelando…".
-- Arquivo compactado sem `eboot.bin` ganha um aviso próprio, que fala do arquivo e não de "esta pasta".
-- Extração que não vira jogo (sem `eboot.bin`, senha cancelada ou erro) apaga na hora a pasta de
-  trabalho em "Onde salvar", em vez de esperar o programa fechar.
+- Cancel stops right away: the relinker is ended at once, cleaning up what was already created does
+  not freeze the window, and the button is locked after the first click, showing "Cancelling…".
+- An archive without `eboot.bin` gets its own message, which talks about the file and not "this
+  folder".
+- An extraction that does not turn into a game (no `eboot.bin`, password cancelled or error) deletes
+  the work folder in "Where to save" right away, instead of waiting for the program to close.
 
 ## [0.5.0] - 2026-10-16
 
-### Alterado
+### Changed
 
-- A extração de um arquivo compactado é feita numa pasta oculta (`.AnyPS5-Conversor`) dentro do local
-  escolhido em "Onde salvar", e não mais em `%TEMP%` no C:. Salvar em outro disco leva a extração
-  junto.
-- No mesmo disco, os arquivos extraídos são movidos para `app0/` em vez de copiados: a etapa fica
-  instantânea e o pico de espaço cai para o arquivo compactado mais uma cópia do conteúdo.
-- O local escolhido em "Onde salvar" fica lembrado entre execuções.
+- Archives are extracted in a hidden folder (`.AnyPS5-Conversor`) inside the location chosen in "Where
+  to save", no longer in `%TEMP%` on C:. Saving to another drive takes the extraction with it.
+- On the same drive, extracted files are moved into `app0/` instead of copied: the step is instant and
+  peak disk use drops to the archive plus one copy of its contents.
+- The location chosen in "Where to save" is remembered between runs.
 
 ## [0.4.1] - 2026-10-16
 
-### Alterado
+### Changed
 
-- Avisos e erros aparecem numa janela no visual do programa, no lugar da caixa de mensagem do Windows.
-  Textos longos, como trechos de registro, ganham barra de rolagem.
+- Warnings and errors appear in a window that matches the program design, instead of the Windows
+  message box. Long texts, such as log excerpts, get a scroll bar.
 
 ## [0.4.0] - 2026-10-16
 
-### Adicionado
+### Added
 
-- Verificação de espaço em disco antes de extrair um arquivo compactado e antes de converter. Se faltar
-  espaço, o programa diz quanto é necessário, quanto há livre e quanto liberar, sem começar nada. Se o
-  disco encher mesmo assim no meio do processo, os arquivos incompletos são apagados e a mensagem explica.
-- O idioma pode ser trocado a qualquer momento, inclusive durante uma extração ou conversão.
+- Disk space check before extracting an archive and before converting. If space is short, the program
+  says how much is needed, how much is free and how much to free up, without starting anything. If the
+  disk still fills up during the process, incomplete files are deleted and the message explains it.
+- The language can be changed at any time, even during an extraction or conversion.
 
-### Corrigido
+### Fixed
 
-- Trocar o idioma depois de converter um jogo vindo de arquivo compactado dava erro ao recarregar o
-  ícone da extração já apagada.
+- Changing the language after converting a game from an archive failed while reloading the icon from
+  the already deleted extraction.
 
-### Alterado
+### Changed
 
-- A versão do programa vem só de `Directory.Build.props`: o build de uma tag falha se ela for diferente,
-  e builds fora de uma versão publicada aparecem como `-dev.N` no rodapé.
+- The program version comes only from `Directory.Build.props`: a tag build fails if they differ, and
+  builds outside a published version show as `-dev.N` in the footer.
 
 ## [0.3.1] - 2026-10-16
 
-### Corrigido
+### Fixed
 
-- Na janela de senha, nomes de arquivo longos cortavam o fim da mensagem. Agora o nome é encurtado pelo
-  meio, mantendo o início e a extensão, a mensagem aparece sempre inteira e a janela ajusta a altura.
+- In the password window, long file names cut off the end of the message. Now the name is shortened in
+  the middle, keeping the start and the extension, the message always shows in full and the window
+  adjusts its height.
 
-### Alterado
+### Changed
 
-- Nada fica no disco sem necessidade: o relinker é extraído na pasta temporária da execução (antes
-  ficava uma cópia por versão em `%LOCALAPPDATA%`), o registro de uma conversão bem-sucedida é
-  apagado ao final e só ficam os 10 registros de falha mais recentes, por até 30 dias.
+- Nothing stays on disk without need: the relinker is extracted to the run's temporary folder (a copy
+  per version used to stay in `%LOCALAPPDATA%`), the log of a successful conversion is deleted at the
+  end, and only the 10 most recent failure logs are kept, for up to 30 days.
 
 ## [0.3.0] - 2026-10-16
 
-### Adicionado
+### Added
 
-- Opção "Ao terminar, mover os arquivos originais do jogo para a Lixeira", desmarcada por padrão. Move
-  o arquivo compactado escolhido ou só a pasta com o `eboot.bin`, nunca uma pasta acima dela, e
-  mantém os originais quando eles estão na raiz do disco, numa pasta do sistema ou do usuário
-  (Área de Trabalho, Documentos, Downloads…) ou quando contêm a pasta de destino.
+- "When done, move the original game files to the Recycle Bin" option, unchecked by default. It moves
+  the chosen archive or only the folder with `eboot.bin`, never a folder above it, and keeps the
+  originals when they are at the root of a drive, in a system or user folder (Desktop, Documents,
+  Downloads…) or when they contain the destination folder.
 
-### Alterado
+### Changed
 
-- A extração de um arquivo compactado é apagada logo depois da conversão, e não só ao fechar o
-  programa.
+- The extraction of an archive is deleted right after the conversion, not only when the program
+  closes.
 
 ## [0.2.1] - 2026-10-16
 
-### Corrigido
+### Fixed
 
-- Extrações e arquivos de trabalho ficavam para sempre em `%TEMP%\AnyPS5-Conversor` quando o programa
-  era encerrado à força ou o PC desligava, ocupando gigabytes. Cada execução agora usa uma subpasta
-  própria, e ao abrir o programa apaga o que sobrou de execuções anteriores.
+- Extractions and work files stayed forever in `%TEMP%\AnyPS5-Conversor` when the program was killed
+  or the PC shut down, taking up gigabytes. Each run now uses its own subfolder, and opening the
+  program deletes what was left by earlier runs.
 
 ## [0.2.0] - 2026-10-16
 
-### Adicionado
+### Added
 
-- Arquivos compactados com senha (`.zip` AES ou ZipCrypto, `.7z` e `.rar`, inclusive com a lista de
-  arquivos protegida): o programa pede a senha numa janela própria, avisa quando ela está errada e não
-  guarda a senha. Não é preciso ter 7-Zip ou WinRAR instalado.
+- Password-protected archives (AES or ZipCrypto `.zip`, `.7z` and `.rar`, including archives with a
+  protected file list): the program asks for the password in its own window, says when it is wrong and
+  does not store it. 7-Zip or WinRAR are not needed.
 
 ## [0.1.0] - 2026-10-16
 
-### Adicionado
+### Added
 
-- Interface gráfica em português e inglês para converter a pasta de um jogo ou app de PS5 em um
-  executável do Windows, sem linha de comando.
-- Entrada por pasta, pelo `eboot.bin` ou por arquivo compactado (`.zip`, `.rar`, `.7z`, `.tar`,
-  `.tar.gz`, `.tgz`, `.bz2`, `.xz`), por botão ou arrastando para a janela. O `eboot.bin` é procurado
-  em até quatro níveis de subpastas. Entradas que tentam gravar fora da pasta de destino são recusadas.
-- Leitura do nome, do código e do ícone do título em `sce_sys/param.json`; o ícone do jogo vai para o
-  `.exe` gerado.
-- Desembrulho de contêineres SELF/fSELF descriptografados (porte de `tools/unwrap_self.py` do
-  AnyPS5) e recusa de arquivos criptografados.
-- Conversão com o relinker do AnyPS5 v0.1.2 e instalação das bibliotecas do AnyPS5 para Windows,
-  tudo embutido no executável, sem instalar nada nem acessar a internet.
-- Uso automático de `--to-intel` em processadores Intel e aviso quando a CPU não tem as instruções
-  exigidas pelos jogos.
-- Base fixa `0x400000` (`--windows-fixed-base`) automática para títulos que leem o próprio
-  `imports.txt`, como Ruffle, VLC e XPSemu.
-- Barra de progresso com a porcentagem real da geração do `.exe`, da cópia dos arquivos e da extração.
-- Registro de cada conversão em `%LOCALAPPDATA%\AnyPS5-Conversor\logs`, indicado na mensagem de erro.
-- Botões para jogar e abrir a pasta ao final, com as últimas linhas de `anyps5.log` se o jogo
-  fechar com erro.
+- Graphical interface in Portuguese and English to convert a PS5 game or app folder into a Windows
+  executable, with no command line.
+- Input by folder, by `eboot.bin` or by archive (`.zip`, `.rar`, `.7z`, `.tar`, `.tar.gz`, `.tgz`,
+  `.bz2`, `.xz`), with a button or by dragging onto the window. `eboot.bin` is searched up to four
+  subfolder levels deep. Entries that try to write outside the destination folder are refused.
+- Title name, code and icon read from `sce_sys/param.json`; the game icon goes into the generated
+  `.exe`.
+- Unwrapping of decrypted SELF/fSELF containers (port of AnyPS5's `tools/unwrap_self.py`) and refusal
+  of encrypted files.
+- Conversion with the AnyPS5 v0.1.2 relinker and installation of the AnyPS5 Windows libraries, all
+  embedded in the executable, with nothing to install and no internet access.
+- Automatic `--to-intel` on Intel CPUs and a warning when the CPU lacks the instructions games
+  require.
+- Automatic fixed base `0x400000` (`--windows-fixed-base`) for titles that read their own
+  `imports.txt`, such as Ruffle, VLC and XPSemu.
+- Progress bar with the real percentage of building the `.exe`, copying the files and extracting.
+- Log of every conversion in `%LOCALAPPDATA%\AnyPS5-Conversor\logs`, shown in the error message.
+- Buttons to play and open the folder at the end, with the last lines of `anyps5.log` if the game
+  closes with an error.
 
 [Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.12.1...HEAD
 [0.12.1]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.12.0...v0.12.1

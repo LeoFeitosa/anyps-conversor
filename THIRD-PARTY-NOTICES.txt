@@ -1,20 +1,12 @@
-AnyPS Conversor - avisos de terceiros / third-party notices
-
-O AnyPS Conversor é distribuído sob a GNU General Public License v2.0 (arquivo LICENSE).
-O executável inclui os componentes abaixo, cada um sob a própria licença.
+AnyPS Conversor - third-party notices
 
 AnyPS Conversor is distributed under the GNU General Public License v2.0 (LICENSE file).
 The executable includes the components below, each under its own license.
 
-1. AnyPS5 (relinker.exe e/and prx-windows)
+1. AnyPS5 (relinker.exe and prx-windows)
 Copyright (c) boykopovar and AnyPS5 contributors
-Licença / License: GNU General Public License v2.0
+License: GNU General Public License v2.0
 https://github.com/boykopovar/AnyPS5
-
-Embutido sem alterações, a partir do release oficial. O código-fonte correspondente é o da tag
-indicada em build/dependencies.json e no rodapé do programa ("AnyPS5 vX.Y.Z"):
-https://github.com/boykopovar/AnyPS5/tree/<tag>
-O desembrulho de SELF é um porte para C# de tools/unwrap_self.py do mesmo projeto.
 
 Embedded unchanged from the official release. The corresponding source code is the one at the tag
 listed in build/dependencies.json and in the program footer ("AnyPS5 vX.Y.Z"):

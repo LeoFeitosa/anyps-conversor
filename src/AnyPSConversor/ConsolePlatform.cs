@@ -1,49 +1,49 @@
 namespace AnyPSConversor;
 
 /// <summary>
-/// Um console que o programa converte: como reconhecer um jogo dele e como convertê-lo. Hoje só o PS5, com o
-/// AnyPS5. Um console novo é outra implementação registrada em <see cref="ConsolePlatform.All"/>; a janela, a
-/// extração, a recusa antecipada de arquivos compactados e a limpeza já perguntam à plataforma.
+/// A console the program converts: how to recognize one of its games and how to convert it. Today only PS5, with
+/// AnyPS5. A new console is another implementation registered in <see cref="ConsolePlatform.All"/>; the window,
+/// extraction, early rejection of archives and cleanup already ask the platform.
 /// </summary>
 public interface IConsolePlatform
 {
-    /// <summary>Nome curto do console, como "PS5".</summary>
+    /// <summary>Short console name, such as "PS5".</summary>
     string Name { get; }
 
-    /// <summary>Arquivo que identifica um jogo deste console (no PS5, o eboot.bin).</summary>
+    /// <summary>File that identifies a game for this console (on PS5, eboot.bin).</summary>
     string MainFile { get; }
 
     /// <summary>
-    /// Confere o arquivo principal já lido e lança <see cref="UserException"/> se ele não pode ser convertido
-    /// (no PS5, criptografado). Usado antes de extrair um arquivo compactado inteiro.
+    /// Checks the already read main file and throws <see cref="UserException"/> if it cannot be converted
+    /// (on PS5, encrypted). Used before extracting a whole archive.
     /// </summary>
     void CheckMainFile(byte[] data);
 
-    /// <summary>Se o arquivo, relativo à pasta do arquivo principal, é um executável que a conversão processa.</summary>
+    /// <summary>Whether the file, relative to the main file's folder, is an executable the conversion processes.</summary>
     bool IsExecutable(string relativePath);
 
     /// <summary>
-    /// Nome, código e ícone do jogo lidos de dentro de um arquivo compactado, antes de extrair.
-    /// <paramref name="read"/> devolve um arquivo pelo caminho relativo à pasta do arquivo principal, ou nulo.
+    /// Game name, ID and icon read from inside an archive, before extracting.
+    /// <paramref name="read"/> returns a file by its path relative to the main file's folder, or null.
     /// </summary>
     GamePreview Preview(Func<string, byte[]?> read);
 
-    /// <summary>Lê o jogo em <paramref name="path"/>; lança "err_no_eboot" se não for um jogo deste console.</summary>
+    /// <summary>Reads the game at <paramref name="path"/>; throws "err_no_eboot" if it is not a game for this console.</summary>
     GameInfo Load(string path, string? fallbackName);
 
-    /// <summary>Converte o jogo e devolve o caminho do executável gerado.</summary>
+    /// <summary>Converts the game and returns the path of the generated executable.</summary>
     Task<string> ConvertAsync(GameInfo game, string parentFolder, bool sourceIsExtraction,
         IProgress<ConversionProgress> progress, Action<string> log, CancellationToken cancel);
 }
 
-/// <summary>O que dá para mostrar de um jogo antes de extraí-lo.</summary>
+/// <summary>What can be shown of a game before extracting it.</summary>
 public sealed record GamePreview(string? Name, string? TitleId, byte[]? Icon, bool HasInfo);
 
 public static class ConsolePlatform
 {
     public static readonly IReadOnlyList<IConsolePlatform> All = [Ps5Platform.Instance];
 
-    /// <summary>Lê o jogo com o primeiro console que o reconhecer.</summary>
+    /// <summary>Reads the game with the first console that recognizes it.</summary>
     public static GameInfo Load(string path, string? fallbackName = null)
     {
         foreach (var platform in All)
@@ -54,18 +54,18 @@ public static class ConsolePlatform
             }
             catch (UserException e) when (e.Key == "err_no_eboot" && platform != All[^1])
             {
-                // Não é deste console; tenta o próximo. O último explica o que falta.
+                // Not for this console; try the next one. The last one explains what is missing.
             }
         }
         throw new UserException("err_no_eboot");
     }
 
-    /// <summary>Console cujo arquivo principal tem este nome, ou nulo.</summary>
+    /// <summary>Console whose main file has this name, or null.</summary>
     public static IConsolePlatform? ForMainFile(string fileName) =>
         All.FirstOrDefault(p => p.MainFile.Equals(fileName, StringComparison.OrdinalIgnoreCase));
 }
 
-/// <summary>PS5 com o AnyPS5: eboot.bin, sce_sys/param.json, o relinker e as bibliotecas prx-windows.</summary>
+/// <summary>PS5 with AnyPS5: eboot.bin, sce_sys/param.json, the relinker and the prx-windows libraries.</summary>
 public sealed class Ps5Platform : IConsolePlatform
 {
     public static readonly Ps5Platform Instance = new();
@@ -90,7 +90,7 @@ public sealed class Ps5Platform : IConsolePlatform
         }
         catch (SelfException)
         {
-            // Outros defeitos do SELF são explicados na conversão, com o registro completo.
+            // Other SELF defects are explained during conversion, with the full log.
         }
     }
 

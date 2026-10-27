@@ -7,8 +7,8 @@ using System.Runtime.Intrinsics.X86;
 namespace AnyPSConversor;
 
 /// <summary>
-/// Andamento da conversão: fração de 0 a 1 (negativa = indeterminada) e chave de status. O passo é a linha de
-/// detalhe embaixo do status: chave de texto (ou nula) e o arquivo ou item da vez.
+/// Conversion progress: fraction from 0 to 1 (negative = indeterminate) and status key. The step is the detail
+/// line below the status: text key (or null) and the current file or item.
 /// </summary>
 public readonly record struct ConversionProgress(double Fraction, string StatusKey, params object[] Args)
 {
@@ -16,21 +16,21 @@ public readonly record struct ConversionProgress(double Fraction, string StatusK
     public string? StepItem { get; init; }
 }
 
-/// <summary>Um passo de uma etapa: fração dela, chave de texto do passo e o arquivo ou item da vez.</summary>
+/// <summary>A step within a stage: its fraction, the step's text key and the current file or item.</summary>
 public delegate void StepReport(double fraction, string? stepKey, string? item);
 
 /// <summary>
-/// Converte a pasta de um jogo de PS5 para Windows: desembrulha os SELF, roda o relinker do AnyPS5,
-/// copia os arquivos do jogo para app0/ e instala as bibliotecas do AnyPS5 em libs/.
+/// Converts a PS5 game folder to Windows: unwraps the SELFs, runs the AnyPS5 relinker,
+/// copies the game files to app0/ and installs the AnyPS5 libraries in libs/.
 /// </summary>
 public static class Converter
 {
-    /// <summary>Relinkers rodando agora: ao fechar o programa eles morrem junto (<see cref="KillRunning"/>).</summary>
+    /// <summary>Relinkers running now: when the program closes they die with it (<see cref="KillRunning"/>).</summary>
     static readonly HashSet<Process> Running = [];
 
-    // ponytail: só cobre o fechamento normal; encerrar pelo Gerenciador de Tarefas deixa o relinker até ele
-    // terminar sozinho. Um Job Object com KILL_ON_JOB_CLOSE cobre esse caso, se for preciso.
-    /// <summary>Pasta do jogo que está sendo gerado agora; se o programa fechar no meio, ela é apagada.</summary>
+    // ponytail: only covers normal closing; ending it from Task Manager leaves the relinker running until it
+    // finishes on its own. A Job Object with KILL_ON_JOB_CLOSE covers that case, if needed.
+    /// <summary>Game folder being generated right now; if the program closes midway, it is deleted.</summary>
     public static string? Unfinished { get; private set; }
 
     public static void KillRunning()
@@ -53,8 +53,8 @@ public static class Converter
     public static string ThirdPartyNotices => ReadResourceText("third-party-notices");
 
     /// <param name="sourceIsExtraction">
-    /// A pasta do jogo é uma extração nossa e pode ser consumida: no mesmo disco, os arquivos são movidos para
-    /// app0/ em vez de copiados, o que é instantâneo e não ocupa espaço a mais.
+    /// The game folder is our own extraction and can be consumed: on the same drive, the files are moved to
+    /// app0/ instead of copied, which is instant and takes no extra space.
     /// </param>
     public static async Task<string> ConvertAsync(
         GameInfo game,
@@ -64,12 +64,12 @@ public static class Converter
         Action<string> log,
         CancellationToken cancel)
     {
-        // Salvar dentro da pasta do jogo misturaria o convertido com o original e faria a cópia ler o que ela
-        // mesma está gravando.
+        // Saving inside the game folder would mix the converted output with the original and make the copy read what it
+        // is itself writing.
         if (SourceCleanup.IsSameOrInside(SourceCleanup.Normalize(parentFolder), SourceCleanup.Normalize(game.Folder)))
             throw new UserException("err_output_in_game");
-        // Pastas de trabalho são apagadas quando a execução dona termina ou o programa abre de novo: o jogo
-        // convertido não pode ficar nelas, nem o original escolhido ali direto (só a extração desta conversão).
+        // Work folders are deleted when the owning run ends or the program opens again: the converted game
+        // cannot stay in them, nor an original chosen directly there (only this conversion's extraction).
         if (Archives.IsInsideWorkFolder(parentFolder))
             throw new UserException("err_output_in_work");
         if (!sourceIsExtraction && Archives.IsInsideWorkFolder(game.Folder))
@@ -89,8 +89,8 @@ public static class Converter
             var converted = await Task.Run(() => PrepareInputs(game, work, log,
                 file => progress.Report(new(0.04, "status_unwrapping") { StepKey = "step_reading", StepItem = file }), cancel), cancel);
 
-            // O relinker usa um núcleo só e lê apenas a pasta de trabalho: a cópia do jogo para app0/ e as
-            // bibliotecas correm ao mesmo tempo. A barra (10–98%) acompanha a mais atrasada das duas.
+            // The relinker uses a single core and reads only the work folder: copying the game to app0/ and the
+            // libraries run at the same time. The bar (10–98%) follows the slower of the two.
             progress.Report(new(0.10, "status_relinking", 0));
             Directory.CreateDirectory(output);
             var exe = Path.Combine(output, game.SafeName + ".exe");
@@ -104,7 +104,7 @@ public static class Converter
                     stage = fraction;
                     if (stepKey is not null)
                         step = (stepKey, item);
-                    // Mostra a etapa mais atrasada, que é a que decide quando a conversão termina.
+                    // Shows the slowest stage, which is the one that decides when the conversion ends.
                     var (key, low, shown) = relinked <= copied
                         ? ("status_relinking", relinked, relinkStep)
                         : ("status_copying", copied, copyStep);
@@ -121,7 +121,7 @@ public static class Converter
                 }
                 catch
                 {
-                    // Se uma etapa falha, a outra para na hora em vez de terminar à toa.
+                    // If one stage fails, the other stops right away instead of finishing for nothing.
                     failed.Cancel();
                     throw;
                 }
@@ -142,7 +142,7 @@ public static class Converter
             }
             catch when (both.Exception?.InnerExceptions.FirstOrDefault(e => e is not OperationCanceledException) is { } cause)
             {
-                // A etapa que parou por causa da outra só acusa "cancelado"; o erro que vale é o da que falhou.
+                // The stage that stopped because of the other only reports "canceled"; the error that counts is the one that failed.
                 System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw(cause);
             }
             cancel.ThrowIfCancellationRequested();
@@ -158,8 +158,8 @@ public static class Converter
         }
         catch
         {
-            // A pasta de saída foi criada por nós e é nova: não deixa meio jogo para trás.
-            // Apagar gigabytes leva tempo; fora da thread da janela, ela continua respondendo.
+            // The output folder was created by us and is new: don't leave half a game behind.
+            // Deleting gigabytes takes time; off the window's thread, it keeps responding.
             await Task.Run(() => TryDelete(output));
             throw;
         }
@@ -180,7 +180,7 @@ public static class Converter
         catch (UserException e) when (e.Key == "err_relinker" && e.Args[0] is string why
             && why.Contains("icon", StringComparison.OrdinalIgnoreCase) && File.Exists(Path.Combine(work, "sce_sys", "icon0.png")))
         {
-            // Um ícone que o relinker não aceita não deve impedir a conversão.
+            // An icon the relinker does not accept must not block the conversion.
             log("icon0.png rejected; converting without the game icon");
             File.Delete(Path.Combine(work, "sce_sys", "icon0.png"));
             await RunRelinkerAsync(relinker, input, exe, fixedBase, log, report, cancel);
@@ -188,16 +188,16 @@ public static class Converter
     }
 
     /// <summary>
-    /// Destino: cópia do jogo em app0/, bibliotecas e o .exe (estimado em duas vezes os executáveis).
-    /// Temporário: os executáveis desembrulhados e o relinker.
+    /// Destination: copy of the game in app0/, libraries and the .exe (estimated at twice the executables).
+    /// Temporary: the unwrapped executables and the relinker.
     /// </summary>
     static void EnsureSpace(GameInfo game, string parentFolder, bool move) =>
         EnsureSpace(parentFolder, move ? 0 : DiskSpace.FolderSize(game.Folder), ExecutableBytes(game));
 
     /// <summary>
-    /// Confere o espaço do processo inteiro, somado por disco. Destino: <paramref name="gameFiles"/> (o jogo em
-    /// app0/, ou o jogo inteiro a extrair quando vem de um arquivo compactado), as bibliotecas e o .exe, estimado
-    /// em duas vezes os executáveis. Temporário: os executáveis desembrulhados e o próprio relinker.
+    /// Checks the space for the whole process, summed per drive. Destination: <paramref name="gameFiles"/> (the game in
+    /// app0/, or the whole game to extract when it comes from an archive), the libraries and the .exe, estimated
+    /// at twice the executables. Temporary: the unwrapped executables and the relinker itself.
     /// </summary>
     public static void EnsureSpace(string parentFolder, long gameFiles, long executables)
     {
@@ -212,11 +212,11 @@ public static class Converter
         ]);
     }
 
-    /// <summary>Tamanho dos executáveis do jogo (o principal e os módulos): base do .exe e do tempo de conversão.</summary>
+    /// <summary>Size of the game's executables (the main one and the modules): basis for the .exe and the conversion time.</summary>
     public static long ExecutableBytes(GameInfo game) =>
         new FileInfo(Path.Combine(game.Folder, game.Platform.MainFile)).Length + game.Modules.Sum(m => new FileInfo(m).Length);
 
-    /// <summary>Instruções do Zen 2 que os jogos usam sem conferir; sem elas o jogo não abre.</summary>
+    /// <summary>Zen 2 instructions that games use without checking; without them the game does not open.</summary>
     public static string[] MissingCpuFeatures()
     {
         var missing = new List<string>();
@@ -243,14 +243,14 @@ public static class Converter
         return System.Text.Encoding.ASCII.GetString(System.Runtime.InteropServices.MemoryMarshal.AsBytes(vendor)) == "GenuineIntel";
     }
 
-    /// <summary>Monta a entrada limpa do relinker e devolve os módulos que viraram .guest.prx.</summary>
+    /// <summary>Builds the clean relinker input and returns the modules that became .guest.prx.</summary>
     static HashSet<string> PrepareInputs(GameInfo game, string work, Action<string> log, Action<string> reading, CancellationToken cancel)
     {
         Directory.CreateDirectory(work);
         reading("eboot.bin");
         WriteClean(Path.Combine(game.Folder, "eboot.bin"), Path.Combine(work, "eboot.bin"), log);
 
-        // O relinker usa sce_sys/icon0.png, ao lado do executável de entrada, como ícone do .exe.
+        // The relinker uses sce_sys/icon0.png, next to the entry executable, as the .exe icon.
         foreach (var name in new[] { "icon0.png", "param.json" })
         {
             var source = Path.Combine(game.Folder, "sce_sys", name);
@@ -296,13 +296,13 @@ public static class Converter
         File.WriteAllBytes(target, data);
     }
 
-    /// <summary>Etapas que o relinker imprime, na ordem em que acontecem.</summary>
+    /// <summary>Stages the relinker prints, in the order they happen.</summary>
     static readonly string[] RelinkerStages = ["Instruction scan", "Syscall scan", "PRX conversion", "Output image", "Write output"];
 
-    /// <summary>Fração de 0 a 1 de uma linha de progresso do relinker, como "PRX conversion | libc.prx | 57% (0/1)".</summary>
+    /// <summary>Fraction from 0 to 1 of a relinker progress line, such as "PRX conversion | libc.prx | 57% (0/1)".</summary>
     public static double? RelinkerFraction(string line) => ParseRelinker(line)?.Fraction;
 
-    /// <summary>Fração, etapa (índice em <see cref="RelinkerStages"/>) e item de uma linha de progresso do relinker.</summary>
+    /// <summary>Fraction, stage (index into <see cref="RelinkerStages"/>) and item of a relinker progress line.</summary>
     public static (double Fraction, int Stage, string Item)? ParseRelinker(string line)
     {
         var parts = line.Split('|');
@@ -316,8 +316,8 @@ public static class Converter
     }
 
     /// <summary>
-    /// Títulos que leem o próprio app0/imports.txt supõem a imagem carregada em 0x400000, como no console
-    /// (Ruffle, VLC e XPSemu na documentação do AnyPS5); para eles o .exe precisa de base fixa.
+    /// Titles that read their own app0/imports.txt assume the image is loaded at 0x400000, as on the console
+    /// (Ruffle, VLC and XPSemu in the AnyPS5 documentation); for them the .exe needs a fixed base.
     /// </summary>
     public static bool NeedsFixedBase(GameInfo game) => File.Exists(Path.Combine(game.Folder, "imports.txt"));
 
@@ -350,8 +350,8 @@ public static class Converter
         {
             if (string.IsNullOrWhiteSpace(line))
                 return;
-            // O relinker redesenha a barra de progresso com \r; cada pedaço atualiza a porcentagem
-            // e só a última versão vai para o registro.
+            // The relinker redraws the progress bar with \r; each chunk updates the percentage
+            // and only the last version goes to the log.
             var segments = line.Split('\r', StringSplitOptions.RemoveEmptyEntries);
             foreach (var segment in segments)
             {
@@ -382,7 +382,7 @@ public static class Converter
         }
         catch (OperationCanceledException)
         {
-            // Espera o relinker morrer de fato: o .exe pela metade só pode ser apagado depois.
+            // Waits for the relinker to actually die: the half-written .exe can only be deleted afterwards.
             process.Kill(entireProcessTree: true);
             await process.WaitForExitAsync(CancellationToken.None);
             throw;
@@ -404,9 +404,9 @@ public static class Converter
         string.Equals(Path.GetPathRoot(Path.GetFullPath(a)), Path.GetPathRoot(Path.GetFullPath(b)), StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Leva o jogo para app0/. Extração nossa no mesmo disco: move. Pasta do usuário no mesmo disco: link físico,
-    /// que é instantâneo e não ocupa espaço (o original continua intacto e apagar um não afeta o outro). Nos demais
-    /// casos, ou se o disco não aceitar links, copia.
+    /// Brings the game to app0/. Our extraction on the same drive: move. User folder on the same drive: hard link,
+    /// which is instant and takes no space (the original stays intact and deleting one does not affect the other). In other
+    /// cases, or if the drive does not support links, copy.
     /// </summary>
     static void CopyGame(string source, string target, HashSet<string> skip, bool move, StepReport report, CancellationToken cancel)
     {
@@ -426,8 +426,8 @@ public static class Converter
             Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
             var stepKey = move ? "step_moving" : "step_copying";
             report((double)done / total, stepKey, file.Relative);
-            // Somente leitura é atributo do arquivo, compartilhado pelo link: tirá-lo para apagar uma conversão
-            // que falhou mexeria no original. Esses vão por cópia.
+            // Read-only is a file attribute, shared through the link: clearing it to delete a failed conversion
+            // would touch the original. Those are copied.
             var linked = link && !File.GetAttributes(file.Path).HasFlag(FileAttributes.ReadOnly)
                 && (link = CreateHardLink(destination, file.Path, IntPtr.Zero));
             if (move)
@@ -437,7 +437,7 @@ public static class Converter
                 using (var input = new FileStream(file.Path, FileMode.Open, FileAccess.Read, FileShare.Read, 1, FileOptions.SequentialScan))
                 using (var output = File.Create(destination))
                 {
-                    // Reserva o tamanho de uma vez: menos fragmentação, e o disco cheio aparece antes de gravar.
+                    // Reserves the size at once: less fragmentation, and a full drive shows up before writing.
                     output.SetLength(file.Size);
                     int read;
                     while ((read = input.Read(buffer)) > 0)
@@ -467,17 +467,17 @@ public static class Converter
         zip.ExtractToDirectory(output, overwriteFiles: true);
     }
 
-    /// <summary>Dados locais do programa: só os registros de conversões que falharam.</summary>
+    /// <summary>The program's local data: only the logs of failed conversions.</summary>
     public static string LogFolder { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), Settings.Name, "logs");
 
     /// <summary>
-    /// Mantém no disco só o que o usuário pode precisar: os 10 registros de falha mais recentes, de até
-    /// 30 dias. Remove também a cópia do relinker que as versões 0.1 a 0.3 guardavam por versão.
+    /// Keeps on disk only what the user may need: the 10 most recent failure logs, up to
+    /// 30 days old. Also removes the relinker copy that versions 0.1 to 0.3 kept per version.
     /// </summary>
     public static void CleanLocalData()
     {
-        // A medida de tempo de conversão das versões 0.9 e 0.10 deixou de ser usada: não fica no disco.
+        // The conversion time measurement from versions 0.9 and 0.10 is no longer used: it does not stay on disk.
         try
         {
             File.Delete(Path.Combine(Settings.Folder, "conversion-rate.txt"));
@@ -502,7 +502,7 @@ public static class Converter
         }
     }
 
-    /// <summary>O relinker vai embutido no .exe e é extraído para a pasta temporária desta execução.</summary>
+    /// <summary>The relinker is embedded in the .exe and extracted to this run's temporary folder.</summary>
     static string ExtractRelinker()
     {
         var path = Path.Combine(Archives.TempRoot, "relinker.exe");

@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Compatibilidade de jogos / Game compatibility
+  - name: Game compatibility
     url: https://github.com/boykopovar/AnyPS5/discussions/categories/game-bring-up
-    about: Se o jogo converte mas não abre, o assunto é do AnyPS5. / If the game converts but does not start, report it to AnyPS5.
+    about: If the game converts but does not start, report it to AnyPS5.

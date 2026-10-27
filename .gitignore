@@ -8,10 +8,10 @@ artifacts/
 .idea/
 .vscode/
 
-# Dependências baixadas por build/download-dependencies.ps1
+# Dependencies downloaded by build/download-dependencies.ps1
 deps/
 
-# Nunca versionar conteúdo de jogos ou saídas de conversão
+# Never version game content or conversion output
 *.pkg
 *.self
 *.sprx
@@ -23,6 +23,6 @@ app0/
 shader_cache/
 anyps5.log
 
-# Sistema
+# System
 Thumbs.db
 .DS_Store

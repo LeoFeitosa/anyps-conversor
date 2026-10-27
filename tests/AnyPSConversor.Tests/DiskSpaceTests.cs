@@ -27,7 +27,7 @@ public class DiskSpaceTests
         var temp = Path.GetTempPath();
         DiskSpace.EnsureAll([(temp, 6 * GiB)], _ => 10 * GiB);
 
-        // Destino e pasta temporária no mesmo disco: cada um caberia sozinho, os dois juntos não.
+        // Destination and temporary folder on the same drive: each would fit alone, both together don't.
         var error = Assert.Throws<UserException>(() =>
             DiskSpace.EnsureAll([(temp, 6 * GiB), (Path.Combine(temp, "outra"), 6 * GiB)], _ => 10 * GiB));
         Assert.Equal("err_disk_space", error.Key);
@@ -44,7 +44,7 @@ public class DiskSpaceTests
     [Fact]
     public void ArchiveExtractionChecksSpaceBeforeWriting()
     {
-        // Um arquivo cujo conteúdo declarado não cabe em disco nenhum é recusado antes de gravar qualquer coisa.
+        // An archive whose declared contents fit on no drive is rejected before writing anything.
         var zip = Path.Combine(Path.GetTempPath(), "anyps5-space-" + Guid.NewGuid().ToString("N") + ".zip");
         try
         {
@@ -58,25 +58,25 @@ public class DiskSpaceTests
         }
     }
 
-    /// <summary>Zip64 com uma entrada vazia que declara um tamanho descompactado enorme no diretório central.</summary>
+    /// <summary>Zip64 with an empty entry that declares a huge uncompressed size in the central directory.</summary>
     static byte[] ZipWithDeclaredSize(long size)
     {
         using var stream = new MemoryStream();
         using var w = new BinaryWriter(stream);
-        // Chama-se eboot.bin para passar pela conferência dos arquivos obrigatórios, que vem antes do espaço.
+        // Named eboot.bin to pass the required-files check, which comes before the space check.
         var name = "jogo/eboot.bin"u8.ToArray();
-        // Cabeçalho local
+        // Local header
         w.Write(0x04034b50); w.Write((short)45); w.Write((short)0); w.Write((short)0); w.Write(0); w.Write(0);
         w.Write(0); w.Write(-1); w.Write((short)name.Length); w.Write((short)20); w.Write(name);
         w.Write((short)1); w.Write((short)16); w.Write(size); w.Write(0L);
         var central = stream.Position;
-        // Diretório central
+        // Central directory
         w.Write(0x02014b50); w.Write((short)45); w.Write((short)45); w.Write((short)0); w.Write((short)0); w.Write(0); w.Write(0);
         w.Write(0); w.Write(-1); w.Write((short)name.Length); w.Write((short)20); w.Write((short)0); w.Write((short)0);
         w.Write((short)0); w.Write(0); w.Write(0); w.Write(name);
         w.Write((short)1); w.Write((short)16); w.Write(size); w.Write(0L);
         var end = stream.Position;
-        // Fim do diretório central
+        // End of central directory
         w.Write(0x06054b50); w.Write((short)0); w.Write((short)0); w.Write((short)1); w.Write((short)1);
         w.Write((int)(end - central)); w.Write((int)central); w.Write((short)0);
         return stream.ToArray();

@@ -29,7 +29,7 @@
     <PackageReference Include="SharpCompress" Version="0.50.5" />
   </ItemGroup>
 
-  <!-- Baixadas e conferidas por build/download-dependencies.ps1; não são versionadas. -->
+  <!-- Downloaded and checked by build/download-dependencies.ps1; not versioned. -->
   <ItemGroup>
     <EmbeddedResource Include="..\..\deps\relinker.exe" LogicalName="relinker.exe" />
     <EmbeddedResource Include="..\..\deps\prx-windows.zip" LogicalName="prx-windows.zip" />

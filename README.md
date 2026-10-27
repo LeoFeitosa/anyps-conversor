@@ -4,79 +4,75 @@
 [![Release](https://img.shields.io/github/v/release/LeoFeitosa/anyps-conversor)](https://github.com/LeoFeitosa/anyps-conversor/releases/latest)
 [![License: GPL-2.0](https://img.shields.io/badge/license-GPL--2.0-blue)](LICENSE)
 
-Interface gráfica para Windows que converte jogos e apps de PS5 em executáveis do Windows, sem
-linha de comando. Você escolhe a pasta do jogo, clica em **Converter para Windows** e, no fim,
-em **Jogar agora**.
+A Windows GUI that converts PS5 games and apps into Windows executables, with no command line.
+Choose the game folder, click **Convert to Windows** and, at the end, **Play now**.
 
-**Português** | [English](README.en.md)
+**[⬇ Download the latest version (AnyPS-Conversor.exe)](https://github.com/LeoFeitosa/anyps-conversor/releases/latest/download/AnyPS-Conversor.exe)**
 
-**[⬇ Baixar a versão mais recente (AnyPS-Conversor.exe)](https://github.com/LeoFeitosa/anyps-conversor/releases/latest/download/AnyPS-Conversor.exe)**
+![AnyPS Conversor window](docs/screenshot-en.png)
 
-![Tela do AnyPS Conversor](docs/screenshot-pt.png)
+## Based on AnyPS5
 
-## Baseado no AnyPS5
+This project is a front end for [AnyPS5](https://github.com/boykopovar/AnyPS5), by
+[boykopovar](https://github.com/boykopovar) and contributors. All the heavy lifting is theirs: the
+relinker that turns the PS5 executable into a native one and the reimplemented system libraries.
+AnyPS Conversor only puts those pieces together in a program anyone can use:
 
-Este projeto é uma interface para o [AnyPS5](https://github.com/boykopovar/AnyPS5), de
-[boykopovar](https://github.com/boykopovar) e colaboradores. Todo o trabalho pesado é deles: o
-relinker que transforma o executável do PS5 num executável nativo e as bibliotecas do sistema
-reimplementadas. O AnyPS Conversor só junta essas peças num programa que qualquer pessoa consegue
-usar:
-
-| Parte | Origem |
+| Part | Source |
 |---|---|
-| Relinker (`relinker.exe`) | Release oficial do AnyPS5, embutido sem alterações |
-| Bibliotecas para Windows (`libs/`) | Release oficial do AnyPS5 (`prx-windows`), embutidas sem alterações |
-| Desembrulho de SELF | Porte para C# de [`tools/unwrap_self.py`](https://github.com/boykopovar/AnyPS5/blob/main/tools/unwrap_self.py) do AnyPS5 |
-| Interface, idiomas e montagem da pasta final | Este repositório |
+| Relinker (`relinker.exe`) | Official AnyPS5 release, embedded unchanged |
+| Windows libraries (`libs/`) | Official AnyPS5 release (`prx-windows`), embedded unchanged |
+| SELF unwrapping | C# port of AnyPS5's [`tools/unwrap_self.py`](https://github.com/boykopovar/AnyPS5/blob/main/tools/unwrap_self.py) |
+| Interface, languages and output folder layout | This repository |
 
-A versão do AnyPS5 usada em cada build fica fixada em [`build/dependencies.json`](build/dependencies.json),
-com o hash SHA-256 de cada arquivo. Uma cópia de segurança desses arquivos fica num release interno deste
-repositório (`anyps5-<versão>`), usada só se o release oficial deixar de existir.
+The AnyPS5 version used by each build is pinned in [`build/dependencies.json`](build/dependencies.json),
+with the SHA-256 hash of every file. A backup copy of those files is kept in an internal release of this
+repository (`anyps5-<version>`), used only if the official release is no longer available.
 
-## Como usar
+## How to use
 
-1. [Baixe o `AnyPS-Conversor.exe`](https://github.com/LeoFeitosa/anyps-conversor/releases/latest/download/AnyPS-Conversor.exe) (sempre a versão mais recente; versões anteriores ficam em
+1. [Download `AnyPS-Conversor.exe`](https://github.com/LeoFeitosa/anyps-conversor/releases/latest/download/AnyPS-Conversor.exe)
+   (always the latest version; earlier versions are in
    [Releases](https://github.com/LeoFeitosa/anyps-conversor/releases)).
-2. Abra o programa. Não precisa instalar nada.
-3. Arraste o jogo para a janela, ou use **Escolher pasta** ou **Escolher arquivo**. Pode ser a pasta
-   onde fica o `eboot.bin` ou um arquivo `.zip`, `.rar`, `.7z`, `.tar`, `.tar.gz`, `.tgz`, `.bz2` ou
-   `.xz` com ela dentro. Se o arquivo tiver senha, o programa pede. Não precisa ter 7-Zip
-   ou WinRAR instalado.
-4. Clique em **Converter para Windows** e depois em **Jogar agora**.
+2. Open the program. Nothing to install.
+3. Drag the game onto the window, or use **Choose folder** or **Choose file**. It can be the folder
+   that holds `eboot.bin` or a `.zip`, `.rar`, `.7z`, `.tar`, `.tar.gz`, `.tgz`, `.bz2` or `.xz`
+   archive containing it. If the archive has a password, the program asks for it. 7-Zip or WinRAR
+   are not needed.
+4. Click **Convert to Windows** and then **Play now**.
 
-Se quiser ficar só com a versão convertida, marque **Ao terminar, mover os arquivos originais do jogo
-para a Lixeira**. Eles vão para a Lixeira do Windows, de onde podem ser restaurados.
+To keep only the converted version, tick **When done, move the original game files to the Recycle
+Bin**. They go to the Windows Recycle Bin, where they can be restored from.
 
-Arquivos compactados são extraídos no próprio local escolhido em "Onde salvar" (numa pasta oculta,
-apagada ao final), então salvar em outro disco também tira a extração do C:.
+Archives are extracted in the location chosen under "Where to save" (in a hidden folder, deleted at the
+end), so saving to another drive also keeps the extraction off C:.
 
-O jogo convertido fica numa pasta nova, por padrão em `%USERPROFILE%\AnyPS\<nome do jogo>`, com o
-executável, a pasta `libs/` e os arquivos originais em `app0/`. A pasta pode ser movida para
-qualquer lugar.
+The converted game goes to a new folder, by default `%USERPROFILE%\AnyPS\<game name>`, with the
+executable, the `libs/` folder and the original files in `app0/`. The folder can be moved anywhere.
 
-Também dá para arrastar a pasta do jogo direto sobre o ícone do `AnyPS-Conversor.exe`.
+You can also drop the game folder straight onto the `AnyPS-Conversor.exe` icon.
 
-## Requisitos
+## Requirements
 
-- Windows 10 (versão 1607 ou mais nova) ou Windows 11, 64 bits. É o mínimo das bibliotecas do AnyPS5
-  para os jogos convertidos rodarem, e também o do .NET 10, com que o conversor é feito.
-- Processador com AVX2, FMA, F16C, BMI1, BMI2, LZCNT e MOVBE (Ryzen e Intel Core a partir de 2015,
-  em geral). O programa avisa se faltar alguma. Em processadores Intel a conversão usa
-  automaticamente a opção `--to-intel` do AnyPS5.
-- Placa de vídeo com driver Vulkan atualizado.
-- O jogo precisa estar **descriptografado**. Arquivos criptografados são recusados, assim como pacotes
-  `.pkg` da loja, que são criptografados.
+- Windows 10 (version 1607 or later) or Windows 11, 64-bit. This is the minimum for the AnyPS5
+  libraries that the converted games run on, and also for .NET 10, which the converter is built with.
+- A CPU with AVX2, FMA, F16C, BMI1, BMI2, LZCNT and MOVBE (generally Ryzen and Intel Core from 2015
+  on). The program warns if any is missing. On Intel CPUs the conversion automatically uses the
+  AnyPS5 `--to-intel` option.
+- A GPU with an up-to-date Vulkan driver.
+- The game must be **decrypted**. Encrypted files are refused, and so are store `.pkg` packages,
+  which are encrypted.
 
-Quando uma conversão falha, o registro dela fica em `%LOCALAPPDATA%\AnyPS-Conversor\logs` (os 10
-mais recentes, por até 30 dias). Fora isso o programa só guarda o idioma e a pasta escolhidos e apaga os
-temporários ao terminar. Se um jogo converte mas não abre ou trava, quase sempre é uma função do sistema que o AnyPS5 ainda
-não implementa. O progresso por título fica no
-[mapa de compatibilidade](https://alxcbtw.github.io/anyps5-roadmap/) e os relatos vão nas
-[discussões do AnyPS5](https://github.com/boykopovar/AnyPS5/discussions/categories/game-bring-up).
+When a conversion fails, its log is kept in `%LOCALAPPDATA%\AnyPS-Conversor\logs` (the 10 most
+recent, for up to 30 days). Apart from that, the program only stores the chosen language and folder
+and deletes its temporary files when it finishes. If a game converts but does not open or freezes,
+it is almost always a system function that AnyPS5 does not implement yet. Per-title progress is on
+the [compatibility map](https://alxcbtw.github.io/anyps5-roadmap/) and reports go to the
+[AnyPS5 discussions](https://github.com/boykopovar/AnyPS5/discussions/categories/game-bring-up).
 
-## Compilar
+## Building
 
-Requisitos: [.NET SDK 10](https://dotnet.microsoft.com/download) e PowerShell 7.
+Requirements: [.NET SDK 10](https://dotnet.microsoft.com/download) and PowerShell 7.
 
 ```powershell
 pwsh build/download-dependencies.ps1
@@ -84,33 +80,33 @@ dotnet test
 dotnet publish src/AnyPSConversor -c Release -o publish
 ```
 
-O resultado é um único `publish/AnyPS-Conversor.exe`, com o runtime do .NET, o relinker e as
-bibliotecas embutidos. Os builds oficiais são feitos pelo GitHub Actions a cada tag `vX.Y.Z` e
-publicados em Releases junto com o SHA-256.
+The result is a single `publish/AnyPS-Conversor.exe`, with the .NET runtime, the relinker and the
+libraries embedded. Official builds are made by GitHub Actions for every `vX.Y.Z` tag and published
+in Releases along with their SHA-256.
 
-Detalhes sobre versões, commits e testes estão em [CONTRIBUTING.md](CONTRIBUTING.md). O histórico
-de mudanças está em [CHANGELOG.md](CHANGELOG.md), e como relatar falhas de segurança, em
+Details on versions, commits and tests are in [CONTRIBUTING.md](CONTRIBUTING.md).
+The change history is in [CHANGELOG.md](CHANGELOG.md), and how to report security problems in
 [SECURITY.md](SECURITY.md).
 
-## Aviso legal
+## Legal notice
 
-- Este projeto não inclui, distribui nem ajuda a obter jogos, firmware, chaves ou bibliotecas
-  proprietárias. Use apenas jogos que você extraiu do seu próprio console ou homebrew de
-  distribuição livre.
-- O programa não quebra nenhuma proteção: ele só aceita executáveis que já estão descriptografados.
-- Projeto independente, sem vínculo com a Sony Interactive Entertainment nem com os autores do
-  AnyPS5. PlayStation e PS5 são marcas da Sony Interactive Entertainment, citadas aqui apenas para
-  descrever compatibilidade.
-- Fornecido "como está", sem garantia. Cada usuário responde pelo uso que faz e pelo cumprimento das
-  leis do seu país.
+- This project does not include, distribute or help obtain games, firmware, keys or proprietary
+  libraries. Only use games you dumped from your own console or freely distributed homebrew.
+- The program does not break any protection: it only accepts executables that are already
+  decrypted.
+- Independent project, not affiliated with Sony Interactive Entertainment or with the AnyPS5
+  authors. PlayStation and PS5 are trademarks of Sony Interactive Entertainment, mentioned here only
+  to describe compatibility.
+- Provided "as is", without warranty. Each user is responsible for how they use it and for complying
+  with the laws of their country.
 
-O texto completo, com marcas, licenças de terceiros e como pedir a remoção de conteúdo, está em
+The full text, with trademarks, third-party licenses and how to request content removal, is in
 [LEGAL.md](LEGAL.md).
 
-## Licença
+## License
 
-[GNU General Public License v2.0](LICENSE), a mesma do AnyPS5. O executável distribui o relinker e
-as bibliotecas do AnyPS5, cujo código-fonte está em
-[boykopovar/AnyPS5](https://github.com/boykopovar/AnyPS5) (na tag fixada em `build/dependencies.json`),
-e o deste programa, aqui. Os componentes de terceiros e suas licenças estão em
-[THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
+[GNU General Public License v2.0](LICENSE), the same as AnyPS5. The executable distributes the
+AnyPS5 relinker and libraries, whose source code is at
+[boykopovar/AnyPS5](https://github.com/boykopovar/AnyPS5) (at the tag pinned in
+`build/dependencies.json`), and this program's source is here. Third-party components and their
+licenses are listed in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).

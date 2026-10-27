@@ -1,10 +1,10 @@
 #Requires -Version 7
 <#
 .SYNOPSIS
-    Baixa o relinker e as bibliotecas para Windows do AnyPS5 na versão fixada em
-    build/dependencies.json, confere o SHA-256 e grava em deps/. Usa o release oficial do AnyPS5 e, se ele
-    não estiver mais disponível, a cópia guardada no release interno anyps5-<versão> deste repositório.
-    Nos dois casos só aceita o arquivo com o SHA-256 fixado.
+    Downloads the AnyPS5 relinker and Windows libraries at the version pinned in
+    build/dependencies.json, checks the SHA-256 and writes them to deps/. Uses the official AnyPS5 release and, if it
+    is no longer available, the copy kept in this repository's internal anyps5-<version> release.
+    In both cases it only accepts the file with the pinned SHA-256.
 #>
 $ErrorActionPreference = 'Stop'
 

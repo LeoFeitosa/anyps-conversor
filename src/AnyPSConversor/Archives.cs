@@ -4,27 +4,27 @@ using SharpCompress.Readers;
 
 namespace AnyPSConversor;
 
-/// <summary>O arquivo tem senha: nenhuma foi informada (<see cref="Wrong"/> falso) ou a informada não abre.</summary>
+/// <summary>The archive has a password: none was given (<see cref="Wrong"/> false) or the one given does not open it.</summary>
 public sealed class PasswordException(bool wrong) : Exception("password required")
 {
     public bool Wrong { get; } = wrong;
 }
 
-/// <summary>Andamento da extração: porcentagem e, ao começar cada entrada, o caminho dela no arquivo.</summary>
+/// <summary>Extraction progress: percentage and, as each entry starts, its path in the archive.</summary>
 public readonly record struct ExtractProgress(int Percent, string? Entry);
 
 /// <summary>
-/// O que se sabe de um arquivo compactado antes de extraí-lo: o jogo (nome e ícone, quando dá para ler sem
-/// descompactar o arquivo inteiro), o tamanho a extrair e o dos executáveis. Os tamanhos vêm do índice e
-/// servem para conferir o espaço do processo inteiro, dividir a barra e estimar o tempo; em tar, gz, bz2 e xz,
-/// que não têm índice, ficam o tamanho do próprio arquivo e zero.
+/// What is known about an archive before extracting it: the game (name and icon, when readable without
+/// decompressing the whole archive), the size to extract and that of the executables. The sizes come from the index and
+/// are used to check the space for the whole process, split the bar and estimate the time; in tar, gz, bz2 and xz,
+/// which have no index, they are the archive's own size and zero.
 /// </summary>
 public sealed record ArchivePreview(GamePreview? Game, long Size, long Executables);
 
 /// <summary>
-/// Extrai o jogo de um arquivo compactado (.zip, .rar, .7z, .tar e variações) para uma pasta de trabalho no
-/// mesmo local onde o jogo convertido será salvo, para usar o disco escolhido pelo usuário e poder mover
-/// (em vez de copiar) os arquivos para app0/.
+/// Extracts the game from an archive (.zip, .rar, .7z, .tar and variants) to a work folder in the
+/// same location where the converted game will be saved, to use the drive chosen by the user and be able to move
+/// (instead of copy) the files to app0/.
 /// </summary>
 public static class Archives
 {
@@ -36,18 +36,18 @@ public static class Archives
     static readonly string TempBase = Path.Combine(Path.GetTempPath(), Settings.Name);
     const string WorkFolderName = "." + Settings.Name;
 
-    /// <summary>Nomes da versão 0.6 e anteriores: o que sobrou neles também é limpo.</summary>
+    /// <summary>Names from version 0.6 and earlier: whatever is left under them is cleaned up too.</summary>
     static readonly string LegacyTempBase = Path.Combine(Path.GetTempPath(), Settings.LegacyName);
     const string LegacyWorkFolderName = "." + Settings.LegacyName;
     static readonly string RunName = "run-" + Environment.ProcessId;
 
     /// <summary>
-    /// Pasta temporária desta execução para o que é pequeno (relinker e executáveis desembrulhados). Fica
-    /// numa subpasta com o número do processo para que <see cref="CleanStaleTemp"/> saiba o que apagar.
+    /// This run's temporary folder for what is small (relinker and unwrapped executables). It lives
+    /// in a subfolder named after the process ID so that <see cref="CleanStaleTemp"/> knows what to delete.
     /// </summary>
     public static string TempRoot { get; } = Path.Combine(TempBase, RunName);
 
-    /// <summary>Pasta oculta desta execução dentro do local de saída, onde ficam as extrações.</summary>
+    /// <summary>This run's hidden folder inside the output location, where extractions go.</summary>
     public static string WorkRoot(string outputParent)
     {
         var root = Path.Combine(outputParent, WorkFolderName);
@@ -57,8 +57,8 @@ public static class Archives
     }
 
     /// <summary>
-    /// Verdadeiro dentro de uma pasta de trabalho (desta ou de outra execução, inclusive das versões antigas):
-    /// tudo nela é apagado quando a execução dona termina ou na próxima vez que o programa abre.
+    /// True inside a work folder (of this or another run, including old versions):
+    /// everything in it is deleted when the owning run ends or the next time the program opens.
     /// </summary>
     public static bool IsInsideWorkFolder(string path)
     {
@@ -70,9 +70,9 @@ public static class Archives
     }
 
     /// <summary>
-    /// Apaga, depois que o programa fechar, a pasta de trabalho desta execução e o jogo convertido pela metade,
-    /// por um cmd à parte que espera 2 s (os arquivos abertos por este processo se soltam ao sair). O que
-    /// sobrar da pasta de trabalho a próxima abertura limpa.
+    /// Deletes, after the program closes, this run's work folder and the half-converted game,
+    /// through a separate cmd that waits 2 s (files opened by this process are released on exit). Whatever
+    /// is left of the work folder the next startup cleans up.
     /// </summary>
     public static void DeleteAfterExit(string outputParent, string? unfinished)
     {
@@ -89,7 +89,7 @@ public static class Archives
         });
     }
 
-    /// <summary>Apaga a pasta de trabalho desta execução e, se ficar vazia, a pasta oculta que a contém.</summary>
+    /// <summary>Deletes this run's work folder and, if it becomes empty, the hidden folder that holds it.</summary>
     public static void DeleteWorkRoot(string outputParent)
     {
         var root = Path.Combine(outputParent, WorkFolderName);
@@ -98,9 +98,9 @@ public static class Archives
     }
 
     /// <summary>
-    /// Apaga o que execuções anteriores deixaram quando foram encerradas à força ou o PC desligou: subpastas
-    /// de processos que não existem mais em %TEMP% e na pasta de trabalho dos locais de saída indicados,
-    /// além das pastas soltas das versões 0.1 e 0.2.
+    /// Deletes what previous runs left behind when they were force-closed or the PC shut down: subfolders
+    /// of processes that no longer exist in %TEMP% and in the work folder of the given output locations,
+    /// plus the loose folders from versions 0.1 and 0.2.
     /// </summary>
     public static void CleanStaleTemp(params string?[] outputParents)
     {
@@ -143,7 +143,7 @@ public static class Archives
         try
         {
             using var process = System.Diagnostics.Process.GetProcessById(pid);
-            // Uma versão antiga (AnyPS5-Conversor.exe) aberta ao mesmo tempo continua dona das pastas dela.
+            // An old version (AnyPS5-Conversor.exe) open at the same time still owns its folders.
             string[] names = [System.Diagnostics.Process.GetCurrentProcess().ProcessName, Settings.Name, Settings.LegacyName];
             return pid == Environment.ProcessId || names.Contains(process.ProcessName, StringComparer.OrdinalIgnoreCase);
         }
@@ -153,22 +153,22 @@ public static class Archives
         }
     }
 
-    /// <summary>Zip, rar e 7z têm índice e são abertos inteiros; tar, gz, bz2 e xz são lidos em sequência e não têm senha.</summary>
+    /// <summary>Zip, rar and 7z have an index and are opened whole; tar, gz, bz2 and xz are read sequentially and have no password.</summary>
     static bool IsIndexed(string archive) =>
         new[] { ".zip", ".rar", ".7z" }.Any(e => archive.EndsWith(e, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
-    /// Confere o arquivo sem extrair nada, para recusar na hora o que não é jogo e mostrar o jogo antes de
-    /// converter. Pelo índice: sem o arquivo principal de nenhum console, recusa. Se o arquivo não é sólido, lê
-    /// também o principal (recusa se criptografado), o nome e o ícone; num arquivo sólido isso exigiria
-    /// descompactar quase tudo, e fica para a extração.
+    /// Checks the archive without extracting anything, to reject right away what is not a game and show the game before
+    /// converting. From the index: without any console's main file, rejects. If the archive is not solid, also reads
+    /// the main file (rejects if encrypted), the name and the icon; in a solid archive this would require
+    /// decompressing almost everything, so it is left for the extraction.
     /// </summary>
-    /// <exception cref="PasswordException">O arquivo tem senha e ela falta ou não confere.</exception>
+    /// <exception cref="PasswordException">The archive has a password and it is missing or wrong.</exception>
     public static ArchivePreview Inspect(string archive, string? password)
     {
         if (!IsIndexed(archive))
         {
-            // Sem índice de arquivos: o .xz ainda diz o tamanho final; .tar já é ele; gz e bz2 não guardam.
+            // No file index: .xz still states the final size; .tar already is it; gz and bz2 don't store it.
             var length = new FileInfo(archive).Length;
             var size = archive.EndsWith(".xz", StringComparison.OrdinalIgnoreCase) ? XzUncompressedSize(archive) ?? length : length;
             return new(null, size, 0);
@@ -201,9 +201,9 @@ public static class Archives
     }
 
     /// <summary>
-    /// Erro de leitura traduzido para o usuário. Cada formato acusa a senha errada de um jeito
-    /// (CryptographicException, "bad password", erro de dados no 7z); com senha informada, qualquer falha de
-    /// leitura é tratada como senha errada.
+    /// Read error translated for the user. Each format reports a wrong password differently
+    /// (CryptographicException, "bad password", data error in 7z); with a password given, any read
+    /// failure is treated as a wrong password.
     /// </summary>
     static Exception ReadFailure(Exception e, string archive, string? password) =>
         password is not null ? new PasswordException(wrong: true)
@@ -211,8 +211,8 @@ public static class Archives
         : new UserException("err_archive", Path.GetFileName(archive), e.Message);
 
     /// <summary>
-    /// Tamanho descompactado de um .xz, somado do índice que cada stream guarda no fim (formato .xz 1.0.4,
-    /// seções 2.1.2 e 4). Lê só alguns bytes do fim do arquivo. Nulo se o arquivo não seguir o formato.
+    /// Uncompressed size of an .xz, summed from the index each stream keeps at its end (.xz format 1.0.4,
+    /// sections 2.1.2 and 4). Reads only a few bytes from the end of the file. Null if the file does not follow the format.
     /// </summary>
     public static long? XzUncompressedSize(string path)
     {
@@ -223,7 +223,7 @@ public static class Archives
             long end = file.Length, total = 0;
             while (end > 0)
             {
-                // Preenchimento entre streams: blocos de 4 bytes zerados.
+                // Stream padding: zeroed 4-byte blocks.
                 while (end >= 4)
                 {
                     file.Position = end - 4;
@@ -255,7 +255,7 @@ public static class Archives
                     total += ReadVarint(index, ref position);
                     blocks += (unpadded + 3) & ~3L;
                 }
-                // Antes dos blocos vem o cabeçalho de 12 bytes do stream; antes dele, o stream anterior.
+                // Before the blocks comes the stream's 12-byte header; before that, the previous stream.
                 end = indexStart - blocks - 12;
                 if (end < 0)
                     return null;
@@ -291,9 +291,9 @@ public static class Archives
         return data.ToArray();
     }
 
-    /// <param name="password">Senha do arquivo; nula até o usuário informar uma.</param>
-    /// <param name="workRoot">Onde extrair; normalmente <see cref="WorkRoot"/> do local de saída.</param>
-    /// <exception cref="PasswordException">O arquivo tem senha e ela falta ou não confere.</exception>
+    /// <param name="password">Archive password; null until the user provides one.</param>
+    /// <param name="workRoot">Where to extract; usually the output location's <see cref="WorkRoot"/>.</param>
+    /// <exception cref="PasswordException">The archive has a password and it is missing or wrong.</exception>
     public static string Extract(string archive, string? password, string workRoot, IProgress<ExtractProgress> progress, CancellationToken cancel)
     {
         var indexed = IsIndexed(archive);
@@ -325,7 +325,7 @@ public static class Archives
         }
     }
 
-    /// <summary>Verdadeiro se alguma entrada é criptografada ou se até a lista de arquivos é protegida.</summary>
+    /// <summary>True if any entry is encrypted or if even the file list is protected.</summary>
     static bool NeedsPassword(string path)
     {
         try
@@ -360,9 +360,9 @@ public static class Archives
     }
 
     /// <summary>
-    /// Recusa antes de extrair o que não pode virar jogo: sem o arquivo principal de nenhum console no índice (no
-    /// PS5, o eboot.bin) ou, num arquivo não sólido, com ele inutilizável, como criptografado. Só ele é lido, em
-    /// memória: o aviso chega em segundos e nada é gravado no disco.
+    /// Rejects before extracting what cannot become a game: without any console's main file in the index (on
+    /// PS5, eboot.bin) or, in a non-solid archive, with it unusable, such as encrypted. Only that file is read, in
+    /// memory: the warning arrives in seconds and nothing is written to disk.
     /// </summary>
     static (IArchiveEntry Main, IConsolePlatform Platform) CheckRequiredFiles(string path, IArchive archive, List<IArchiveEntry> entries)
     {
@@ -380,7 +380,7 @@ public static class Archives
 
     static void ExtractStream(string path, string target, ReaderOptions options, IProgress<ExtractProgress> progress, CancellationToken cancel)
     {
-        // Só o .tar sem compressão diz o tamanho final de antemão; nos demais, o disco cheio é tratado ao gravar.
+        // Only an uncompressed .tar states the final size up front; for the others, a full drive is handled while writing.
         if (path.EndsWith(".tar", StringComparison.OrdinalIgnoreCase))
             DiskSpace.Ensure(target, new FileInfo(path).Length);
         using var file = File.OpenRead(path);
@@ -391,14 +391,14 @@ public static class Archives
                 continue;
             progress.Report(new((int)(100 * file.Position / Math.Max(1, file.Length)), reader.Entry.Key));
             using var input = reader.OpenEntryStream();
-            // Sem o tamanho final, o andamento é a posição no arquivo compactado; anda também dentro de uma
-            // entrada grande, senão a barra ficaria parada até ela terminar.
+            // Without the final size, progress is the position in the archive; it also moves inside a
+            // large entry, otherwise the bar would sit still until it finished.
             Write(input, Destination(target, reader.Entry.Key),
                 _ => progress.Report(new((int)(100 * file.Position / Math.Max(1, file.Length)), null)), cancel);
         }
     }
 
-    /// <summary>Caminho final de uma entrada; recusa entradas que saiam da pasta (zip slip).</summary>
+    /// <summary>Final path of an entry; rejects entries that escape the folder (zip slip).</summary>
     static string Destination(string target, string? key)
     {
         var root = Path.GetFullPath(target) + Path.DirectorySeparatorChar;

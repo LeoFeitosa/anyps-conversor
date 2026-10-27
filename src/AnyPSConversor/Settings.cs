@@ -1,18 +1,18 @@
 namespace AnyPSConversor;
 
-/// <summary>Preferências do usuário em %APPDATA%\AnyPS-Conversor: só o que ele escolheu na janela.</summary>
+/// <summary>User preferences in %APPDATA%\AnyPS-Conversor: only what they chose in the window.</summary>
 public static class Settings
 {
     public const string Name = "AnyPS-Conversor";
 
-    /// <summary>Nome das pastas do programa até a versão 0.6, quando ele se chamava AnyPS5 Conversor.</summary>
+    /// <summary>Name of the program's folders up to version 0.6, when it was called AnyPS5 Conversor.</summary>
     public const string LegacyName = "AnyPS5-Conversor";
 
     public static string Folder { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Name);
     static readonly string OutputFile = Path.Combine(Folder, "output.txt");
     static readonly string AutoPlayFile = Path.Combine(Folder, "auto-play.txt");
 
-    /// <summary>Abrir o jogo assim que a conversão terminar; desligado por padrão.</summary>
+    /// <summary>Open the game as soon as the conversion finishes; off by default.</summary>
     public static bool AutoPlay
     {
         get
@@ -29,17 +29,17 @@ public static class Settings
 
     public static string DefaultOutput { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "AnyPS");
 
-    /// <summary>Pasta de saída padrão até a versão 0.6; só para limpar o que sobrou lá.</summary>
+    /// <summary>Default output folder up to version 0.6; only to clean up what was left there.</summary>
     public static string LegacyDefaultOutput { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "AnyPS5");
 
     /// <summary>
-    /// Na primeira execução depois da troca de nome, renomeia as pastas antigas em %APPDATA% e %LOCALAPPDATA%
-    /// para as novas: o usuário não perde o idioma, o local escolhido nem os registros. Só a abertura normal do
-    /// programa chama isto, antes de ler qualquer configuração.
+    /// On the first run after the rename, renames the old folders in %APPDATA% and %LOCALAPPDATA%
+    /// to the new ones: the user keeps the language, the chosen location and the logs. Only the normal startup of the
+    /// program calls this, before reading any setting.
     /// </summary>
     public static void MigrateLegacyFolders()
     {
-        // Uma versão antiga aberta ainda usa as pastas dela; a migração fica para a próxima abertura.
+        // An old version still open uses its own folders; the migration waits for the next startup.
         if (System.Diagnostics.Process.GetProcessesByName(LegacyName).Length > 0)
             return;
         foreach (var root in new[] { Environment.SpecialFolder.ApplicationData, Environment.SpecialFolder.LocalApplicationData })
@@ -57,7 +57,7 @@ public static class Settings
         }
     }
 
-    /// <summary>Onde salvar os jogos convertidos (e extrair os compactados); o padrão é %USERPROFILE%\AnyPS.</summary>
+    /// <summary>Where to save converted games (and extract archives); the default is %USERPROFILE%\AnyPS.</summary>
     public static string Output
     {
         get
