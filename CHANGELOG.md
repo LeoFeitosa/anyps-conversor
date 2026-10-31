@@ -6,8 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.12.2] - 2026-10-31
+
 ### Changed
 
+- The executable lists the project's GitHub account as its author.
 - The repository is in English only: `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, the legal
   notice, issue and pull request templates, release notes and the update workflow's issues no longer
   repeat everything in Portuguese, and the README shows the English screenshot only. The program
@@ -299,7 +302,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Buttons to play and open the folder at the end, with the last lines of `anyps5.log` if the game
   closes with an error.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.12.1...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.12.2...HEAD
+[0.12.2]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.12.1...v0.12.2
 [0.12.1]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.11.1...v0.12.0
 [0.11.1]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.11.0...v0.11.1

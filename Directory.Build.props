@@ -2,7 +2,7 @@
   <PropertyGroup>
     <!-- App version (SemVer), single source of truth: the vX.Y.Z tag must match, otherwise the build fails.
          Builds outside a tag get the -dev.N suffix and show up that way in the program footer. -->
-    <VersionPrefix>0.12.1</VersionPrefix>
+    <VersionPrefix>0.12.2</VersionPrefix>
     <Authors>LeoFeitosa</Authors>
     <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
