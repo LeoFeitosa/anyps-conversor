@@ -26,7 +26,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SharpCompress" Version="0.50.5" />
+    <PackageReference Include="SharpCompress" Version="0.50.7" />
   </ItemGroup>
 
   <!-- Downloaded and checked by build/download-dependencies.ps1; not versioned. -->
