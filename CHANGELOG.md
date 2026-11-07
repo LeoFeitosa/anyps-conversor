@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.12.3] - 2026-11-07
+
+### AnyPS5
+
+- AnyPS5 updated from v0.1.3 to v0.1.4 ([release notes](https://github.com/boykopovar/AnyPS5/releases/tag/v0.1.4)).
+
 ## [0.12.2] - 2026-10-31
 
 ### Changed
@@ -302,7 +308,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Buttons to play and open the folder at the end, with the last lines of `anyps5.log` if the game
   closes with an error.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.12.2...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.12.3...HEAD
+[0.12.3]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.12.2...v0.12.3
 [0.12.2]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.12.1...v0.12.2
 [0.12.1]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.11.1...v0.12.0
