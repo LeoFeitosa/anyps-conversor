@@ -1,13 +1,13 @@
 {
-  "anyps5": "v0.1.4",
+  "anyps5": "v0.1.5",
   "files": {
     "relinker.exe": {
-      "asset": "relinker-v0.1.4.exe",
-      "sha256": "6f6d49e3613ea7fce859621265068bfd64161a729a8051c83150f2d45ec193e0"
+      "asset": "relinker-v0.1.5.exe",
+      "sha256": "541fa50fb7255be93111b72ebe5c320f3ccb936905f8f522914f233177ca17e7"
     },
     "prx-windows.zip": {
-      "asset": "prx-windows-v0.1.4.zip",
-      "sha256": "cbd61c521d555614dbcddc62cdabf45acfe409c520307cdb58732c8486dd0d7a"
+      "asset": "prx-windows-v0.1.5.zip",
+      "sha256": "d026931807f977d9ce21d07bcecd8dd229e652ec849414ac69cefcab4cc96a57"
     }
   }
 }
