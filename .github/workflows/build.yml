@@ -88,7 +88,7 @@ jobs:
           gh release create "$TAG" dist/AnyPS-Conversor.exe dist/AnyPS-Conversor.exe.sha256 THIRD-PARTY-NOTICES.txt \
             --repo "$GITHUB_REPOSITORY" --title "AnyPS Conversor $TAG" --notes-file notes.md
 
-  # The README image always shows the published version, taken from the executable itself.
+  # The README and site images always show the published version, taken from the executable itself.
   screenshots:
     if: github.ref_type == 'tag'
     needs: release
@@ -105,7 +105,7 @@ jobs:
           name: AnyPS-Conversor
           path: dist
 
-      - name: Update the README screenshot
+      - name: Update the screenshots
         shell: pwsh
         env:
           TAG: ${{ github.ref_name }}
@@ -115,11 +115,20 @@ jobs:
           $current = @($props.Project.PropertyGroup.VersionPrefix | Where-Object { $_ })[0]
           if ("v$current" -ne $env:TAG) { "Skipping: $env:TAG is not the current version (v$current)."; exit 0 }
           ./build/update-screenshots.ps1 -Exe dist/AnyPS-Conversor.exe
-          git add docs/screenshot-en.png
+          git add docs/screenshot-en.png docs/screenshot-pt.png
           git diff --cached --quiet
           if ($LASTEXITCODE -eq 0) { 'Screenshot already up to date.'; exit 0 }
           git config user.name 'github-actions[bot]'
           git config user.email '41898099+github-actions[bot]@users.noreply.github.com'
-          git commit -m "docs: update screenshot for $env:TAG"
+          git commit -m "docs: update screenshots for $env:TAG"
           git push origin HEAD:main
 
+  # The site is published from main after the screenshots land there; a push made with the workflow token starts no other workflow.
+  site:
+    if: github.ref_type == 'tag'
+    needs: screenshots
+    uses: ./.github/workflows/pages.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write

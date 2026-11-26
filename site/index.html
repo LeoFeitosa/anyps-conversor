@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AnyPS Conversor — Run PS5 homebrew and your own game dumps on Windows</title>
+<meta name="description" content="AnyPS Conversor turns a decrypted PS5 game or app into a Windows executable in one click. Free, open source, portable, no installer, keeps itself up to date. Built on AnyPS5.">
+<link rel="canonical" href="https://leofeitosa.github.io/anyps-conversor/">
+<link rel="alternate" hreflang="en" href="https://leofeitosa.github.io/anyps-conversor/">
+<link rel="alternate" hreflang="pt-BR" href="https://leofeitosa.github.io/anyps-conversor/pt/">
+<link rel="alternate" hreflang="x-default" href="https://leofeitosa.github.io/anyps-conversor/">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#0f141c">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="icon.png" type="image/png">
+<link rel="apple-touch-icon" href="icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AnyPS Conversor">
+<meta property="og:title" content="AnyPS Conversor — PS5 to Windows in one click">
+<meta property="og:description" content="Convert decrypted PS5 games and apps into Windows executables. Free, open source, portable and self-updating. Built on AnyPS5.">
+<meta property="og:url" content="https://leofeitosa.github.io/anyps-conversor/">
+<meta property="og:image" content="https://leofeitosa.github.io/anyps-conversor/screenshot.png">
+<meta property="og:image:alt" content="The AnyPS Conversor window: choose the game, choose where to save, convert to Windows.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AnyPS Conversor — PS5 to Windows in one click">
+<meta name="twitter:description" content="Convert decrypted PS5 games and apps into Windows executables. Free, open source, portable and self-updating.">
+<meta name="twitter:image" content="https://leofeitosa.github.io/anyps-conversor/screenshot.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "AnyPS Conversor",
+  "operatingSystem": "Windows 10, Windows 11",
+  "applicationCategory": "UtilitiesApplication",
+  "applicationSubCategory": "Game converter",
+  "description": "Converts a decrypted PS5 game or app into a Windows executable in one click. Built on AnyPS5.",
+  "url": "https://leofeitosa.github.io/anyps-conversor/",
+  "downloadUrl": "https://github.com/LeoFeitosa/anyps-conversor/releases/latest/download/AnyPS-Conversor.exe",
+  "softwareHelp": "https://github.com/LeoFeitosa/anyps-conversor#how-to-use",
+  "license": "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "screenshot": "https://leofeitosa.github.io/anyps-conversor/screenshot.png",
+  "isBasedOn": "https://github.com/boykopovar/AnyPS5",
+  "codeRepository": "https://github.com/LeoFeitosa/anyps-conversor",
+  "inLanguage": "en"
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css">
+<script>
+// First visit in Portuguese goes to the Portuguese page; a choice made on the site wins over the browser language.
+(function () { try { var c = localStorage.getItem("lang"); if (c === "pt" || (!c && /^pt/i.test(navigator.language))) location.replace("pt/" + location.hash); } catch (e) {} })();
+</script>
+</head>
+<body>
+
+<header class="page masthead">
+  <a class="name" href="#"><img src="icon.png" alt="">AnyPS Conversor</a>
+  <nav aria-label="Sections">
+    <a href="#window">How it works</a>
+    <a href="#requirements">Requirements</a>
+    <a href="#anyps5">AnyPS5</a>
+    <a href="#questions">Questions</a>
+    <a href="https://github.com/LeoFeitosa/anyps-conversor">GitHub</a>
+    <a class="lang" href="pt/" hreflang="pt-BR" lang="pt-BR" onclick="try { localStorage.setItem('lang', 'pt') } catch (e) {}">Português</a>
+  </nav>
+</header>
+
+<main>
+  <div class="page intro">
+    <div>
+    <h1>The PS5 game you dumped, as a Windows program.</h1>
+    <p class="one">AnyPS Conversor takes a decrypted PS5 game or homebrew app and builds a Windows executable from it. One window, three choices.</p>
+    <a class="get" href="https://github.com/LeoFeitosa/anyps-conversor/releases/latest/download/AnyPS-Conversor.exe">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+      Download AnyPS-Conversor.exe
+    </a>
+    <p class="release" id="version">Free and open source. A single portable file for Windows 10 and 11; it updates itself from the <a href="https://github.com/LeoFeitosa/anyps-conversor/releases/latest">latest release</a>.</p>
+    <ul class="facts" aria-label="Why you can trust it">
+      <li>Open source under the <a href="https://github.com/LeoFeitosa/anyps-conversor/blob/main/LICENSE">GPL-2.0</a></li>
+      <li>SHA-256 published with every release</li>
+      <li>No installer, no account, no telemetry</li>
+      <li>Decrypts nothing, includes no games</li>
+      <li id="anyps5-version">Ships the official AnyPS5 release, unchanged</li>
+    </ul>
+    </div>
+    <img class="shot" src="screenshot.png" width="952" height="991" alt="The AnyPS Conversor window: choose the game, choose where to save, convert to Windows." fetchpriority="high">
+  </div>
+
+  <div class="page manual" id="window">
+    <h2>What the window asks</h2>
+    <div><ol class="notes">
+      <li><b>Choose the game</b><p>Drop the folder that holds <code>eboot.bin</code> on the window, or an archive with that folder inside: zip, rar, 7z, tar, gz, bz2 or xz. Password-protected archives are extracted too; 7-Zip and WinRAR are not needed.</p></li>
+      <li><b>Where to save</b><p>A new folder named after the game is created there, with the Windows executable, the libraries it needs and the original files in <code>app0</code>. The folder can be moved to any drive afterwards.</p></li>
+      <li><b>Convert to Windows</b><p>The program unwraps the executable, relinks it with AnyPS5 and copies the game files. When it finishes, the same window offers Play now and Open folder.</p></li>
+    </ol>
+    <p class="then">Everything else, from the processor check to the download of newer versions, happens without asking.</p></div>
+  </div>
+
+  <div class="page text">
+    <aside class="toc" aria-label="Contents">
+      <ol>
+        <li><a href="#requirements">Before you start</a></li>
+        <li><a href="#after">After converting</a></li>
+        <li><a href="#updates">How updates work</a></li>
+        <li><a href="#anyps5">Built on AnyPS5</a></li>
+        <li><a href="#questions">Questions</a></li>
+        <li><a href="#legal">Legal notice</a></li>
+      </ol>
+    </aside>
+
+    <div>
+      <section id="requirements">
+        <h2>Before you start</h2>
+        <p>Converted games run on the AnyPS5 libraries, so the PC has to meet their bar. The program checks the processor when it opens and says what is missing, if anything.</p>
+        <table>
+          <tr><th>Windows</th><td>Windows 10 version 1607 or later, or Windows 11. 64-bit only.</td></tr>
+          <tr><th>Processor</th><td>AVX2, FMA, F16C, BMI1, BMI2, LZCNT and MOVBE. In practice, Ryzen and Intel Core from 2015 on. On Intel the conversion switches to the right mode by itself.</td></tr>
+          <tr><th>Graphics</th><td>Any GPU with an up-to-date Vulkan driver.</td></tr>
+          <tr><th>The game</th><td>A decrypted copy: free homebrew, or a dump of a game you own, taken from your own console. Encrypted files and store <code>.pkg</code> packages are refused. The program decrypts nothing and bypasses no protection.</td></tr>
+        </table>
+        <p class="warn">Whether a given title plays well is up to AnyPS5's progress. The <a href="https://github.com/boykopovar/AnyPS5/discussions/categories/game-bring-up">game bring-up discussions</a> track titles one by one; if a game converts but does not start, that is where to report it.</p>
+      </section>
+
+      <section id="after">
+        <h2>After converting</h2>
+        <p>The window shows Play now and Open folder. The converted folder is self-contained: executable, <code>libs</code> and <code>app0</code>. Copy it to another PC that meets the requirements and it runs there as well.</p>
+        <p>If you ticked the Recycle Bin option, the original files are moved to the Windows Recycle Bin at the end, not deleted, so they can be restored. Archives are extracted in the folder you chose under Where to save, inside a hidden folder that is removed when the conversion ends, so saving to another drive keeps the extraction off C:.</p>
+        <p>When a conversion fails, its log is kept under <code>%LOCALAPPDATA%\AnyPS-Conversor\logs</code>, the ten most recent for up to thirty days. Apart from the chosen language and folder, nothing else is stored.</p>
+      </section>
+
+      <section id="updates">
+        <h2>How updates work</h2>
+        <p>Each time it opens, the program looks up the newest release on GitHub. If there is one, it downloads the file in the background, checks it against the SHA-256 published with the release, and replaces itself. If you are in the middle of a conversion, the swap waits until you close the window. Nothing about you or your PC is sent; the request is the same one a browser makes to open the releases page.</p>
+        <p>When AnyPS5 itself publishes a new version, a new AnyPS Conversor is built from it, tested on real homebrew and released, and every installed copy picks it up the same way. To keep a copy on a fixed version, set the environment variable <code>ANYPS_NO_UPDATE</code>.</p>
+      </section>
+
+      <section id="anyps5">
+        <h2>Built on AnyPS5</h2>
+        <p>All the heavy lifting is done by <a href="https://github.com/boykopovar/AnyPS5">AnyPS5</a>, by boykopovar and contributors: the relinker that turns the PS5 executable into a native one, and the reimplemented system libraries the game calls into. AnyPS Conversor puts those pieces into a window anyone can use.</p>
+        <table>
+          <tr><th>Relinker</th><td>Official AnyPS5 release, embedded unchanged and checked by hash.</td></tr>
+          <tr><th>Windows libraries</th><td>Official AnyPS5 release, embedded unchanged and checked by hash.</td></tr>
+          <tr><th>SELF unwrapping</th><td>C# port of AnyPS5's <code>unwrap_self.py</code>.</td></tr>
+          <tr><th>Everything else</th><td>Interface, archive extraction, languages and updates: this project.</td></tr>
+        </table>
+        <p>The AnyPS5 version inside each build is listed in the release notes and in <a href="https://github.com/LeoFeitosa/anyps-conversor/blob/main/build/dependencies.json">build/dependencies.json</a>.</p>
+      </section>
+
+      <section id="questions">
+        <h2>Questions</h2>
+        <dl>
+          <dt>Is it free?</dt>
+          <dd>Yes. GPL-2.0, like AnyPS5. No paid version, no account, no telemetry.</dd>
+          <dt>Does it need an installer or administrator rights?</dt>
+          <dd>No. Put the file anywhere you can write to, such as your Downloads folder, and run it. Updates replace that file in place.</dd>
+          <dt>Is the download safe?</dt>
+          <dd>Every release ships an <code>AnyPS-Conversor.exe.sha256</code> file next to the executable; compare the hash before running. The whole program is open source, so anyone can read what it does.</dd>
+          <dt>Where do I get games?</dt>
+          <dd>From your own console, or from homebrew authors. This project does not include, host or point to games, firmware, keys or certificates, and issues containing them are removed.</dd>
+          <dt>Something went wrong. Where do I ask?</dt>
+          <dd>If the conversion itself failed, open an <a href="https://github.com/LeoFeitosa/anyps-conversor/issues">issue</a> with the log from the logs folder. If the game converted but does not play, the AnyPS5 discussions linked above are the right place.</dd>
+        </dl>
+      </section>
+
+      <section id="legal">
+        <h2>Legal notice</h2>
+        <p>Independent project, not affiliated with or endorsed by Sony Interactive Entertainment or by the AnyPS5 authors. PlayStation and PS5 are trademarks of Sony Interactive Entertainment Inc., mentioned only to describe compatibility. The program is provided as is, without warranty. Each user is responsible for having the right to use the software they convert. Full text in <a href="https://github.com/LeoFeitosa/anyps-conversor/blob/main/LEGAL.md">LEGAL.md</a>.</p>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="page">
+    <div>AnyPS Conversor is free software under the GNU General Public License v2.0.</div>
+    <nav aria-label="Project links">
+      <a href="https://github.com/LeoFeitosa/anyps-conversor">Source code</a>
+      <a href="https://github.com/LeoFeitosa/anyps-conversor/releases">All releases</a>
+      <a href="https://github.com/LeoFeitosa/anyps-conversor/blob/main/CHANGELOG.md">Changelog</a>
+      <a href="https://github.com/LeoFeitosa/anyps-conversor/blob/main/SECURITY.md">Security</a>
+      <a href="https://github.com/LeoFeitosa/anyps-conversor/issues">Report a problem</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+// The released version, shown when GitHub answers; the sentence above stays correct when it does not.
+fetch("https://api.github.com/repos/LeoFeitosa/anyps-conversor/releases/latest", { headers: { Accept: "application/vnd.github+json" } })
+  .then(r => r.ok ? r.json() : Promise.reject())
+  .then(release => {
+    const exe = (release.assets || []).find(a => a.name === "AnyPS-Conversor.exe");
+    const size = exe ? `, ${(exe.size / 1048576).toFixed(0)} MB` : "";
+    const date = release.published_at ? new Date(release.published_at).toLocaleDateString("en-GB", { year: "numeric", month: "long", day: "numeric" }) : "";
+    document.getElementById("version").innerHTML =
+      `Version <a href="${release.html_url}">${release.tag_name.replace(/^v/, "")}</a>${date ? ", released " + date : ""}${size}. Free and open source; a single portable file for Windows 10 and 11 that updates itself.`;
+  })
+  .catch(() => {});
+fetch("https://raw.githubusercontent.com/LeoFeitosa/anyps-conversor/main/build/dependencies.json")
+  .then(r => r.ok ? r.json() : Promise.reject())
+  .then(d => { if (d.anyps5) document.getElementById("anyps5-version").textContent = `Ships the official AnyPS5 ${d.anyps5} release, unchanged`; })
+  .catch(() => {});
+</script>
+</body>
+</html>

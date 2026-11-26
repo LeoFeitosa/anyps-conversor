@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://leofeitosa.github.io/anyps-conversor/</loc>
+    <lastmod>2026-11-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <xhtml:link rel="alternate" hreflang="en" href="https://leofeitosa.github.io/anyps-conversor/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://leofeitosa.github.io/anyps-conversor/pt/"/>
+  </url>
+  <url>
+    <loc>https://leofeitosa.github.io/anyps-conversor/pt/</loc>
+    <lastmod>2026-11-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <xhtml:link rel="alternate" hreflang="en" href="https://leofeitosa.github.io/anyps-conversor/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://leofeitosa.github.io/anyps-conversor/pt/"/>
+  </url>
+</urlset>

@@ -1,0 +1,42 @@
+name: Site
+
+# Publishes site/ to GitHub Pages: the project page, with the download link that always points at the latest release.
+# Build calls it after every release, so the site shows the screenshots of the version that was just published.
+
+on:
+  push:
+    branches: [main]
+    paths: [site/**, docs/screenshot-*.png]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Use the screenshots taken from the released executable
+        run: |
+          cp docs/screenshot-en.png site/screenshot.png
+          cp docs/screenshot-pt.png site/screenshot-pt.png
+          sed -i "s|<lastmod>.*</lastmod>|<lastmod>$(date -u +%F)</lastmod>|" site/sitemap.xml
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v5

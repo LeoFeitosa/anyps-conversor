@@ -9,6 +9,8 @@ Choose the game folder, click **Convert to Windows** and, at the end, **Play now
 
 **[⬇ Download the latest version (AnyPS-Conversor.exe)](https://github.com/LeoFeitosa/anyps-conversor/releases/latest/download/AnyPS-Conversor.exe)**
 
+Project site: [leofeitosa.github.io/anyps-conversor](https://leofeitosa.github.io/anyps-conversor/)
+
 ![AnyPS Conversor window](docs/screenshot-en.png)
 
 ## Based on AnyPS5

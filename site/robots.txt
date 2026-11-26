@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://leofeitosa.github.io/anyps-conversor/sitemap.xml
