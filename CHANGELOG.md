@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-11-26
+
+### Added
+
+- The program updates itself. At every start it looks up the newest release on GitHub; a newer one
+  is downloaded in the background, checked against the SHA-256 the release publishes and put in
+  place of the running executable: at once when nothing has been chosen or started, otherwise when
+  the window closes, so the next start already runs it. No prompt and no installer. A development
+  build never replaces itself, and `ANYPS_NO_UPDATE=1` keeps a run on its version.
+
 ## [0.12.4] - 2026-11-18
 
 ### AnyPS5
@@ -314,7 +324,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Buttons to play and open the folder at the end, with the last lines of `anyps5.log` if the game
   closes with an error.
 
-[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.12.4...HEAD
+[Unreleased]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.12.4...v0.13.0
 [0.12.4]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.12.3...v0.12.4
 [0.12.3]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.12.2...v0.12.3
 [0.12.2]: https://github.com/LeoFeitosa/anyps-conversor/compare/v0.12.1...v0.12.2

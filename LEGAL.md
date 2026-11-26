@@ -12,8 +12,9 @@ own console.
 - It does not decrypt anything or circumvent any technical protection measure. It only accepts
   executables that are already decrypted and refuses encrypted files, including store `.pkg`
   packages.
-- It does not collect data, require an account or connect to the internet. It only opens a link
-  when the user clicks it.
+- It does not collect data and does not require an account. Its only connection is to GitHub, to
+  check for a newer version of itself at start and download it; that request carries nothing about
+  the user or the machine. Other links open only when the user clicks them.
 
 **User responsibility.** Each person is responsible for having the right to use the software they
 convert and for complying with the laws of their country, the terms they agreed to and the rights of

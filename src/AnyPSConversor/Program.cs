@@ -14,6 +14,9 @@ static class Program
             MainForm.SaveScreenshot(file, rest.FirstOrDefault());
             return;
         }
+        // A newer version downloaded last time takes over before anything else runs.
+        if (Updater.InstallPendingOnStart(args))
+            return;
         Settings.MigrateLegacyFolders();
         // In the background: an abandoned extraction can be tens of GB and the window cannot wait for it.
         var output = Settings.Output;

@@ -80,6 +80,7 @@ public sealed class MainForm : Form
     string? sourceInput;
     string? convertedExe;
     CancellationTokenSource? running;
+    readonly CancellationTokenSource updating = new();
     string statusKey = "status_idle";
     object[] statusArgs = [];
     bool statusIsError;
@@ -216,16 +217,32 @@ public sealed class MainForm : Form
         ResumeLayout(false);
         if (initialGame is not null)
             Shown += async (_, _) => await LoadGameAsync(initialGame);
+        Shown += async (_, _) => await UpdateAsync();
         // Closing ends everything at once: the relinker dies with it and an extraction of tens of GB is deleted by a
         // separate process, without keeping the program open (and windowless) meanwhile.
         FormClosed += (_, _) =>
         {
+            updating.Cancel();
             running?.Cancel();
+            Updater.InstallPending();
             Converter.KillRunning();
             Archives.TryDelete(Archives.TempRoot);
             // During extraction it has no extractionParent yet; the destination does not change while something runs.
             Archives.DeleteAfterExit(extractionParent ?? outputBox.Text, Converter.Unfinished);
         };
+    }
+
+    /// <summary>
+    /// A newer release is fetched in the background. With nothing chosen and nothing running, the new version opens
+    /// in place of this window; otherwise it is installed when the window closes and runs from the next start.
+    /// </summary>
+    async Task UpdateAsync()
+    {
+        var tag = await Updater.DownloadNewerAsync(AppVersion, updating.Token);
+        if (tag is null || IsDisposed || game is not null || archive is not null || running is not null)
+            return;
+        if (Updater.InstallPendingAndRestart())
+            Close();
     }
 
     static void PlaceStep(Card card, StepBadge badge, Label title, Label? hint)

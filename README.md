@@ -34,7 +34,8 @@ repository (`anyps5-<version>`), used only if the official release is no longer 
 1. [Download `AnyPS-Conversor.exe`](https://github.com/LeoFeitosa/anyps-conversor/releases/latest/download/AnyPS-Conversor.exe)
    (always the latest version; earlier versions are in
    [Releases](https://github.com/LeoFeitosa/anyps-conversor/releases)).
-2. Open the program. Nothing to install.
+2. Open the program. Nothing to install, and it keeps itself up to date: a newer version is
+   downloaded from this repository's releases and takes over on its own.
 3. Drag the game onto the window, or use **Choose folder** or **Choose file**. It can be the folder
    that holds `eboot.bin` or a `.zip`, `.rar`, `.7z`, `.tar`, `.tar.gz`, `.tgz`, `.bz2` or `.xz`
    archive containing it. If the archive has a password, the program asks for it. 7-Zip or WinRAR
