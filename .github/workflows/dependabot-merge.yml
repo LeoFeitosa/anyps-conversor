@@ -1,0 +1,35 @@
+name: Dependabot merge
+
+# Merges a Dependabot pull request by rebase once the Build workflow passed on its head. Only patch and
+# minor updates: a major update, or a title the step cannot read, is left for a person. Nothing is
+# published: the update ships with the next AnyPS5 adoption (anyps5-update.yml).
+
+on:
+  workflow_run:
+    workflows: [Build]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.actor.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Merge the pull request at the tested commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          pr=$(gh pr list --repo "$GITHUB_REPOSITORY" --author 'app/dependabot' --state open --json number,title,headRefOid --jq ".[] | select(.headRefOid == \"$HEAD\")")
+          if [ -z "$pr" ]; then echo "No open Dependabot pull request at $HEAD"; exit 0; fi
+          number=$(jq -r .number <<<"$pr")
+          title=$(jq -r .title <<<"$pr")
+          from=$(sed -nE 's/^Bump .* from ([0-9]+)[.0-9]* to [0-9.]+$/\1/p' <<<"$title")
+          to=$(sed -nE 's/^Bump .* from [0-9.]+ to ([0-9]+)[.0-9]*$/\1/p' <<<"$title")
+          if [ -z "$from" ] || [ -z "$to" ] || [ "$from" != "$to" ]; then echo "Left for review: $title"; exit 0; fi
+          gh pr merge "$number" --repo "$GITHUB_REPOSITORY" --rebase
+          echo "Merged #$number: $title"
